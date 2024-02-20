@@ -1,0 +1,139 @@
+basePath: /api/v1
+consumes:
+- application/json
+definitions:
+  models.SiteDetail:
+    properties:
+      address:
+        example: 234, Lagos, Nigeria
+        type: string
+      email:
+        example: litpad@gmail.com
+        type: string
+      fb:
+        example: https://facebook.com
+        type: string
+      ig:
+        example: https://instagram.com
+        type: string
+      name:
+        type: string
+      phone:
+        example: "+234345434343"
+        type: string
+      tw:
+        example: https://twitter.com
+        type: string
+      wh:
+        example: https://wa.me/2348133831036
+        type: string
+    type: object
+  models.Subscriber:
+    properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
+    required:
+    - email
+    type: object
+  routes.HealthCheckSchema:
+    properties:
+      success:
+        example: pong
+        type: string
+    type: object
+  schemas.SiteDetailResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/models.SiteDetail'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SubscriberResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/models.Subscriber'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  utils.ErrorResponse:
+    properties:
+      code:
+        type: string
+      data:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: '`LitPAD API built with Fiber and GORM`'
+  title: LITPAD API
+  version: "4.0"
+paths:
+  /general/site-detail:
+    get:
+      description: This endpoint retrieves few details of the site/application.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SiteDetailResponseSchema'
+      summary: Retrieve site details
+      tags:
+      - General
+  /general/subscribe:
+    post:
+      description: This endpoint creates a newsletter subscriber in our application
+      parameters:
+      - description: Subscriber object
+        in: body
+        name: subscriber
+        required: true
+        schema:
+          $ref: '#/definitions/models.Subscriber'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.SubscriberResponseSchema'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Add a subscriber
+      tags:
+      - General
+  /healthcheck:
+    get:
+      description: This endpoint checks the health of our application.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.HealthCheckSchema'
+      summary: HealthCheck
+      tags:
+      - HealthCheck
+produces:
+- application/json
+securityDefinitions:
+  BearerAuth:
+    description: Type 'Bearer jwt_string' to correctly set the API Key
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

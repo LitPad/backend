@@ -3,13 +3,17 @@ package main
 import (
 	"log"
 
+	"github.com/LitPad/backend/config"
+	"github.com/LitPad/backend/database"
+	_ "github.com/LitPad/backend/docs"
+	"github.com/LitPad/backend/routes"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	_ "github.com/LitPad/backend/docs"
 )
 
 // @title LITPAD API
+// @description `LitPAD API built with Fiber and GORM`
 // @version 4.0
 // @Accept json
 // @Produce json
@@ -20,6 +24,16 @@ import (
 // @name Authorization
 // @description Type 'Bearer jwt_string' to correctly set the API Key
 func main() {
+	// Load config
+	conf, err := config.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot not load config", err)
+	}
+
+	// Get Database
+	database.ConnectDb(conf)
+	db := database.Database.Db
+
 	app := fiber.New()
 
 	// CORS config
@@ -40,6 +54,6 @@ func main() {
 
 	app.Use(swagger.New(swaggerCfg))
 	// Register Routes & Sockets
-	// routes.SetupRoutes(app, db)
-	log.Fatal(app.Listen(":8000"))
+	routes.SetupRoutes(app, db)
+	log.Fatal(app.Listen(":" + conf.Port))
 }
