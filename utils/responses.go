@@ -7,13 +7,6 @@ type ErrorResponse struct {
 	Data				*map[string]string	`json:"data,omitempty"`
 }
 
-func (obj ErrorResponse) Init() ErrorResponse {
-	if obj.Status == "" {
-		obj.Status = "failure"
-	}
-	return obj
-}
-
 // Error codes
 var ERR_UNAUTHORIZED_USER =	"unauthorized_user"
 var ERR_NETWORK_FAILURE =	"network_failure"
@@ -40,6 +33,6 @@ func RequestErr(code string, message string, opts ...map[string]string) ErrorRes
 	if len(opts) > 0 {
 		data = &opts[0]
 	}
-	resp := ErrorResponse{Code: code, Message: message, Data: data}.Init()
+	resp := ErrorResponse{Status: "failure", Code: code, Message: message, Data: data}
 	return resp
 }
