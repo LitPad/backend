@@ -7,7 +7,7 @@ import (
 type Config struct {
 	ProjectName               string `mapstructure:"PROJECT_NAME"`
 	Debug                     bool   `mapstructure:"DEBUG"`
-	EmailOtpExpireSeconds     int    `mapstructure:"EMAIL_OTP_EXPIRE_SECONDS"`
+	EmailOtpExpireSeconds     int64    `mapstructure:"EMAIL_OTP_EXPIRE_SECONDS"`
 	AccessTokenExpireMinutes  int    `mapstructure:"ACCESS_TOKEN_EXPIRE_MINUTES"`
 	RefreshTokenExpireMinutes int    `mapstructure:"REFRESH_TOKEN_EXPIRE_MINUTES"`
 	Port                      string `mapstructure:"PORT"`
