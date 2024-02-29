@@ -55,6 +55,11 @@ func ConnectDb(cfg config.Config) {
 		// general
 		&models.SiteDetail{}, 
 		&models.Subscriber{}, 
+
+		// accounts
+		&models.User{},
+		&models.Otp{}, 
+
 	)
 
 	Database = DbInstance{Db: db}

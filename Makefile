@@ -19,3 +19,6 @@ show-logs:
 	
 test:
 	go test ./tests -v -count=1
+
+swag:
+	swag init --md .
