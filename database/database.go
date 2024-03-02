@@ -1,25 +1,18 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"fmt"
 
-	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/config"
+	"github.com/LitPad/backend/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-
 )
 
-type DbInstance struct {
-	Db *gorm.DB
-}
-
-var Database DbInstance
-
-func ConnectDb(cfg config.Config) {
+func ConnectDb(cfg config.Config) *gorm.DB {
 	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s"
 	dsn := fmt.Sprintf(
 		dsnTemplate,
@@ -33,7 +26,7 @@ func ConnectDb(cfg config.Config) {
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		SkipDefaultTransaction: true,
-		PrepareStmt: true,
+		PrepareStmt:            true,
 	})
 
 	if err != nil {
@@ -46,16 +39,19 @@ func ConnectDb(cfg config.Config) {
 
 	// Add UUID extension
 	result := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-    if result.Error != nil {
-        log.Fatal("failed to create extension: " + result.Error.Error())
-    }
+	if result.Error != nil {
+		log.Fatal("failed to create extension: " + result.Error.Error())
+	}
 
 	// Add Migrations
 	db.AutoMigrate(
 		// general
-		&models.SiteDetail{}, 
-		&models.Subscriber{}, 
-	)
+		&models.SiteDetail{},
+		&models.Subscriber{},
 
-	Database = DbInstance{Db: db}
+		// accounts
+		&models.User{},
+		&models.Otp{},
+	)
+	return db
 }

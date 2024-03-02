@@ -43,6 +43,81 @@ definitions:
         example: pong
         type: string
     type: object
+  schemas.EmailRequestSchema:
+    properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
+    required:
+    - email
+    type: object
+  schemas.RegisterResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.EmailRequestSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.RegisterUser:
+    properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
+      first_name:
+        example: John
+        maxLength: 50
+        type: string
+      last_name:
+        example: Doe
+        maxLength: 50
+        type: string
+      password:
+        example: strongpassword
+        maxLength: 50
+        minLength: 8
+        type: string
+      terms_agreement:
+        type: boolean
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  schemas.ResponseSchema:
+    properties:
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SetNewPasswordSchema:
+    properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
+      otp:
+        example: 123456
+        type: integer
+      password:
+        example: newstrongpassword
+        maxLength: 50
+        minLength: 8
+        type: string
+    required:
+    - email
+    - otp
+    - password
+    type: object
   schemas.SiteDetailResponseSchema:
     properties:
       data:
@@ -65,6 +140,19 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.VerifyEmailRequestSchema:
+    properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
+      otp:
+        example: 123456
+        type: integer
+    required:
+    - email
+    - otp
+    type: object
   utils.ErrorResponse:
     properties:
       code:
@@ -84,6 +172,124 @@ info:
   title: LITPAD API
   version: "4.0"
 paths:
+  /auth/register:
+    post:
+      description: '`This endpoint registers new users into our application.`'
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.RegisterUser'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.RegisterResponseSchema'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /auth/resend-verification-email:
+    post:
+      description: '`This endpoint resends new otp to the user''s email.`'
+      parameters:
+      - description: Email data
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.EmailRequestSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Resend Verification Email
+      tags:
+      - Auth
+  /auth/send-password-reset-otp:
+    post:
+      description: '`This endpoint sends new password reset otp to the user''s email.`'
+      parameters:
+      - description: Email object
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.EmailRequestSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Send Password Reset Otp
+      tags:
+      - Auth
+  /auth/set-new-password:
+    post:
+      description: '`This endpoint verifies the password reset otp.`'
+      parameters:
+      - description: Password reset object
+        in: body
+        name: email
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.SetNewPasswordSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Set New Password
+      tags:
+      - Auth
+  /auth/verify-email:
+    post:
+      description: '`This endpoint verifies a user''s email.`'
+      parameters:
+      - description: Verify Email object
+        in: body
+        name: verify_email
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.VerifyEmailRequestSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Verify a user's email
+      tags:
+      - Auth
   /general/site-detail:
     get:
       description: This endpoint retrieves few details of the site/application.

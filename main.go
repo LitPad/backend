@@ -31,8 +31,7 @@ func main() {
 	}
 
 	// Get Database
-	database.ConnectDb(conf)
-	db := database.Database.Db
+	db := database.ConnectDb(conf)
 
 	app := fiber.New()
 
