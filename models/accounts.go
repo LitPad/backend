@@ -16,9 +16,9 @@ type User struct {
 	LastName        string  `json:"last_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"Doe"`
 	Email           string  `json:"email" gorm:"not null;unique;" validate:"required,min=5,email" example:"johndoe@email.com"`
 	Password        string  `json:"password" gorm:"not null" validate:"required,min=8,max=50" example:"strongpassword"`
-	IsEmailVerified *bool   `json:"is_email_verified" gorm:"default:false" swaggerignore:"true"`
-	IsSuperuser     *bool   `json:"is_superuser" gorm:"default:false" swaggerignore:"true"`
-	IsStaff         *bool   `json:"is_staff" gorm:"default:false" swaggerignore:"true"`
+	IsEmailVerified bool    `json:"is_email_verified" gorm:"default:false" swaggerignore:"true"`
+	IsSuperuser     bool    `json:"is_superuser" gorm:"default:false" swaggerignore:"true"`
+	IsStaff         bool    `json:"is_staff" gorm:"default:false" swaggerignore:"true"`
 	TermsAgreement  bool    `json:"terms_agreement" gorm:"default:false" validate:"eq=true"`
 	Avatar          *string `gorm:"type:varchar(1000);null;" json:"avatar"`
 	Access          *string `gorm:"type:varchar(1000);null;" json:"access"`
@@ -36,14 +36,14 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 
 type Otp struct {
 	BaseModel
-	UserId uuid.UUID `json:"user_id" gorm:"not null;unique;"`
-	User   User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;unique;not null"`
-	Code   *uint32   `json:"code" gorm:"not null"`
+	UserId uuid.UUID `json:"user_id" gorm:"unique"`
+	User   User      `gorm:"unique;constraint:OnDelete:CASCADE"`
+	Code   uint32    `json:"code"`
 }
 
 func (otp *Otp) BeforeSave(tx *gorm.DB) (err error) {
 	code := uint32(utils.GetRandomInt(6))
-	otp.Code = &code
+	otp.Code = code
 	return
 }
 

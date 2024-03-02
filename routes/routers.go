@@ -25,4 +25,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	// Auth Routes ()
 	authRouter := api.Group("/auth")
 	authRouter.Post("/register", endpoint.Register)
+	authRouter.Post("/verify-email", endpoint.VerifyEmail)
+	authRouter.Post("/resend-verification-email", endpoint.ResendVerificationEmail)
+	authRouter.Post("/send-password-reset-otp", endpoint.SendPasswordResetOtp)
+	authRouter.Post("/set-new-password", endpoint.SetNewPassword)
+
 }

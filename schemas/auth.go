@@ -13,8 +13,28 @@ type EmailRequestSchema struct {
 	Email string `json:"email" validate:"required,min=5,email" example:"johndoe@email.com"`
 }
 
+type VerifyEmailRequestSchema struct {
+	EmailRequestSchema
+	Otp					uint32					`json:"otp" validate:"required" example:"123456"`
+}
+
+type SetNewPasswordSchema struct {
+	VerifyEmailRequestSchema
+	Password			string				`json:"password" validate:"required,min=8,max=50" example:"newstrongpassword"`
+}
+
 // RESPONSE BODY SCHEMAS
 type RegisterResponseSchema struct {
 	ResponseSchema
 	Data EmailRequestSchema `json:"data"`
+}
+
+type TokensResponseSchema struct {
+	Access			string					`json:"access"`
+	Refresh			string					`json:"refresh"`
+}
+
+type LoginResponseSchema struct {
+	ResponseSchema
+	Data			TokensResponseSchema		`json:"data"`
 }
