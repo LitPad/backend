@@ -213,3 +213,103 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 	response := schemas.ResponseSchema{Message: "Password reset successful"}.Init()
 	return c.Status(200).JSON(response)
 }
+
+// @Summary Login a user
+// @Description This endpoint generates new access and refresh tokens for authentication
+// @Tags Auth
+// @Param user body schemas.LoginSchema true "User login"
+// @Success 201 {object} schemas.ResponseSchema
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Security GuestUserAuth
+// @Router /auth/login [post]
+func (ep Endpoint) Login(c *fiber.Ctx) error {
+	db := ep.DB
+
+	data := schemas.LoginSchema{}
+
+	// Validate request
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	user := models.User{Email: data.Email}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil || !utils.CheckPasswordHash(data.Password, user.Password) {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_CREDENTIALS, "Invalid Credentials"))
+	}
+
+	if !user.IsEmailVerified {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_UNVERIFIED_USER, "Verify your email first"))
+	}
+
+	// Create Auth Tokens
+	access := GenerateAccessToken(user.ID)
+	user.Access = &access
+	refresh := GenerateRefreshToken()
+	user.Refresh = &refresh
+	db.Save(&user)
+	response := schemas.LoginResponseSchema{
+		ResponseSchema: schemas.ResponseSchema{Message: "Login successful"}.Init(),
+		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Refresh tokens
+// @Description This endpoint refresh tokens by generating new access and refresh tokens for a user
+// @Tags Auth
+// @Param refresh body schemas.RefreshTokenSchema true "Refresh token"
+// @Success 201 {object} schemas.ResponseSchema
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /auth/refresh [post]
+func (ep Endpoint) Refresh(c *fiber.Ctx) error {
+	db := ep.DB
+
+	data := schemas.RefreshTokenSchema{}
+
+	// Validate request
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	token := data.Refresh
+	user := models.User{Refresh: &token}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil || !DecodeRefreshToken(token){
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Refresh token is invalid or expired"))
+
+	}
+
+	// Create and Update Auth Tokens
+	access := GenerateAccessToken(user.ID)
+	user.Access = &access
+	refresh := GenerateRefreshToken()
+	user.Refresh = &refresh
+	db.Save(&user)
+
+	response := schemas.LoginResponseSchema{
+		ResponseSchema: schemas.ResponseSchema{Message: "Tokens refresh successful"}.Init(),
+		Data:           schemas.TokensResponseSchema{Access: access, Refresh: refresh},
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Logout a user
+// @Description This endpoint logs a user out from our application
+// @Tags Auth
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /auth/logout [get]
+// @Security BearerAuth
+func (ep Endpoint) Logout(c *fiber.Ctx) error {
+	db := ep.DB
+	user := c.Locals("user").(*models.User)
+	user.Access = nil
+	user.Refresh = nil
+	db.Save(user)
+	response := schemas.ResponseSchema{Message: "Logout successful"}.Init()
+	return c.Status(200).JSON(response)
+}

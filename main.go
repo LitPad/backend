@@ -6,6 +6,7 @@ import (
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/database"
 	_ "github.com/LitPad/backend/docs"
+	"github.com/LitPad/backend/initials"
 	"github.com/LitPad/backend/routes"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
@@ -32,6 +33,8 @@ func main() {
 
 	// Get Database
 	db := database.ConnectDb(conf)
+	// Create initial data
+	initials.CreateInitialData(db, conf)
 
 	app := fiber.New()
 
