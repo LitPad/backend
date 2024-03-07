@@ -75,21 +75,15 @@ func DecodeAccessToken(token string, db *gorm.DB) (*models.User, *string) {
 	})
 	tokenErr := "Auth Token is Invalid or Expired!"
 	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			log.Println("JWT Error: ", "Invalid Signature")
-		} else {
-			log.Println("JWT Error: ", err)
-		}
 		return nil, &tokenErr
 	}
 	if !tkn.Valid {
 		return nil, &tokenErr
 	}
-	user := models.User{BaseModel: models.BaseModel{ID: claims.UserId}}
+	user := models.User{BaseModel: models.BaseModel{ID: claims.UserId}, Access: &token}
 	// Fetch Jwt model object
-	result := db.Take(&user)
-	log.Println(result.Error)
-	if result.Error != nil || *user.Access != token {
+	result := db.Take(&user, user)
+	if result.Error != nil {
 		return nil, &tokenErr
 	}
 	return &user, nil
