@@ -10,6 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type AccType string
+
+const (
+	READER AccType = "READER"
+	WRITER AccType = "WRITER"
+)
+
 type User struct {
 	BaseModel
 	FirstName       string  `json:"first_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"John"`
@@ -23,6 +30,9 @@ type User struct {
 	Avatar          *string `gorm:"type:varchar(1000);null;" json:"avatar"`
 	Access          *string `gorm:"type:varchar(1000);null;" json:"access"`
 	Refresh         *string `gorm:"type:varchar(1000);null;" json:"refresh"`
+	
+	Bio				*string `gorm:"type:varchar(1000);null;" json:"bio"`
+	AccountType     AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
 }
 
 func (user User) FullName() string {
