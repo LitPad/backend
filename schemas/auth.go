@@ -4,6 +4,7 @@ package schemas
 type RegisterUser struct {
 	FirstName      string `json:"first_name" validate:"required,max=50" example:"John"`
 	LastName       string `json:"last_name" validate:"required,max=50" example:"Doe"`
+	Username       string `json:"username" validate:"required,max=1000" example:"john-doe"`
 	Email          string `json:"email" validate:"required,min=5,email" example:"johndoe@email.com"`
 	Password       string `json:"password" validate:"required,min=8,max=50" example:"strongpassword"`
 	TermsAgreement bool   `json:"terms_agreement" validate:"eq=true"`

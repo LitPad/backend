@@ -33,4 +33,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	authRouter.Post("/refresh", endpoint.Refresh)
 	authRouter.Get("/logout", endpoint.AuthMiddleware, endpoint.Logout)
 
+	// Profile Routes ()
+	profilesRouter := api.Group("/profiles")
+	profilesRouter.Get("/:username", endpoint.GetProfile)
+
 }

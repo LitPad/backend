@@ -27,10 +27,20 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 	}
 
 	user := utils.ConvertStructData(data, models.User{}).(*models.User)
+	// Validate email uniqueness
 	db.Take(&user, models.User{Email: user.Email})
 	if user.ID != uuid.Nil {
 		data := map[string]string{
-			"email": "Email already registered!",
+			"email": "Email already taken!",
+		}
+		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+	}
+
+	// Validate username uniqueness
+	db.Take(&user, models.User{Username: user.Username})
+	if user.ID != uuid.Nil {
+		data := map[string]string{
+			"username": "Username already taken!",
 		}
 		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
 	}
