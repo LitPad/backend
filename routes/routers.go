@@ -36,5 +36,6 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	// Profile Routes ()
 	profilesRouter := api.Group("/profiles")
 	profilesRouter.Get("/:username", endpoint.GetProfile)
-
+	profilesRouter.Patch("/update",endpoint.UpdateProfile)
+	profilesRouter.Put("/update-password", endpoint.UpdatePassword)
 }
