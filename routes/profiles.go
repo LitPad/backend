@@ -63,6 +63,10 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx)error {
 
 	savedUser := c.Locals("user").(*models.User)
 
+	if savedUser == nil || savedUser.ID == uuid.Nil{
+		return c.Status(403).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "SignIn to make this request"))
+	}
+
 	if len(data.Username) > 0{
 	searchUser := models.User{Username: data.Username}
 
