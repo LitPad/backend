@@ -76,6 +76,8 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx)error {
 		}
 	}
 
+	// current design supports update of username only hence the code looking like this
+
 	db.Model(&models.User{}).Where("username = ?", savedUser.Username).Update("username", data.Username)
 
 	response := schemas.UserProfileResponseSchema{
