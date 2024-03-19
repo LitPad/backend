@@ -63,10 +63,6 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx)error {
 
 	savedUser := c.Locals("user").(*models.User)
 
-	if savedUser == nil || savedUser.ID == uuid.Nil{
-		return c.Status(403).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "SignIn to make this request"))
-	}
-
 	if len(data.Username) > 0{
 	searchUser := models.User{Username: data.Username}
 
@@ -78,7 +74,8 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx)error {
 
 	// current design supports update of username only hence the code looking like this
 
-	db.Model(&models.User{}).Where("username = ?", savedUser.Username).Update("username", data.Username)
+	savedUser.Username = data.Username
+	db.Save(&savedUser)
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: schemas.ResponseSchema{Message: "User details updated successfully"}.Init(),
@@ -120,7 +117,7 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx)error {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_MISMATCH, "Password Mismatch"))
 	}
 
-	if utils.CheckPasswordHash(data.NewPassword, searchUserInterface.Password){
+	if data.NewPassword == data.OldPassword{
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_SAME, "new password is same as old password"))
 	}
 
