@@ -118,6 +118,10 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx)error {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_MISMATCH, "Password Mismatch"))
 	}
 
+	if utils.CheckPasswordHash(data.NewPassword, searchUserInterface.Password){
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_SAME, "new password is same as old password"))
+	}
+
 	searchUserInterface.Password = utils.HashPassword(data.NewPassword)
 	db.Save(&searchUserInterface)
 
