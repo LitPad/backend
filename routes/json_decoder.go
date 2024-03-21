@@ -91,3 +91,15 @@ func ValidateRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse
 	}
 	return nil, nil
 }
+
+func ValidatePathParams(c *fiber.Ctx, pathParams map[string]string) (*int, *utils.ErrorResponse){
+	for paramName, paramValue := range pathParams{
+		if paramValue == "" {
+			errData := utils.RequestErr(utils.ERR_INVALID_REQUEST, fmt.Sprintf("Missing or invalid value for path parameter: %s", paramName))
+			errCode := 400
+			return &errCode, &errData
+		}
+	}
+
+	return nil, nil
+}
