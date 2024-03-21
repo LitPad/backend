@@ -5,16 +5,10 @@ import (
 	"time"
 
 	"github.com/LitPad/backend/config"
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-)
-
-type AccType string
-
-const (
-	READER AccType = "READER"
-	WRITER AccType = "WRITER"
 )
 
 type User struct {
@@ -31,9 +25,9 @@ type User struct {
 	Avatar          *string `gorm:"type:varchar(1000);null;" json:"avatar"`
 	Access          *string `gorm:"type:varchar(1000);null;" json:"access"`
 	Refresh         *string `gorm:"type:varchar(1000);null;" json:"refresh"`
-	
-	Bio				*string `gorm:"type:varchar(1000);null;" json:"bio"`
-	AccountType     AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
+
+	Bio         *string `gorm:"type:varchar(1000);null;" json:"bio"`
+	AccountType choices.AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
 }
 
 func (user User) FullName() string {
@@ -59,7 +53,7 @@ func (otp *Otp) BeforeSave(tx *gorm.DB) (err error) {
 }
 
 func (obj Otp) CheckExpiration() bool {
-	cfg, _ := config.LoadConfig(".")
+	cfg := config.GetConfig()
 	currentTime := time.Now().UTC()
 	diff := int64(currentTime.Sub(obj.UpdatedAt).Seconds())
 	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds

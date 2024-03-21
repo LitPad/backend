@@ -26,10 +26,7 @@ import (
 // @description Type 'Bearer jwt_string' to correctly set the API Key
 func main() {
 	// Load config
-	conf, err := config.LoadConfig(".")
-	if err != nil {
-		log.Fatal("cannot not load config", err)
-	}
+	conf := config.GetConfig()
 
 	// Get Database
 	db := database.ConnectDb(conf)

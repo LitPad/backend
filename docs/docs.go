@@ -390,6 +390,116 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/profiles/profile/{username}": {
+            "get": {
+                "description": "This endpoint views a user profile",
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "View User Profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of user",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profiles/update": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint updates a user's profile",
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "Update User Profile",
+                "parameters": [
+                    {
+                        "description": "Profile object",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateUserProfileSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profiles/update-password": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint updates a user's password",
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "Update User Password",
+                "parameters": [
+                    {
+                        "description": "Password object",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdatePasswordSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -515,7 +625,8 @@ const docTemplate = `{
                 "email",
                 "first_name",
                 "last_name",
-                "password"
+                "password",
+                "username"
             ],
             "properties": {
                 "email": {
@@ -541,6 +652,11 @@ const docTemplate = `{
                 },
                 "terms_agreement": {
                     "type": "boolean"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "john-doe"
                 }
             }
         },
@@ -611,6 +727,38 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.UpdatePasswordSchema": {
+            "type": "object",
+            "required": [
+                "newPassword",
+                "oldPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 8,
+                    "example": "newstrongpassword"
+                },
+                "oldPassword": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 8,
+                    "example": "newstrongpassword"
+                }
+            }
+        },
+        "schemas.UpdateUserProfileSchema": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "description": "Bio\t\t\t\t*string ` + "`" + `json:\"bio\"` + "`" + `",
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "john-doe"
                 }
             }
         },

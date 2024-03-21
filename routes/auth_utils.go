@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var cfg, _ = config.LoadConfig(".")
+var cfg = config.GetConfig()
 var SECRETKEY = []byte(cfg.SecretKey)
 
 type AccessTokenPayload struct {

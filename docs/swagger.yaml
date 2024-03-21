@@ -104,11 +104,16 @@ definitions:
         type: string
       terms_agreement:
         type: boolean
+      username:
+        example: john-doe
+        maxLength: 1000
+        type: string
     required:
     - email
     - first_name
     - last_name
     - password
+    - username
     type: object
   schemas.ResponseSchema:
     properties:
@@ -158,6 +163,30 @@ definitions:
         type: string
       status:
         example: success
+        type: string
+    type: object
+  schemas.UpdatePasswordSchema:
+    properties:
+      newPassword:
+        example: newstrongpassword
+        maxLength: 50
+        minLength: 8
+        type: string
+      oldPassword:
+        example: newstrongpassword
+        maxLength: 50
+        minLength: 8
+        type: string
+    required:
+    - newPassword
+    - oldPassword
+    type: object
+  schemas.UpdateUserProfileSchema:
+    properties:
+      username:
+        description: "Bio\t\t\t\t*string `json:\"bio\"`"
+        example: john-doe
+        maxLength: 1000
         type: string
     type: object
   schemas.VerifyEmailRequestSchema:
@@ -430,6 +459,75 @@ paths:
       summary: HealthCheck
       tags:
       - HealthCheck
+  /profiles/profile/{username}:
+    get:
+      description: This endpoint views a user profile
+      parameters:
+      - description: Username of user
+        in: path
+        name: username
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View User Profile
+      tags:
+      - Profiles
+  /profiles/update:
+    patch:
+      description: This endpoint updates a user's profile
+      parameters:
+      - description: Profile object
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateUserProfileSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update User Profile
+      tags:
+      - Profiles
+  /profiles/update-password:
+    put:
+      description: This endpoint updates a user's password
+      parameters:
+      - description: Password object
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdatePasswordSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update User Password
+      tags:
+      - Profiles
 produces:
 - application/json
 securityDefinitions:

@@ -5,6 +5,7 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 	"gorm.io/gorm"
 )
 
@@ -12,6 +13,7 @@ func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
 	user := models.User{
 		FirstName:       "Test",
 		LastName:        "Admin",
+		Username:        "test-admin",
 		Email:           cfg.FirstSuperuserEmail,
 		Password:        cfg.FirstSuperUserPassword,
 		IsSuperuser:     true,
@@ -26,6 +28,8 @@ func createWriter(db *gorm.DB, cfg config.Config) models.User {
 	user := models.User{
 		FirstName:       "Test",
 		LastName:        "Writer",
+		Username:        "test-writer",
+		AccountType: choices.ACCTYPE_WRITER,
 		Email:           cfg.FirstWriterEmail,
 		Password:        cfg.FirstWriterPassword,
 		IsEmailVerified: true,
@@ -39,6 +43,7 @@ func createReader(db *gorm.DB, cfg config.Config) models.User {
 	user := models.User{
 		FirstName:       "Test",
 		LastName:        "Reader",
+		Username:        "test-reader",
 		Email:           cfg.FirstReaderEmail,
 		Password:        cfg.FirstReaderPassword,
 		IsEmailVerified: true,

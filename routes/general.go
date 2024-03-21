@@ -17,7 +17,7 @@ func (ep Endpoint) GetSiteDetails(c *fiber.Ctx) error {
 
 	db.FirstOrCreate(&sitedetail, sitedetail)
 	responseSiteDetail := schemas.SiteDetailResponseSchema{
-		ResponseSchema: schemas.ResponseSchema{Message: "Site Details Fetched!"}.Init(),
+		ResponseSchema: ResponseMessage("Site Details Fetched!"),
 		Data:           sitedetail,
 	}
 	return c.Status(200).JSON(responseSiteDetail)
@@ -35,7 +35,6 @@ func (ep Endpoint) Subscribe(c *fiber.Ctx) error {
 	subscriber := models.Subscriber{}
 
 	// Validate request
-
 	if errCode, errData := ValidateRequest(c, &subscriber); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
@@ -44,7 +43,7 @@ func (ep Endpoint) Subscribe(c *fiber.Ctx) error {
 	db.FirstOrCreate(&subscriber, models.Subscriber{Email: subscriber.Email})
 
 	responseSubscriber := schemas.SubscriberResponseSchema{
-		ResponseSchema: schemas.ResponseSchema{Message: "Subscription successful!"}.Init(),
+		ResponseSchema: ResponseMessage("Subscription successful!"),
 		Data:           subscriber,
 	}
 	return c.Status(200).JSON(responseSubscriber)

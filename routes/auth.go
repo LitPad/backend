@@ -55,7 +55,7 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 	go senders.SendEmail(user, "activate", &otp.Code)
 
 	response := schemas.RegisterResponseSchema{
-		ResponseSchema: schemas.ResponseSchema{Message: "Registration successful"}.Init(),
+		ResponseSchema: ResponseMessage("Registration successful"),
 		Data:           schemas.EmailRequestSchema{Email: user.Email},
 	}
 	return c.Status(201).JSON(response)
@@ -104,8 +104,7 @@ func (ep Endpoint) VerifyEmail(c *fiber.Ctx) error {
 
 	// Send Welcome Email
 	go senders.SendEmail(&user, "welcome", nil)
-	response := schemas.ResponseSchema{Message: "Account verification successful"}.Init()
-	return c.Status(200).JSON(response)
+	return c.Status(200).JSON(ResponseMessage("Account verification successful"))
 }
 
 // @Summary Resend Verification Email
@@ -140,9 +139,7 @@ func (ep Endpoint) ResendVerificationEmail(c *fiber.Ctx) error {
 	db.Take(&otp, otp)
 	db.Save(&otp) // Create or save
 	go senders.SendEmail(&user, "activate", &otp.Code)
-
-	response := schemas.ResponseSchema{Message: "Verification email sent"}.Init()
-	return c.Status(200).JSON(response)
+	return c.Status(200).JSON(ResponseMessage("Verification email sent"))
 }
 
 // @Summary Send Password Reset Otp
@@ -175,8 +172,7 @@ func (ep Endpoint) SendPasswordResetOtp(c *fiber.Ctx) error {
 	db.Save(&otp) // Create or save
 	go senders.SendEmail(&user, "reset", &otp.Code)
 
-	response := schemas.ResponseSchema{Message: "Password otp sent"}.Init()
-	return c.Status(200).JSON(response)
+	return c.Status(200).JSON(ResponseMessage("Password otp sent"))
 }
 
 // @Summary Set New Password
@@ -220,8 +216,7 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 	// Send Email
 	go senders.SendEmail(&user, "reset-success", nil)
 
-	response := schemas.ResponseSchema{Message: "Password reset successful"}.Init()
-	return c.Status(200).JSON(response)
+	return c.Status(200).JSON(ResponseMessage("Password reset successful"))
 }
 
 // @Summary Login a user
@@ -260,7 +255,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	user.Refresh = &refresh
 	db.Save(&user)
 	response := schemas.LoginResponseSchema{
-		ResponseSchema: schemas.ResponseSchema{Message: "Login successful"}.Init(),
+		ResponseSchema: ResponseMessage("Login successful"),
 		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
 	}
 	return c.Status(201).JSON(response)
@@ -288,7 +283,7 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 	token := data.Refresh
 	user := models.User{Refresh: &token}
 	db.Take(&user, user)
-	if user.ID == uuid.Nil || !DecodeRefreshToken(token){
+	if user.ID == uuid.Nil || !DecodeRefreshToken(token) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Refresh token is invalid or expired"))
 
 	}
@@ -301,7 +296,7 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 	db.Save(&user)
 
 	response := schemas.LoginResponseSchema{
-		ResponseSchema: schemas.ResponseSchema{Message: "Tokens refresh successful"}.Init(),
+		ResponseSchema: ResponseMessage("Tokens refresh successful"),
 		Data:           schemas.TokensResponseSchema{Access: access, Refresh: refresh},
 	}
 	return c.Status(201).JSON(response)
@@ -316,10 +311,9 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) Logout(c *fiber.Ctx) error {
 	db := ep.DB
-	user := c.Locals("user").(*models.User)
+	user := RequestUser(c)
 	user.Access = nil
 	user.Refresh = nil
 	db.Save(user)
-	response := schemas.ResponseSchema{Message: "Logout successful"}.Init()
-	return c.Status(200).JSON(response)
+	return c.Status(200).JSON(ResponseMessage("Logout successful"))
 }

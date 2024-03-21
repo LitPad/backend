@@ -31,17 +31,16 @@ type Config struct {
 	CORSAllowedOrigins        string `mapstructure:"CORS_ALLOWED_ORIGINS"`
 }
 
-func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
+func GetConfig() (config Config) {
+	viper.AddConfigPath(".")
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 
 	viper.AutomaticEnv()
-
+	var err error
 	if err = viper.ReadInConfig(); err != nil {
-		return
+		panic(err)
 	}
-
-	err = viper.Unmarshal(&config)
+	viper.Unmarshal(&config)
 	return
 }

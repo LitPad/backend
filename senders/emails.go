@@ -54,7 +54,7 @@ func SendEmail(user *models.User, emailType string, code *uint32) {
 	if os.Getenv("ENVIRONMENT") == "TESTING" {
 		return
 	}
-	cfg, _ := config.LoadConfig(".")
+	cfg := config.GetConfig()
 
 	emailData := sortEmail(user, emailType, code)
 	templateFile := emailData["template_file"]
