@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"context"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/LitPad/backend/config"
@@ -9,6 +11,9 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/gosimple/slug"
+	"github.com/mitchellh/mapstructure"
+	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
 )
 
@@ -107,4 +112,77 @@ func DecodeRefreshToken(token string) bool {
 		return false
 	}
 	return true
+}
+
+// Social Auth
+type GooglePayload struct {
+	SUB           string `json:"sub"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Picture       string `json:"picture"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Locale        string `json:"locale"`
+}
+
+func ConvertToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
+	payload, err := idtoken.Validate(context.Background(), accessToken, cfg.GoogleClientID)
+	log.Println("Err: ", payload)
+	if err != nil {
+		errMsg := "Invalid Token"
+		if strings.Contains(err.Error(), "audience provided") {
+			errMsg = "Invalid Audience"
+		}
+		errData := utils.RequestErr(utils.ERR_INVALID_TOKEN, errMsg)
+		return nil, &errData
+	}
+
+	// Bind JSON into struct
+	data := GooglePayload{}
+	mapstructure.Decode(payload.Claims, &data)
+	return &data, nil
+}
+
+func GenerateUsername(db *gorm.DB, firstName string, lastName string, username *string) string {
+	uniqueUsername := slug.Make(firstName + " " + lastName)
+	if username != nil {
+		uniqueUsername = *username
+	}
+	user := models.User{Username: uniqueUsername}
+	db.Take(&user, user)
+	if user.ID != uuid.Nil {
+		// username is already taken
+		// Make it unique by attaching a random string
+		// to it and repeat the function
+		randomStr := utils.GetRandomString(6)
+		uniqueUsername = uniqueUsername + "-" + randomStr
+		return GenerateUsername(db, firstName, lastName, &uniqueUsername)
+	}
+	return uniqueUsername
+}
+
+func RegisterSocialUser(db *gorm.DB, email string, name string, avatar string) (*models.User, *utils.ErrorResponse) {
+	user := models.User{Email: email}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
+		name := strings.Split(name, " ")
+		firstName := name[0]
+		lastName := name[1]
+		username := GenerateUsername(db, firstName, lastName, nil)
+		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: &avatar, SocialLogin: true}
+		db.Create(&user)
+	} else {
+		if !user.SocialLogin {
+			errData := utils.RequestErr(utils.ERR_INVALID_AUTH, "Requires password to login")
+			return nil, &errData
+		}
+	}
+	// Generate tokens
+	access := GenerateAccessToken(user.ID)
+	user.Access = &access
+	refresh := GenerateRefreshToken()
+	user.Refresh = &refresh
+	db.Save(&user)
+	return &user, nil
 }

@@ -22,13 +22,48 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/login": {
+        "/auth/google": {
             "post": {
-                "security": [
+                "description": "` + "`" + `This endpoint generates new access and refresh tokens for authentication via google` + "`" + `\n` + "`" + `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authentication` + "`" + `",
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login a user via google",
+                "parameters": [
                     {
-                        "GuestUserAuth": []
+                        "description": "User login",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SocialLoginSchema"
+                        }
                     }
                 ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
                 "description": "This endpoint generates new access and refresh tokens for authentication",
                 "tags": [
                     "Auth"
@@ -714,6 +749,19 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.SocialLoginSchema": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "minLength": 10,
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
+                }
+            }
+        },
         "schemas.SubscriberResponseSchema": {
             "type": "object",
             "properties": {
@@ -733,17 +781,17 @@ const docTemplate = `{
         "schemas.UpdatePasswordSchema": {
             "type": "object",
             "required": [
-                "newPassword",
-                "oldPassword"
+                "new_password",
+                "old_password"
             ],
             "properties": {
-                "newPassword": {
+                "new_password": {
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 8,
-                    "example": "newstrongpassword"
+                    "example": "oldpassword"
                 },
-                "oldPassword": {
+                "old_password": {
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 8,
@@ -758,6 +806,7 @@ const docTemplate = `{
                     "description": "Bio\t\t\t\t*string ` + "`" + `json:\"bio\"` + "`" + `",
                     "type": "string",
                     "maxLength": 1000,
+                    "minLength": 3,
                     "example": "john-doe"
                 }
             }

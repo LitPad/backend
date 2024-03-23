@@ -7,7 +7,7 @@ import (
 type Config struct {
 	ProjectName               string `mapstructure:"PROJECT_NAME"`
 	Debug                     bool   `mapstructure:"DEBUG"`
-	EmailOtpExpireSeconds     int64    `mapstructure:"EMAIL_OTP_EXPIRE_SECONDS"`
+	EmailOtpExpireSeconds     int64  `mapstructure:"EMAIL_OTP_EXPIRE_SECONDS"`
 	AccessTokenExpireMinutes  int    `mapstructure:"ACCESS_TOKEN_EXPIRE_MINUTES"`
 	RefreshTokenExpireMinutes int    `mapstructure:"REFRESH_TOKEN_EXPIRE_MINUTES"`
 	Port                      string `mapstructure:"PORT"`
@@ -29,6 +29,9 @@ type Config struct {
 	MailSenderHost            string `mapstructure:"MAIL_SENDER_HOST"`
 	MailSenderPort            int    `mapstructure:"MAIL_SENDER_PORT"`
 	CORSAllowedOrigins        string `mapstructure:"CORS_ALLOWED_ORIGINS"`
+	GoogleClientID            string `mapstructure:"GOOGLE_CLIENT_ID"`
+	GoogleClientSecret        string `mapstructure:"GOOGLE_CLIENT_SECRET"`
+	SocialsPassword            string `mapstructure:"SOCIALS_PASSWORD"`
 }
 
 func GetConfig() (config Config) {

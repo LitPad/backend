@@ -226,7 +226,6 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 // @Success 201 {object} schemas.ResponseSchema
 // @Failure 422 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
-// @Security GuestUserAuth
 // @Router /auth/login [post]
 func (ep Endpoint) Login(c *fiber.Ctx) error {
 	db := ep.DB
@@ -254,6 +253,45 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	refresh := GenerateRefreshToken()
 	user.Refresh = &refresh
 	db.Save(&user)
+	response := schemas.LoginResponseSchema{
+		ResponseSchema: ResponseMessage("Login successful"),
+		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Login a user via google
+// @Description `This endpoint generates new access and refresh tokens for authentication via google`
+// @Description `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authentication`
+// @Tags Auth
+// @Param user body schemas.SocialLoginSchema true "User login"
+// @Success 201 {object} schemas.ResponseSchema
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /auth/google [post]
+func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
+	db := ep.DB
+
+	data := schemas.SocialLoginSchema{}
+
+	// Validate request
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	userGoogleData, errData := ConvertToken(data.Token)
+	if errData != nil {
+		return c.Status(401).JSON(errData)
+	}
+
+	email := userGoogleData.Email
+	name := userGoogleData.Name
+	avatar := userGoogleData.Picture
+
+	user, err := RegisterSocialUser(db, email, name, avatar)
+	if err != nil {
+		return c.Status(401).JSON(err)
+	}
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Login successful"),
 		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
