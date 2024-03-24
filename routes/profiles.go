@@ -59,7 +59,8 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx) error {
 		searchUser := models.User{Username: username}
 		db.Not(models.User{BaseModel: models.BaseModel{ID: savedUser.ID}}).Take(&searchUser, searchUser)
 		if searchUser.ID != uuid.Nil {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Username is already taken by another user"))
+			data := map[string]string{"username": "Username is already taken by another user"}
+			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid Entry", data))
 		}
 		savedUser.Username = username
 	}
@@ -94,11 +95,14 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 	user := RequestUser(c)
 
 	if !utils.CheckPasswordHash(data.OldPassword, user.Password) {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_MISMATCH, "Password Mismatch"))
+		data := map[string]string{"old_password": "Password Mismatch"}
+
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_MISMATCH, "Invalid Entry", data))
 	}
 
 	if data.NewPassword == data.OldPassword {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_SAME, "new password is same as old password"))
+		data := map[string]string{"new_password": "new password is same as old password"}
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_SAME, "Invalid Entry", data))
 	}
 
 	user.Password = utils.HashPassword(data.NewPassword)
