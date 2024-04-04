@@ -31,7 +31,8 @@ type Config struct {
 	CORSAllowedOrigins        string `mapstructure:"CORS_ALLOWED_ORIGINS"`
 	GoogleClientID            string `mapstructure:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret        string `mapstructure:"GOOGLE_CLIENT_SECRET"`
-	SocialsPassword            string `mapstructure:"SOCIALS_PASSWORD"`
+	FacebookAppID             string `mapstructure:"FACEBOOK_APP_ID"`
+	SocialsPassword           string `mapstructure:"SOCIALS_PASSWORD"`
 }
 
 func GetConfig() (config Config) {

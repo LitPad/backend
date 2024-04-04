@@ -14,9 +14,49 @@
     },
     "basePath": "/api/v1",
     "paths": {
+        "/auth/facebook": {
+            "post": {
+                "description": "`This endpoint generates new access and refresh tokens for authentication via facebook`\n`Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization`",
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login a user via facebook",
+                "parameters": [
+                    {
+                        "description": "User login",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SocialLoginSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/google": {
             "post": {
-                "description": "`This endpoint generates new access and refresh tokens for authentication via google`\n`Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authentication`",
+                "description": "`This endpoint generates new access and refresh tokens for authentication via google`\n`Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authorization`",
                 "tags": [
                     "Auth"
                 ],

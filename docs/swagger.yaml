@@ -231,11 +231,39 @@ info:
   title: LITPAD API
   version: "4.0"
 paths:
+  /auth/facebook:
+    post:
+      description: |-
+        `This endpoint generates new access and refresh tokens for authentication via facebook`
+        `Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization`
+      parameters:
+      - description: User login
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.SocialLoginSchema'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Login a user via facebook
+      tags:
+      - Auth
   /auth/google:
     post:
       description: |-
         `This endpoint generates new access and refresh tokens for authentication via google`
-        `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authentication`
+        `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authorization`
       parameters:
       - description: User login
         in: body

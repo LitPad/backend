@@ -22,7 +22,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	generalRouter.Get("/site-detail", endpoint.GetSiteDetails)
 	generalRouter.Post("/subscribe", endpoint.Subscribe)
 
-	// Auth Routes (9)
+	// Auth Routes (10)
 	authRouter := api.Group("/auth")
 	authRouter.Post("/register", endpoint.Register)
 	authRouter.Post("/verify-email", endpoint.VerifyEmail)
@@ -31,6 +31,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	authRouter.Post("/set-new-password", endpoint.SetNewPassword)
 	authRouter.Post("/login", endpoint.Login)
 	authRouter.Post("/google", endpoint.GoogleLogin)
+	authRouter.Post("/facebook", endpoint.FacebookLogin)
 	authRouter.Post("/refresh", endpoint.Refresh)
 	authRouter.Get("/logout", endpoint.AuthMiddleware, endpoint.Logout)
 

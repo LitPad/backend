@@ -262,7 +262,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 
 // @Summary Login a user via google
 // @Description `This endpoint generates new access and refresh tokens for authentication via google`
-// @Description `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authentication`
+// @Description `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authorization`
 // @Tags Auth
 // @Param user body schemas.SocialLoginSchema true "User login"
 // @Success 201 {object} schemas.ResponseSchema
@@ -279,7 +279,7 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	userGoogleData, errData := ConvertToken(data.Token)
+	userGoogleData, errData := ConvertGoogleToken(data.Token)
 	if errData != nil {
 		return c.Status(401).JSON(errData)
 	}
@@ -288,7 +288,45 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 	name := userGoogleData.Name
 	avatar := userGoogleData.Picture
 
-	user, err := RegisterSocialUser(db, email, name, avatar)
+	user, err := RegisterSocialUser(db, email, name, &avatar)
+	if err != nil {
+		return c.Status(401).JSON(err)
+	}
+	response := schemas.LoginResponseSchema{
+		ResponseSchema: ResponseMessage("Login successful"),
+		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Login a user via facebook
+// @Description `This endpoint generates new access and refresh tokens for authentication via facebook`
+// @Description `Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization`
+// @Tags Auth
+// @Param user body schemas.SocialLoginSchema true "User login"
+// @Success 201 {object} schemas.ResponseSchema
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /auth/facebook [post]
+func (ep Endpoint) FacebookLogin(c *fiber.Ctx) error {
+	db := ep.DB
+
+	data := schemas.SocialLoginSchema{}
+
+	// Validate request
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	userFacebookData, errData := ConvertFacebookToken(data.Token)
+	if errData != nil {
+		return c.Status(401).JSON(errData)
+	}
+
+	email := userFacebookData.Email
+	name := userFacebookData.Name
+
+	user, err := RegisterSocialUser(db, email, name, nil)
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}

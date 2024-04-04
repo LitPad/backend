@@ -12,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
+	fb "github.com/huandu/facebook/v2"
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
@@ -115,6 +116,7 @@ func DecodeRefreshToken(token string) bool {
 }
 
 // Social Auth
+// GOOGLE
 type GooglePayload struct {
 	SUB           string `json:"sub"`
 	Name          string `json:"name"`
@@ -126,9 +128,8 @@ type GooglePayload struct {
 	Locale        string `json:"locale"`
 }
 
-func ConvertToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
+func ConvertGoogleToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
 	payload, err := idtoken.Validate(context.Background(), accessToken, cfg.GoogleClientID)
-	log.Println("Err: ", payload)
 	if err != nil {
 		errMsg := "Invalid Token"
 		if strings.Contains(err.Error(), "audience provided") {
@@ -141,6 +142,41 @@ func ConvertToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
 	// Bind JSON into struct
 	data := GooglePayload{}
 	mapstructure.Decode(payload.Claims, &data)
+	return &data, nil
+}
+
+// FACEBOOK
+type FacebookPayload struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorResponse) {
+	res, err := fb.Get("/app", fb.Params{
+		"access_token": accessToken,
+	})
+	if err != nil {
+		errData := utils.RequestErr(utils.ERR_INVALID_TOKEN, "Token is invalid or expired")
+		return nil, &errData
+	}
+	if res["id"] != cfg.FacebookAppID {
+		errData := utils.RequestErr(utils.ERR_INVALID_TOKEN, "Invalid Facebook App ID")
+		return nil, &errData
+	}
+	res, err = fb.Get("/me", fb.Params{
+		"fields":       "id,name,email",
+		"access_token": accessToken,
+	})
+
+	if err != nil {
+		if err != nil {
+			errData := utils.RequestErr(utils.ERR_INVALID_TOKEN, "Token is invalid or expired")
+			return nil, &errData
+		}
+	}
+	// Bind JSON into struct
+	data := FacebookPayload{}
+	mapstructure.Decode(res, &data)
 	return &data, nil
 }
 
@@ -162,7 +198,7 @@ func GenerateUsername(db *gorm.DB, firstName string, lastName string, username *
 	return uniqueUsername
 }
 
-func RegisterSocialUser(db *gorm.DB, email string, name string, avatar string) (*models.User, *utils.ErrorResponse) {
+func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *utils.ErrorResponse) {
 	user := models.User{Email: email}
 	db.Take(&user, user)
 	if user.ID == uuid.Nil {
@@ -170,7 +206,7 @@ func RegisterSocialUser(db *gorm.DB, email string, name string, avatar string) (
 		firstName := name[0]
 		lastName := name[1]
 		username := GenerateUsername(db, firstName, lastName, nil)
-		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: &avatar, SocialLogin: true}
+		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: avatar, SocialLogin: true}
 		db.Create(&user)
 	} else {
 		if !user.SocialLogin {
