@@ -28,7 +28,7 @@ func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 	db.Take(&user, user)
 
 	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "Cannot Find Resource"))
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
 	}
 
 	response := schemas.UserProfileResponseSchema{
@@ -59,7 +59,7 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx) error {
 		searchUser := models.User{Username: username}
 		db.Not(models.User{BaseModel: models.BaseModel{ID: savedUser.ID}}).Take(&searchUser, searchUser)
 		if searchUser.ID != uuid.Nil {
-			data := map[string]string{"username": "Username is already taken by another user"}
+			data := map[string]string{"username": "Username is already taken"}
 			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid Entry", data))
 		}
 		savedUser.Username = username
@@ -101,7 +101,7 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 	}
 
 	if data.NewPassword == data.OldPassword {
-		data := map[string]string{"new_password": "new password is same as old password"}
+		data := map[string]string{"new_password": "New password is same as old password"}
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_SAME, "Invalid Entry", data))
 	}
 
