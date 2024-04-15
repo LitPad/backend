@@ -6,6 +6,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // @Summary View User Profile
@@ -18,17 +19,18 @@ import (
 func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 	db := ep.DB
 
-	pathParams := c.Params("username")
-
-	if pathParams == "" {
+	username := c.Params("username")
+	if username == "" {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path params"))
 	}
 
-	user := models.User{Username: pathParams, IsEmailVerified: true}
-	db.Take(&user, user)
-
-	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
+	var user models.User
+	err := db.Preload("Followers").Preload("Followings").Where("username = ? AND is_email_verified = ?", username, true).First(&user).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
+		}
+		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal server error"))
 	}
 
 	response := schemas.UserProfileResponseSchema{

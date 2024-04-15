@@ -6,13 +6,15 @@ import (
 )
 
 type UserProfile struct {
-	FirstName   string          `json:"first_name" validate:"required,max=50" example:"John"`
-	LastName    string          `json:"last_name" validate:"required,max=50" example:"Doe"`
-	Username    string          `json:"username" validate:"required,max=1000" example:"john-doe"`
-	Email       string          `json:"email" validate:"required"`
-	Avatar      *string         `json:"avatar"`
-	Bio         *string         `json:"bio"`
-	AccountType choices.AccType `json:"account_type"`
+    FirstName   string `json:"first_name"`
+    LastName    string `json:"last_name"`
+    Username    string `json:"username"`
+    Email       string `json:"email"`
+    Avatar      *string `json:"avatar"`
+    Bio         *string `json:"bio"`
+    AccountType choices.AccType `json:"account_type"`
+    Followers   []models.User `json:"followers"`
+    Followings  []models.User `json:"followings"`
 }
 
 func (u UserProfile) Init(user models.User) UserProfile {
@@ -23,6 +25,8 @@ func (u UserProfile) Init(user models.User) UserProfile {
 	u.Avatar = user.Avatar
 	u.Bio = user.Bio
 	u.AccountType = user.AccountType
+	u.Followers = user.Followers
+	u.Followings = user.Followings
 	return u
 }
 
