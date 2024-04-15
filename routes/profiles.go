@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/routes/helpers"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -133,22 +134,15 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
     var toFollowUser, followerUser models.User
 
     // Retrieve the user to follow
-    err := db.Where("username = ? AND is_email_verified = ?", toFollowUsername, true).First(&toFollowUser).Error
-    if err != nil {
-        if err == gorm.ErrRecordNotFound {
-            return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User to follow does not exist"))
-        }
-        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal server error"))
-    }
+    if err := db.Where("username = ? AND is_email_verified = ?", toFollowUsername, true).First(&toFollowUser).Error; err != nil {
+		return helpers.UserNotFoundError(c, "User to follow does not exist", err)
+	}
+    
 
     // Retrieve the follower user
-    err = db.Where("username = ? AND is_email_verified = ?", followerUsername, true).First(&followerUser).Error
-    if err != nil {
-        if err == gorm.ErrRecordNotFound {
-            return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "Follower user does not exist"))
-        }
-        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal server error"))
-    }
+	if err := db.Where("username = ? AND is_email_verified = ?", followerUsername, true).First(&followerUser).Error; err !=nil{
+		return helpers.UserNotFoundError(c, "Follower user does not exist", err)
+	}
 
 	// check if both are readers
 	  if toFollowUser.AccountType != "READER" || followerUser.AccountType != "READER" {
@@ -157,24 +151,50 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 
 	 tx := db.Begin()
 
-    // Add the following relationship
-      if err = tx.Model(&followerUser).Association("Followings").Append(&toFollowUser); err != nil {
-        tx.Rollback()
-        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to follow user"))
-    }
+	  // Toggle follow
+    var existingFollowings []models.User
 
-	 // Add the follower relationship
-    if err = tx.Model(&toFollowUser).Association("Followers").Append(&followerUser); err != nil {
-        tx.Rollback()
-        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to add follower"))
-    }
+    tx.Model(&followerUser).Association("Followings").Find(&existingFollowings, "id = ?", toFollowUser.ID)
 
-	 if err = tx.Commit().Error; err != nil {
+    alreadyFollowing := len(existingFollowings) > 0
+
+	if alreadyFollowing {
+		 // Remove following and followers
+        if err := tx.Model(&followerUser).Association("Followings").Delete(&toFollowUser); err != nil {
+            tx.Rollback()
+            return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to unfollow user"))
+        }
+        if err := tx.Model(&toFollowUser).Association("Followers").Delete(&followerUser); err != nil {
+            tx.Rollback()
+            return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to remove follower"))
+        }
+	} else {
+		// Add the following relationship
+		if err := tx.Model(&followerUser).Association("Followings").Append(&toFollowUser); err != nil {
+			tx.Rollback()
+			return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to follow user"))
+		}
+
+		// Add the follower relationship
+		if err := tx.Model(&toFollowUser).Association("Followers").Append(&followerUser); err != nil {
+			tx.Rollback()
+			return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to add follower"))
+		}
+	}
+
+	 if err := tx.Commit().Error; err != nil {
         return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to commit changes"))
     }
 
-    return c.Status(200).JSON(fiber.Map{
-        "status":  "success",
-        "message": "Successfully followed the user",
-    })
+   if alreadyFollowing {
+        return c.Status(200).JSON(fiber.Map{
+            "status":  "success",
+            "message": "Successfully unfollowed the user",
+        })
+    } else {
+        return c.Status(200).JSON(fiber.Map{
+            "status":  "success",
+            "message": "Successfully followed the user",
+        })
+    }
 }
