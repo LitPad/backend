@@ -117,6 +117,17 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 }
 
 
+// @Summary Toggle Follow Status
+// @Description This endpoint allows a user to follow or unfollow another user based on the current follow status.
+// @Tags Profiles
+// @Param username path string true "Username of the user to follow or unfollow"
+// @Success 200 {object} map[string]interface{} "Returns a success status with a message indicating whether the user was followed or unfollowed."
+// @Failure 400 {object} utils.ErrorResponse "Returns an error for invalid request parameters."
+// @Failure 403 {object} utils.ErrorResponse "Returns an error when trying to follow a user when both are not of type 'Reader'."
+// @Failure 404 {object} utils.ErrorResponse "Returns an error when either the user to follow or the follower user does not exist."
+// @Failure 500 {object} utils.ErrorResponse "Returns an error when there is an internal server error or a transaction fails."
+// @Router /user/{username}/toggle-follow [post]
+// @Security BearerAuth
 func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
     db := ep.DB
 
