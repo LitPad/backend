@@ -114,3 +114,67 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 	db.Save(&user)
 	return c.Status(200).JSON(ResponseMessage("Password updated successfully"))
 }
+
+
+func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
+    db := ep.DB
+
+    toFollowUsername := c.Params("username")
+    if toFollowUsername == "" {
+        return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path parameter for username"))
+    }
+
+	followerUsername := RequestUser(c).Username
+
+    if toFollowUsername == followerUsername {
+        return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Cannot follow yourself"))
+    }
+
+    var toFollowUser, followerUser models.User
+
+    // Retrieve the user to follow
+    err := db.Where("username = ? AND is_email_verified = ?", toFollowUsername, true).First(&toFollowUser).Error
+    if err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User to follow does not exist"))
+        }
+        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal server error"))
+    }
+
+    // Retrieve the follower user
+    err = db.Where("username = ? AND is_email_verified = ?", followerUsername, true).First(&followerUser).Error
+    if err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "Follower user does not exist"))
+        }
+        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal server error"))
+    }
+
+	// check if both are readers
+	  if toFollowUser.AccountType != "READER" || followerUser.AccountType != "READER" {
+        return c.Status(403).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Only users of type 'Reader' can follow each other"))
+    }
+
+	 tx := db.Begin()
+
+    // Add the following relationship
+      if err = tx.Model(&followerUser).Association("Followings").Append(&toFollowUser); err != nil {
+        tx.Rollback()
+        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to follow user"))
+    }
+
+	 // Add the follower relationship
+    if err = tx.Model(&toFollowUser).Association("Followers").Append(&followerUser); err != nil {
+        tx.Rollback()
+        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to add follower"))
+    }
+
+	 if err = tx.Commit().Error; err != nil {
+        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to commit changes"))
+    }
+
+    return c.Status(200).JSON(fiber.Map{
+        "status":  "success",
+        "message": "Successfully followed the user",
+    })
+}
