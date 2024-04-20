@@ -13,7 +13,7 @@ import (
 )
 
 func ConnectDb(cfg config.Config) *gorm.DB {
-	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s"
+	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s"
 	dsn := fmt.Sprintf(
 		dsnTemplate,
 		cfg.PostgresServer,
@@ -21,7 +21,6 @@ func ConnectDb(cfg config.Config) *gorm.DB {
 		cfg.PostgresPassword,
 		cfg.PostgresDB,
 		cfg.PostgresPort,
-		"disable",
 		"UTC",
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
