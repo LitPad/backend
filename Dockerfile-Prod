@@ -15,4 +15,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["air", "-b", "0.0.0.0"]
+CMD ["go", "run", "main.go", "-b", "0.0.0.0"]
