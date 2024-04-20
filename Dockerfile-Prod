@@ -15,4 +15,6 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["go", "run", "main.go", "-b", "0.0.0.0"]
+RUN go build -tags netgo -ldflags '-s -w' -o app
+
+CMD ["./app"]
