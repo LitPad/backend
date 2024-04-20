@@ -44,7 +44,7 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 type Otp struct {
 	BaseModel
 	UserId uuid.UUID `json:"user_id" gorm:"unique"`
-	User   User      `gorm:"unique;constraint:OnDelete:CASCADE"`
+	User   User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE"`
 	Code   uint32    `json:"code"`
 }
 
