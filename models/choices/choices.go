@@ -6,3 +6,20 @@ const (
 	ACCTYPE_READER AccType = "READER"
 	ACCTYPE_WRITER AccType = "WRITER"
 )
+
+type PaymentType string
+
+const (
+	PTYPE_GPAY PaymentType = "GOOGLE PAY"
+	PTYPE_STRIPE PaymentType = "STRIPE"
+	PTYPE_PAYPAL PaymentType = "PAYPAL"
+)
+
+type AgeType int
+
+const (
+	ATYPE_FOUR AgeType = 4
+	ATYPE_TWELVE AgeType = 12
+	ATYPE_SIXTEEN AgeType = 16
+	ATYPE_EIGHTEEN AgeType = 18
+)

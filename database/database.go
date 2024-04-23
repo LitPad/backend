@@ -12,6 +12,28 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+func CreateTables (db *gorm.DB) {
+	db.AutoMigrate(
+		// general
+		&models.SiteDetail{},
+		&models.Subscriber{},
+
+		// accounts
+		&models.User{},
+		&models.Otp{},
+
+		// book
+		&models.Tag{},
+		&models.Genre{},
+		&models.Book{},
+
+		// wallet
+		&models.Coin{},
+		&models.Transaction{},
+		&models.BoughtBooks{},
+	)
+}
+
 func ConnectDb(cfg config.Config) *gorm.DB {
 	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s"
 	dsn := fmt.Sprintf(
@@ -43,14 +65,6 @@ func ConnectDb(cfg config.Config) *gorm.DB {
 	}
 
 	// Add Migrations
-	db.AutoMigrate(
-		// general
-		&models.SiteDetail{},
-		&models.Subscriber{},
-
-		// accounts
-		&models.User{},
-		&models.Otp{},
-	)
+	CreateTables(db)
 	return db
 }
