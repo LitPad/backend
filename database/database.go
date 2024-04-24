@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func CreateTables (db *gorm.DB) {
-	db.AutoMigrate(
+func Models() []interface{} {
+	return []interface{}{
 		// general
 		&models.SiteDetail{},
 		&models.Subscriber{},
@@ -31,7 +31,29 @@ func CreateTables (db *gorm.DB) {
 		&models.Coin{},
 		&models.Transaction{},
 		&models.BoughtBooks{},
-	)
+	}
+}
+
+func MakeMigrations(db *gorm.DB) {
+	models := Models()
+	for _, model := range models {
+		db.AutoMigrate(model)
+	}
+}
+
+func CreateTables(db *gorm.DB) {
+	models := Models()
+	for _, model := range models {
+		db.Migrator().CreateTable(model)
+	}
+}
+
+func DropTables(db *gorm.DB) {
+	// Drop Tables
+	models := Models()
+	for _, model := range models {
+		db.Migrator().DropTable(model)
+	}
 }
 
 func ConnectDb(cfg config.Config) *gorm.DB {
@@ -65,6 +87,6 @@ func ConnectDb(cfg config.Config) *gorm.DB {
 	}
 
 	// Add Migrations
-	CreateTables(db)
+	MakeMigrations(db)
 	return db
 }
