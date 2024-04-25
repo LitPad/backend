@@ -6,23 +6,53 @@ import (
 )
 
 type UserProfile struct {
-	FirstName   string          `json:"first_name" validate:"required,max=50" example:"John"`
-	LastName    string          `json:"last_name" validate:"required,max=50" example:"Doe"`
-	Username    string          `json:"username" validate:"required,max=1000" example:"john-doe"`
-	Email       string          `json:"email" validate:"required"`
-	Avatar      *string         `json:"avatar"`
-	Bio         *string         `json:"bio"`
-	AccountType choices.AccType `json:"account_type"`
+    FirstName   string `json:"first_name"`
+    LastName    string `json:"last_name"`
+    Username    string `json:"username"`
+    Email       string `json:"email"`
+    Avatar      *string `json:"avatar"`
+    Bio         *string `json:"bio"`
+    AccountType choices.AccType `json:"account_type"`
+    Followers   []UserProfile `json:"followers"`
+    Followings  []UserProfile `json:"followings"`
 }
 
-func (u UserProfile) Init(user models.User) UserProfile {
-	u.FirstName = user.FirstName
-	u.LastName = user.LastName
-	u.Username = user.Username
-	u.Email = user.Email
-	u.Avatar = user.Avatar
-	u.Bio = user.Bio
-	u.AccountType = user.AccountType
+func (dto *UserProfile) FromModel(user models.User) {
+    dto.FirstName = user.FirstName
+    dto.LastName = user.LastName
+    dto.Username = user.Username
+    dto.Avatar = user.Avatar
+    dto.Bio = user.Bio
+    dto.AccountType = user.AccountType
+}
+
+func (u UserProfile) Init (user models.User) UserProfile{
+	var followers []UserProfile
+	var followings []UserProfile
+
+	for _, follower := range user.Followers{
+		var dto UserProfile
+		dto.FromModel(follower)
+		followers = append(followers, dto)
+	}
+
+	 for _, following := range user.Followings {
+        var dto UserProfile
+		dto.FromModel(following)
+        followings = append(followings, dto)
+    }
+
+	u = UserProfile{
+		FirstName : user.FirstName,
+		LastName : user.LastName,
+		Username : user.Username,
+		Email : user.Email,
+		Avatar : user.Avatar,
+		Bio : user.Bio,
+		AccountType : user.AccountType,
+		Followers : followers,
+		Followings : followings,
+	}
 	return u
 }
 
