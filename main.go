@@ -15,7 +15,7 @@ import (
 
 // @title LITPAD API
 // @description `LitPAD API built with Fiber and GORM`
-// @version 4.0
+// @version 1.0
 // @Accept json
 // @Produce json
 // @BasePath  /api/v1

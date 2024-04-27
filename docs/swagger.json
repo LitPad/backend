@@ -10,7 +10,7 @@
         "description": "`LitPAD API built with Fiber and GORM`",
         "title": "LITPAD API",
         "contact": {},
-        "version": "4.0"
+        "version": "1.0"
     },
     "basePath": "/api/v1",
     "paths": {
@@ -478,7 +478,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
                         }
                     },
                     "400": {
@@ -572,7 +572,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
                         }
                     },
                     "400": {
@@ -625,6 +625,17 @@
         }
     },
     "definitions": {
+        "choices.AccType": {
+            "type": "string",
+            "enum": [
+                "READER",
+                "WRITER"
+            ],
+            "x-enum-varnames": [
+                "ACCTYPE_READER",
+                "ACCTYPE_WRITER"
+            ]
+        },
         "models.SiteDetail": {
             "type": "object",
             "properties": {
@@ -693,6 +704,29 @@
                     "type": "string",
                     "minLength": 5,
                     "example": "johndoe@email.com"
+                }
+            }
+        },
+        "schemas.FollowerData": {
+            "type": "object",
+            "properties": {
+                "account_type": {
+                    "$ref": "#/definitions/choices.AccType"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "followers_count": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stories_count": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -895,6 +929,60 @@
                     "maxLength": 1000,
                     "minLength": 3,
                     "example": "john-doe"
+                }
+            }
+        },
+        "schemas.UserProfile": {
+            "type": "object",
+            "properties": {
+                "account_type": {
+                    "$ref": "#/definitions/choices.AccType"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "followers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FollowerData"
+                    }
+                },
+                "followings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FollowerData"
+                    }
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.UserProfileResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.UserProfile"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },

@@ -31,6 +31,9 @@ type User struct {
 	Followings      []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
 	Followers       []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
 	Coins           int             `json:"coins" gorm:"default:0"`
+
+	// Back referenced
+	Books			[]Book			`gorm:"foreignKey:AuthorID"`
 }
 
 func (user User) FullName() string {

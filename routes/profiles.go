@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"log"
-
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
@@ -18,7 +16,7 @@ import (
 // @Description This endpoint views a user profile
 // @Tags Profiles
 // @Param username path string true "Username of user"
-// @Success 200 {object} schemas.ResponseSchema
+// @Success 200 {object} schemas.UserProfileResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /profiles/profile/{username} [get]
 func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
@@ -49,7 +47,7 @@ func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 // @Description This endpoint updates a user's profile
 // @Tags Profiles
 // @Param profile body schemas.UpdateUserProfileSchema true "Profile object"
-// @Success 200 {object} schemas.ResponseSchema
+// @Success 200 {object} schemas.UserProfileResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /profiles/update [patch]
 // @Security BearerAuth
@@ -156,7 +154,6 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 	if toFollowUser.AccountType == choices.ACCTYPE_READER {
 		return c.Status(403).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Readers cannot be followed"))
 	}
-	log.Println("User......: ", toFollowUser.ID)
 	tx := db.Begin()
 
 	// Toggle follow

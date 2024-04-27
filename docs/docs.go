@@ -486,7 +486,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
                         }
                     },
                     "400": {
@@ -580,7 +580,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
                         }
                     },
                     "400": {
@@ -633,6 +633,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "choices.AccType": {
+            "type": "string",
+            "enum": [
+                "READER",
+                "WRITER"
+            ],
+            "x-enum-varnames": [
+                "ACCTYPE_READER",
+                "ACCTYPE_WRITER"
+            ]
+        },
         "models.SiteDetail": {
             "type": "object",
             "properties": {
@@ -701,6 +712,29 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 5,
                     "example": "johndoe@email.com"
+                }
+            }
+        },
+        "schemas.FollowerData": {
+            "type": "object",
+            "properties": {
+                "account_type": {
+                    "$ref": "#/definitions/choices.AccType"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "followers_count": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "stories_count": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -906,6 +940,60 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.UserProfile": {
+            "type": "object",
+            "properties": {
+                "account_type": {
+                    "$ref": "#/definitions/choices.AccType"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "followers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FollowerData"
+                    }
+                },
+                "followings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FollowerData"
+                    }
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.UserProfileResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.UserProfile"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.VerifyEmailRequestSchema": {
             "type": "object",
             "required": [
@@ -957,7 +1045,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "4.0",
+	Version:          "1.0",
 	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},

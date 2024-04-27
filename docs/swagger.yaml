@@ -2,6 +2,14 @@ basePath: /api/v1
 consumes:
 - application/json
 definitions:
+  choices.AccType:
+    enum:
+    - READER
+    - WRITER
+    type: string
+    x-enum-varnames:
+    - ACCTYPE_READER
+    - ACCTYPE_WRITER
   models.SiteDetail:
     properties:
       address:
@@ -51,6 +59,21 @@ definitions:
         type: string
     required:
     - email
+    type: object
+  schemas.FollowerData:
+    properties:
+      account_type:
+        $ref: '#/definitions/choices.AccType'
+      avatar:
+        type: string
+      followers_count:
+        type: integer
+      name:
+        type: string
+      stories_count:
+        type: integer
+      username:
+        type: string
     type: object
   schemas.LoginSchema:
     properties:
@@ -199,6 +222,42 @@ definitions:
         minLength: 3
         type: string
     type: object
+  schemas.UserProfile:
+    properties:
+      account_type:
+        $ref: '#/definitions/choices.AccType'
+      avatar:
+        type: string
+      bio:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      followers:
+        items:
+          $ref: '#/definitions/schemas.FollowerData'
+        type: array
+      followings:
+        items:
+          $ref: '#/definitions/schemas.FollowerData'
+        type: array
+      last_name:
+        type: string
+      username:
+        type: string
+    type: object
+  schemas.UserProfileResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.UserProfile'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.VerifyEmailRequestSchema:
     properties:
       email:
@@ -229,7 +288,7 @@ info:
   contact: {}
   description: '`LitPAD API built with Fiber and GORM`'
   title: LITPAD API
-  version: "4.0"
+  version: "1.0"
 paths:
   /auth/facebook:
     post:
@@ -536,7 +595,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
+            $ref: '#/definitions/schemas.UserProfileResponseSchema'
         "400":
           description: Bad Request
           schema:
@@ -596,7 +655,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
+            $ref: '#/definitions/schemas.UserProfileResponseSchema'
         "400":
           description: Bad Request
           schema:
