@@ -28,8 +28,8 @@ type User struct {
 	SocialLogin     bool            `gorm:"default:false"`
 	Bio             *string         `gorm:"type:varchar(1000);null;" json:"bio"`
 	AccountType     choices.AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
-	Followers       []User          `json:"followers" gorm:"many2many:user_followers;"`
-	Followings      []User          `json:"followings" gorm:"many2many:user_followings;"`
+	Followings      []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
+	Followers       []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
 	Coins           int             `json:"coins" gorm:"default:0"`
 }
 

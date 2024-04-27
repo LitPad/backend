@@ -35,15 +35,17 @@ func Models() []interface{} {
 }
 
 func MakeMigrations(db *gorm.DB) {
-	models := Models()
-	for _, model := range models {
+	modelsList := Models()
+	log.Println("Erroooooooo: ")
+
+	for _, model := range modelsList {
 		db.AutoMigrate(model)
 	}
 }
 
 func CreateTables(db *gorm.DB) {
-	models := Models()
-	for _, model := range models {
+	modelsList := Models()
+	for _, model := range modelsList {
 		db.Migrator().CreateTable(model)
 	}
 }

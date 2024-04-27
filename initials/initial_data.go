@@ -29,7 +29,7 @@ func createWriter(db *gorm.DB, cfg config.Config) models.User {
 		FirstName:       "Test",
 		LastName:        "Writer",
 		Username:        "test-writer",
-		AccountType: choices.ACCTYPE_WRITER,
+		AccountType:     choices.ACCTYPE_WRITER,
 		Email:           cfg.FirstWriterEmail,
 		Password:        cfg.FirstWriterPassword,
 		IsEmailVerified: true,

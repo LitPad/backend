@@ -1,7 +1,11 @@
 package routes
 
 import (
+	"log"
+
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
+	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/routes/helpers"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
@@ -26,7 +30,7 @@ func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 	}
 
 	var user models.User
-	err := db.Preload("Followers").Preload("Followings").Where("username = ? AND is_email_verified = ?", username, true).First(&user).Error
+	err := db.Scopes(scopes.FollowerFollowingPreloaderScope).Where(models.User{Username: username}).Take(&user).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
@@ -116,96 +120,70 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Password updated successfully"))
 }
 
-
 // @Summary Toggle Follow Status
-// @Description This endpoint allows a user to follow or unfollow another user based on the current follow status.
+// @Description `This endpoint allows a user to follow or unfollow a writer`.
 // @Tags Profiles
 // @Param username path string true "Username of the user to follow or unfollow"
-// @Success 200 {object} map[string]interface{} "Returns a success status with a message indicating whether the user was followed or unfollowed."
+// @Success 200 {object} schemas.ResponseSchema
 // @Failure 400 {object} utils.ErrorResponse "Returns an error for invalid request parameters."
-// @Failure 403 {object} utils.ErrorResponse "Returns an error when trying to follow a user when both are not of type 'Reader'."
+// @Failure 403 {object} utils.ErrorResponse "Returns an error when trying to follow a user that isn't a writer"
 // @Failure 404 {object} utils.ErrorResponse "Returns an error when either the user to follow or the follower user does not exist."
 // @Failure 500 {object} utils.ErrorResponse "Returns an error when there is an internal server error or a transaction fails."
-// @Router /user/{username}/toggle-follow [post]
+// @Router /profiles/profile/{username}/follow [get]
 // @Security BearerAuth
 func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
-    db := ep.DB
-
-    toFollowUsername := c.Params("username")
-    if toFollowUsername == "" {
-        return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path parameter for username"))
-    }
-
-	followerUsername := RequestUser(c).Username
-
-    if toFollowUsername == followerUsername {
-        return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Cannot follow yourself"))
-    }
-
-    var toFollowUser, followerUser models.User
-
-    // Retrieve the user to follow
-    if err := db.Where("username = ? AND is_email_verified = ?", toFollowUsername, true).First(&toFollowUser).Error; err != nil {
-		return helpers.UserNotFoundError(c, "User to follow does not exist", err)
+	db := ep.DB
+	user := RequestUser(c)
+	toFollowUsername := c.Params("username")
+	if toFollowUsername == "" {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path parameter for username"))
 	}
-    
 
-    // Retrieve the follower user
-	if err := db.Where("username = ? AND is_email_verified = ?", followerUsername, true).First(&followerUser).Error; err !=nil{
-		return helpers.UserNotFoundError(c, "Follower user does not exist", err)
+	followerUsername := user.Username
+
+	if toFollowUsername == followerUsername {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Cannot follow yourself"))
+	}
+
+	toFollowUser := models.User{}
+
+	// Retrieve the user to follow
+	if err := db.Scopes(scopes.VerifiedUserScope).Where(models.User{Username: toFollowUsername}).Take(&toFollowUser).Error; err != nil {
+		return helpers.UserNotFoundError(c, "User to follow does not exist", err)
 	}
 
 	// check if both are readers
-	  if toFollowUser.AccountType != "READER" || followerUser.AccountType != "READER" {
-        return c.Status(403).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Only users of type 'Reader' can follow each other"))
-    }
+	if toFollowUser.AccountType == choices.ACCTYPE_READER {
+		return c.Status(403).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Readers cannot be followed"))
+	}
+	log.Println("User......: ", toFollowUser.ID)
+	tx := db.Begin()
 
-	 tx := db.Begin()
-
-	  // Toggle follow
-    var existingFollowings []models.User
-
-    tx.Model(&followerUser).Association("Followings").Find(&existingFollowings, "id = ?", toFollowUser.ID)
-
-    alreadyFollowing := len(existingFollowings) > 0
+	// Toggle follow
+	count := tx.Model(&user).Where("id = ?", toFollowUser.ID).Association("Followings").Count()
+	alreadyFollowing := count > 0
 
 	if alreadyFollowing {
-		 // Remove following and followers
-        if err := tx.Model(&followerUser).Association("Followings").Delete(&toFollowUser); err != nil {
-            tx.Rollback()
-            return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to unfollow user"))
-        }
-        if err := tx.Model(&toFollowUser).Association("Followers").Delete(&followerUser); err != nil {
-            tx.Rollback()
-            return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to remove follower"))
-        }
+		// Remove following and followers
+		if err := tx.Model(&user).Association("Followings").Delete(&toFollowUser); err != nil {
+			tx.Rollback()
+			return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to unfollow user"))
+		}
 	} else {
 		// Add the following relationship
-		if err := tx.Model(&followerUser).Association("Followings").Append(&toFollowUser); err != nil {
+		if err := tx.Model(&user).Omit("Followings.*").Association("Followings").Append(&toFollowUser); err != nil {
 			tx.Rollback()
 			return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to follow user"))
 		}
-
-		// Add the follower relationship
-		if err := tx.Model(&toFollowUser).Association("Followers").Append(&followerUser); err != nil {
-			tx.Rollback()
-			return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to add follower"))
-		}
 	}
 
-	 if err := tx.Commit().Error; err != nil {
-        return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to commit changes"))
-    }
+	if err := tx.Commit().Error; err != nil {
+		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to commit changes"))
+	}
 
-   if alreadyFollowing {
-        return c.Status(200).JSON(fiber.Map{
-            "status":  "success",
-            "message": "Successfully unfollowed the user",
-        })
-    } else {
-        return c.Status(200).JSON(fiber.Map{
-            "status":  "success",
-            "message": "Successfully followed the user",
-        })
-    }
+	message := "User followed successfully"
+	if alreadyFollowing {
+		message = "User unfollowed successfully"
+	}
+	return c.Status(200).JSON(ResponseMessage(message))
 }

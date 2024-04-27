@@ -498,6 +498,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/profiles/profile/{username}/follow": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to follow or unfollow a writer` + "`" + `.",
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "Toggle Follow Status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of the user to follow or unfollow",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Returns an error for invalid request parameters.",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Returns an error when trying to follow a user that isn't a writer",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Returns an error when either the user to follow or the follower user does not exist.",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns an error when there is an internal server error or a transaction fails.",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profiles/update": {
             "patch": {
                 "security": [
