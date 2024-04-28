@@ -13,3 +13,8 @@ func ResponseMessage(message string) schemas.ResponseSchema {
 func RequestUser(c *fiber.Ctx) *models.User {
 	return c.Locals("user").(*models.User)
 }
+
+func GetBaseReferer(c *fiber.Ctx) string {
+	referer := c.Context().Referer()
+	return string(referer[:])
+}

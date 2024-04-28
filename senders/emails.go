@@ -14,7 +14,9 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func sortEmail(user *models.User, emailType string, code *uint32) map[string]interface{} {
+var cfg = config.GetConfig()
+
+func sortEmail(user *models.User, emailType string, tokenString *string, url *string) map[string]interface{} {
 	templateFile := "templates/welcome.html"
 	subject := "Account verified"
 	data := make(map[string]interface{})
@@ -27,14 +29,14 @@ func sortEmail(user *models.User, emailType string, code *uint32) map[string]int
 		subject = "Activate your account"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["otp"] = code
+		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.EmailVerificationPath, *tokenString) 
 
 	} else if emailType == "reset" {
 		templateFile = "templates/password-reset.html"
 		subject = "Reset your password"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["otp"] = code
+		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.PasswordResetPath, *tokenString) 
 
 	} else if emailType == "reset-success" {
 		templateFile = "templates/password-reset-success.html"
@@ -47,16 +49,19 @@ func sortEmail(user *models.User, emailType string, code *uint32) map[string]int
 
 type EmailContext struct {
 	Name string
-	Otp  *uint32
+	Url  *string
 }
 
-func SendEmail(user *models.User, emailType string, code *uint32) {
+func SendEmail(user *models.User, emailType string, tokenString *string, urlOpts ...string) {
 	if os.Getenv("ENVIRONMENT") == "TESTING" {
 		return
 	}
 	cfg := config.GetConfig()
-
-	emailData := sortEmail(user, emailType, code)
+	var url *string 
+	if len(urlOpts) > 0 {
+		url = &urlOpts[0]
+	}
+	emailData := sortEmail(user, emailType, tokenString, url)
 	templateFile := emailData["template_file"]
 	subject := emailData["subject"]
 
@@ -64,9 +69,9 @@ func SendEmail(user *models.User, emailType string, code *uint32) {
 	data := EmailContext{
 		Name: user.FirstName,
 	}
-	if otp, ok := emailData["otp"]; ok {
-		code := otp.(*uint32)
-		data.Otp = code
+	if url, ok := emailData["url"]; ok {
+		url := url.(string)
+		data.Url = &url
 	}
 
 	// Read the HTML file content

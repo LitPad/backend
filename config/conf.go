@@ -33,6 +33,8 @@ type Config struct {
 	GoogleClientSecret        string `mapstructure:"GOOGLE_CLIENT_SECRET"`
 	FacebookAppID             string `mapstructure:"FACEBOOK_APP_ID"`
 	SocialsPassword           string `mapstructure:"SOCIALS_PASSWORD"`
+	EmailVerificationPath     string `mapstructure:"EMAIL_VERIFICATION_PATH"`
+	PasswordResetPath         string `mapstructure:"PASSWORD_RESET_PATH"`
 }
 
 func GetConfig() (config Config) {

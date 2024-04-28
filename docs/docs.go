@@ -840,25 +840,19 @@ const docTemplate = `{
         "schemas.SetNewPasswordSchema": {
             "type": "object",
             "required": [
-                "email",
-                "otp",
-                "password"
+                "password",
+                "token_string"
             ],
             "properties": {
-                "email": {
-                    "type": "string",
-                    "minLength": 5,
-                    "example": "johndoe@email.com"
-                },
-                "otp": {
-                    "type": "integer",
-                    "example": 123456
-                },
                 "password": {
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 8,
                     "example": "newstrongpassword"
+                },
+                "token_string": {
+                    "type": "string",
+                    "example": "Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"
                 }
             }
         },
@@ -997,18 +991,12 @@ const docTemplate = `{
         "schemas.VerifyEmailRequestSchema": {
             "type": "object",
             "required": [
-                "email",
-                "otp"
+                "token_string"
             ],
             "properties": {
-                "email": {
+                "token_string": {
                     "type": "string",
-                    "minLength": 5,
-                    "example": "johndoe@email.com"
-                },
-                "otp": {
-                    "type": "integer",
-                    "example": 123456
+                    "example": "Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"
                 }
             }
         },

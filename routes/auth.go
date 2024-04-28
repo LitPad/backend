@@ -49,10 +49,10 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 	db.Create(&user)
 
 	// Send Email
-	otp := models.Otp{UserId: user.ID}
-	db.Take(&otp, otp)
-	db.Save(&otp) // Create or save
-	go senders.SendEmail(user, "activate", &otp.Code)
+	token := models.Token{UserId: user.ID}
+	db.Take(&token, token)
+	db.Save(&token) // Create or save
+	go senders.SendEmail(user, "activate", &token.TokenString, GetBaseReferer(c))
 
 	response := schemas.RegisterResponseSchema{
 		ResponseSchema: ResponseMessage("Registration successful"),
@@ -78,29 +78,23 @@ func (ep Endpoint) VerifyEmail(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	user := models.User{Email: data.Email}
-	db.Take(&user, user)
-	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_EMAIL, "Incorrect Email"))
+	token := models.Token{TokenString: data.TokenString}
+	db.Joins("User").Take(&token, token)
+	if token.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Invalid Token"))
 	}
 
-	if user.IsEmailVerified {
-		return c.Status(200).JSON(schemas.ResponseSchema{Message: "Email already verified"}.Init())
+	if token.CheckExpiration() {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired Token"))
 	}
-
-	otp := models.Otp{UserId: user.ID}
-	db.Take(&otp, otp)
-	if otp.ID == uuid.Nil || otp.Code != data.Otp {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Incorrect Otp"))
-	}
-
-	if otp.CheckExpiration() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired Otp"))
-	}
-
 	// Update User
+	user := token.User
+	if user.IsEmailVerified {
+		return c.Status(200).JSON(ResponseMessage("Email already verified"))
+	}
 	user.IsEmailVerified = true
 	db.Save(&user)
+	db.Delete(&token)
 
 	// Send Welcome Email
 	go senders.SendEmail(&user, "welcome", nil)
@@ -135,10 +129,10 @@ func (ep Endpoint) ResendVerificationEmail(c *fiber.Ctx) error {
 	}
 
 	// Send Email
-	otp := models.Otp{UserId: user.ID}
-	db.Take(&otp, otp)
-	db.Save(&otp) // Create or save
-	go senders.SendEmail(&user, "activate", &otp.Code)
+	token := models.Token{UserId: user.ID}
+	db.Take(&token, token)
+	db.Save(&token) // Create or save
+	go senders.SendEmail(&user, "activate", &token.TokenString, GetBaseReferer(c))
 	return c.Status(200).JSON(ResponseMessage("Verification email sent"))
 }
 
@@ -167,10 +161,10 @@ func (ep Endpoint) SendPasswordResetOtp(c *fiber.Ctx) error {
 	}
 
 	// Send Email
-	otp := models.Otp{UserId: user.ID}
-	db.Take(&otp, otp)
-	db.Save(&otp) // Create or save
-	go senders.SendEmail(&user, "reset", &otp.Code)
+	token := models.Token{UserId: user.ID}
+	db.Take(&token, token)
+	db.Save(&token) // Create or save
+	go senders.SendEmail(&user, "reset", &token.TokenString, GetBaseReferer(c))
 
 	return c.Status(200).JSON(ResponseMessage("Password otp sent"))
 }
@@ -193,25 +187,21 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	user := models.User{Email: data.Email}
-	db.Take(&user, user)
-	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_EMAIL, "Incorrect Email"))
+	token := models.Token{TokenString: data.TokenString}
+	db.Joins("User").Take(&token, token)
+	if token.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Invalid Token"))
 	}
 
-	otp := models.Otp{UserId: user.ID}
-	db.Take(&otp, otp)
-	if otp.ID == uuid.Nil || otp.Code != data.Otp {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Incorrect Otp"))
+	if token.CheckExpiration() {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired Token"))
 	}
 
-	if otp.CheckExpiration() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired Otp"))
-	}
-
+	user := token.User
 	// Set Password
 	user.Password = utils.HashPassword(data.Password)
 	db.Save(&user)
+	db.Delete(&token)
 
 	// Send Email
 	go senders.SendEmail(&user, "reset-success", nil)

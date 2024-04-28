@@ -20,7 +20,7 @@ func Models() []interface{} {
 
 		// accounts
 		&models.User{},
-		&models.Otp{},
+		&models.Token{},
 
 		// book
 		&models.Tag{},
@@ -36,8 +36,6 @@ func Models() []interface{} {
 
 func MakeMigrations(db *gorm.DB) {
 	modelsList := Models()
-	log.Println("Erroooooooo: ")
-
 	for _, model := range modelsList {
 		db.AutoMigrate(model)
 	}

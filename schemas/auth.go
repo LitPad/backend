@@ -15,8 +15,7 @@ type EmailRequestSchema struct {
 }
 
 type VerifyEmailRequestSchema struct {
-	EmailRequestSchema
-	Otp					uint32					`json:"otp" validate:"required" example:"123456"`
+	TokenString					string					`json:"token_string" validate:"required" example:"Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"`
 }
 
 type SetNewPasswordSchema struct {

@@ -33,7 +33,7 @@ type User struct {
 	Coins           int             `json:"coins" gorm:"default:0"`
 
 	// Back referenced
-	Books			[]Book			`gorm:"foreignKey:AuthorID"`
+	Books []Book `gorm:"foreignKey:AuthorID"`
 }
 
 func (user User) FullName() string {
@@ -45,20 +45,30 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-type Otp struct {
+type Token struct {
 	BaseModel
-	UserId uuid.UUID `json:"user_id" gorm:"unique"`
-	User   User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE"`
-	Code   uint32    `json:"code"`
+	UserId      uuid.UUID `json:"user_id" gorm:"unique"`
+	User        User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE"`
+	TokenString string    `json:"token_string"`
 }
 
-func (otp *Otp) BeforeSave(tx *gorm.DB) (err error) {
-	code := uint32(utils.GetRandomInt(6))
-	otp.Code = code
+func (token *Token) BeforeSave(tx *gorm.DB) (err error) {
+	token.TokenString = token.GenerateRandomToken(tx, "")
 	return
 }
 
-func (obj Otp) CheckExpiration() bool {
+func (token Token) GenerateRandomToken(db *gorm.DB, tokenString string) string {
+	// Create new
+	tokenStr := fmt.Sprintf("%s%s", utils.GetRandomString(100), tokenString)
+	tokenData := Token{TokenString: tokenStr}
+	if tokenData.ID != uuid.Nil {
+		tokenStr = fmt.Sprintf("%s%s", tokenStr, utils.GetRandomString(6))
+		return token.GenerateRandomToken(db, tokenStr)
+	}
+	return tokenStr
+}
+
+func (obj Token) CheckExpiration() bool {
 	cfg := config.GetConfig()
 	currentTime := time.Now().UTC()
 	diff := int64(currentTime.Sub(obj.UpdatedAt).Seconds())

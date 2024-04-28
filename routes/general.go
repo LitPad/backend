@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"log"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/schemas"
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +16,7 @@ import (
 func (ep Endpoint) GetSiteDetails(c *fiber.Ctx) error {
 	db := ep.DB
 	var sitedetail models.SiteDetail
-
+	log.Println("Ref: ", GetBaseReferer(c))
 	db.FirstOrCreate(&sitedetail, sitedetail)
 	responseSiteDetail := schemas.SiteDetailResponseSchema{
 		ResponseSchema: ResponseMessage("Site Details Fetched!"),
