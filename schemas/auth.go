@@ -43,8 +43,8 @@ type RegisterResponseSchema struct {
 }
 
 type TokensResponseSchema struct {
-	Access			string					`json:"access"`
-	Refresh			string					`json:"refresh"`
+	Access			string					`json:"access" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
+	Refresh			string					`json:"refresh" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 }
 
 type LoginResponseSchema struct {

@@ -213,7 +213,7 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 // @Description This endpoint generates new access and refresh tokens for authentication
 // @Tags Auth
 // @Param user body schemas.LoginSchema true "User login"
-// @Success 201 {object} schemas.ResponseSchema
+// @Success 201 {object} schemas.LoginResponseSchema
 // @Failure 422 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
 // @Router /auth/login [post]
@@ -255,7 +255,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 // @Description `Pass in token gotten from gsi client authentication here in payload to retrieve tokens for authorization`
 // @Tags Auth
 // @Param user body schemas.SocialLoginSchema true "User login"
-// @Success 201 {object} schemas.ResponseSchema
+// @Success 201 {object} schemas.LoginResponseSchema
 // @Failure 422 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
 // @Router /auth/google [post]
@@ -294,7 +294,7 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 // @Description `Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization`
 // @Tags Auth
 // @Param user body schemas.SocialLoginSchema true "User login"
-// @Success 201 {object} schemas.ResponseSchema
+// @Success 201 {object} schemas.LoginResponseSchema
 // @Failure 422 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
 // @Router /auth/facebook [post]
@@ -331,7 +331,7 @@ func (ep Endpoint) FacebookLogin(c *fiber.Ctx) error {
 // @Description This endpoint refresh tokens by generating new access and refresh tokens for a user
 // @Tags Auth
 // @Param refresh body schemas.RefreshTokenSchema true "Refresh token"
-// @Success 201 {object} schemas.ResponseSchema
+// @Success 201 {object} schemas.LoginResponseSchema
 // @Failure 422 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse

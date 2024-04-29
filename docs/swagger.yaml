@@ -75,6 +75,17 @@ definitions:
       username:
         type: string
     type: object
+  schemas.LoginResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.TokensResponseSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.LoginSchema:
     properties:
       email:
@@ -192,6 +203,15 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.TokensResponseSchema:
+    properties:
+      access:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
+        type: string
+      refresh:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
+        type: string
+    type: object
   schemas.UpdatePasswordSchema:
     properties:
       new_password:
@@ -296,7 +316,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
+            $ref: '#/definitions/schemas.LoginResponseSchema'
         "401":
           description: Unauthorized
           schema:
@@ -324,7 +344,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
+            $ref: '#/definitions/schemas.LoginResponseSchema'
         "401":
           description: Unauthorized
           schema:
@@ -350,7 +370,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
+            $ref: '#/definitions/schemas.LoginResponseSchema'
         "401":
           description: Unauthorized
           schema:
@@ -394,7 +414,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
+            $ref: '#/definitions/schemas.LoginResponseSchema'
         "401":
           description: Unauthorized
           schema:

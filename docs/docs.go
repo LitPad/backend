@@ -44,7 +44,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.LoginResponseSchema"
                         }
                     },
                     "401": {
@@ -84,7 +84,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.LoginResponseSchema"
                         }
                     },
                     "401": {
@@ -124,7 +124,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.LoginResponseSchema"
                         }
                     },
                     "401": {
@@ -192,7 +192,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
+                            "$ref": "#/definitions/schemas.LoginResponseSchema"
                         }
                     },
                     "401": {
@@ -738,6 +738,22 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.LoginResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.TokensResponseSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.LoginSchema": {
             "type": "object",
             "required": [
@@ -898,6 +914,19 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.TokensResponseSchema": {
+            "type": "object",
+            "properties": {
+                "access": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
+                },
+                "refresh": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
                 }
             }
         },
