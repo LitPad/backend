@@ -668,6 +668,66 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/wallet/coins": {
+            "get": {
+                "description": "This endpoint returns all available coins for sale",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "View Available Coins",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.CoinsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to buy coins",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Buy Coins",
+                "parameters": [
+                    {
+                        "description": "Payment object",
+                        "name": "coin",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BuyCoinSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.PaymentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -680,6 +740,32 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "ACCTYPE_READER",
                 "ACCTYPE_WRITER"
+            ]
+        },
+        "choices.PaymentStatus": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "SUCCEEDED",
+                "FAILED"
+            ],
+            "x-enum-varnames": [
+                "PSPENDING",
+                "PSSUCCEEDED",
+                "PSFAILED"
+            ]
+        },
+        "choices.PaymentType": {
+            "type": "string",
+            "enum": [
+                "GOOGLE PAY",
+                "STRIPE",
+                "PAYPAL"
+            ],
+            "x-enum-varnames": [
+                "PTYPE_GPAY",
+                "PTYPE_STRIPE",
+                "PTYPE_PAYPAL"
             ]
         },
         "models.SiteDetail": {
@@ -737,6 +823,63 @@ const docTemplate = `{
                 "success": {
                     "type": "string",
                     "example": "pong"
+                }
+            }
+        },
+        "schemas.BuyCoinSchema": {
+            "type": "object",
+            "required": [
+                "coin_id",
+                "payment_type"
+            ],
+            "properties": {
+                "coin_id": {
+                    "type": "string",
+                    "example": "19e8bd22-fab1-4bb4-ba82-77c41bea6b99"
+                },
+                "payment_type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.PaymentType"
+                        }
+                    ],
+                    "example": "STRIPE"
+                }
+            }
+        },
+        "schemas.CoinSchema": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "id": {
+                    "type": "string",
+                    "example": "19e8bd22-fab1-4bb4-ba82-77c41bea6b99"
+                },
+                "price": {
+                    "type": "number",
+                    "example": 10.45
+                }
+            }
+        },
+        "schemas.CoinsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.CoinSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -806,6 +949,22 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "password"
+                }
+            }
+        },
+        "schemas.PaymentResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.TransactionSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -965,6 +1124,36 @@ const docTemplate = `{
                 "refresh": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
+                }
+            }
+        },
+        "schemas.TransactionSchema": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "example": 10.35
+                },
+                "client_secret": {
+                    "type": "string"
+                },
+                "coins": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "payment_status": {
+                    "$ref": "#/definitions/choices.PaymentStatus"
+                },
+                "payment_type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.PaymentType"
+                        }
+                    ],
+                    "example": "STRIPR"
+                },
+                "reference": {
+                    "type": "string"
                 }
             }
         },

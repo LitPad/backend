@@ -15,6 +15,14 @@ const (
 	PTYPE_PAYPAL PaymentType = "PAYPAL"
 )
 
+type PaymentStatus string
+
+const (
+	PSPENDING PaymentStatus = "PENDING"
+	PSSUCCEEDED PaymentStatus = "SUCCEEDED"
+	PSFAILED PaymentStatus = "FAILED"
+)
+
 type AgeType int
 
 const (

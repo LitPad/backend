@@ -42,4 +42,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	profilesRouter.Patch("/update", endpoint.AuthMiddleware, endpoint.UpdateProfile)
 	profilesRouter.Put("/update-password", endpoint.AuthMiddleware, endpoint.UpdatePassword)
 	profilesRouter.Get("/profile/:username/follow", endpoint.AuthMiddleware, endpoint.FollowUser)
+
+	// Wallet Routes ()
+	walletRouter := api.Group("/wallet")
+	walletRouter.Get("/coins", endpoint.AvailableCoins)
+	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 }

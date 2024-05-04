@@ -35,6 +35,8 @@ type Config struct {
 	SocialsPassword           string `mapstructure:"SOCIALS_PASSWORD"`
 	EmailVerificationPath     string `mapstructure:"EMAIL_VERIFICATION_PATH"`
 	PasswordResetPath         string `mapstructure:"PASSWORD_RESET_PATH"`
+	StripePublicKey           string `mapstructure:"STRIPE_PUBLIC_KEY"`
+	StripeSecretKey           string `mapstructure:"STRIPE_SECRET_KEY"`
 }
 
 func GetConfig() (config Config) {
