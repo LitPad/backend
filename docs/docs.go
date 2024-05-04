@@ -286,11 +286,11 @@ const docTemplate = `{
         },
         "/auth/send-password-reset-otp": {
             "post": {
-                "description": "` + "`" + `This endpoint sends new password reset otp to the user's email.` + "`" + `",
+                "description": "` + "`" + `This endpoint sends new password reset link to the user's email.` + "`" + `",
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Send Password Reset Otp",
+                "summary": "Send Password Reset Link",
                 "parameters": [
                     {
                         "description": "Email object",
@@ -326,7 +326,7 @@ const docTemplate = `{
         },
         "/auth/set-new-password": {
             "post": {
-                "description": "` + "`" + `This endpoint verifies the password reset otp.` + "`" + `",
+                "description": "` + "`" + `This endpoint verifies the password reset token and set new password.` + "`" + `",
                 "tags": [
                     "Auth"
                 ],
@@ -387,6 +387,44 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/verify-password-reset-token/{token_string}": {
+            "get": {
+                "description": "` + "`" + `This endpoint checks the validity of a password reset token.` + "`" + `",
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Check Password Reset Token Validity",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Token string",
+                        "name": "token_string",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
                         }
                     },
                     "422": {

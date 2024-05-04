@@ -81,11 +81,11 @@ func (ep Endpoint) VerifyEmail(c *fiber.Ctx) error {
 	token := models.Token{TokenString: data.TokenString}
 	db.Joins("User").Take(&token, token)
 	if token.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Invalid Token"))
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
 	}
 
 	if token.CheckExpiration() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired Token"))
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
 	}
 	// Update User
 	user := token.User
@@ -136,8 +136,8 @@ func (ep Endpoint) ResendVerificationEmail(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Verification email sent"))
 }
 
-// @Summary Send Password Reset Otp
-// @Description `This endpoint sends new password reset otp to the user's email.`
+// @Summary Send Password Reset Link
+// @Description `This endpoint sends new password reset link to the user's email.`
 // @Tags Auth
 // @Param email body schemas.EmailRequestSchema true "Email object"
 // @Success 200 {object} schemas.ResponseSchema
@@ -166,11 +166,36 @@ func (ep Endpoint) SendPasswordResetOtp(c *fiber.Ctx) error {
 	db.Save(&token) // Create or save
 	go senders.SendEmail(&user, "reset", &token.TokenString, GetBaseReferer(c))
 
-	return c.Status(200).JSON(ResponseMessage("Password otp sent"))
+	return c.Status(200).JSON(ResponseMessage("Password reset link sent"))
+}
+
+// @Summary Check Password Reset Token Validity
+// @Description `This endpoint checks the validity of a password reset token.`
+// @Tags Auth
+// @Param token_string path string true "Token string"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /auth/verify-password-reset-token/{token_string} [get]
+func (ep Endpoint) VerifyPasswordResetToken(c *fiber.Ctx) error {
+	db := ep.DB
+
+	tokenStr := c.Params("token_string")
+
+	token := models.Token{TokenString: tokenStr}
+	db.Joins("User").Take(&token, token)
+	if token.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
+	}
+
+	if token.CheckExpiration() {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
+	}
+	return c.Status(200).JSON(ResponseMessage("Token verified successfully"))
 }
 
 // @Summary Set New Password
-// @Description `This endpoint verifies the password reset otp.`
+// @Description `This endpoint verifies the password reset token and set new password.`
 // @Tags Auth
 // @Param email body schemas.SetNewPasswordSchema true "Password reset object"
 // @Success 200 {object} schemas.ResponseSchema
@@ -190,11 +215,11 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 	token := models.Token{TokenString: data.TokenString}
 	db.Joins("User").Take(&token, token)
 	if token.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Invalid Token"))
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
 	}
 
 	if token.CheckExpiration() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired Token"))
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
 	}
 
 	user := token.User

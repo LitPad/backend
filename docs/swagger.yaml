@@ -476,7 +476,7 @@ paths:
       - Auth
   /auth/send-password-reset-otp:
     post:
-      description: '`This endpoint sends new password reset otp to the user''s email.`'
+      description: '`This endpoint sends new password reset link to the user''s email.`'
       parameters:
       - description: Email object
         in: body
@@ -497,12 +497,12 @@ paths:
           description: Unprocessable Entity
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
-      summary: Send Password Reset Otp
+      summary: Send Password Reset Link
       tags:
       - Auth
   /auth/set-new-password:
     post:
-      description: '`This endpoint verifies the password reset otp.`'
+      description: '`This endpoint verifies the password reset token and set new password.`'
       parameters:
       - description: Password reset object
         in: body
@@ -546,6 +546,31 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: Verify a user's email
+      tags:
+      - Auth
+  /auth/verify-password-reset-token/{token_string}:
+    get:
+      description: '`This endpoint checks the validity of a password reset token.`'
+      parameters:
+      - description: Token string
+        in: path
+        name: token_string
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Check Password Reset Token Validity
       tags:
       - Auth
   /general/site-detail:
