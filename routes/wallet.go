@@ -68,3 +68,42 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(response)
 }
+
+// @Summary View Current Transactions
+// @Description This endpoint returns all transactions of a user
+// @Tags Wallet
+// @Param page query int false "Current Page" default(1)
+// @Param payment_status query string false "Payment Status"
+// @Success 200 {object} schemas.TransactionsResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /wallet/transactions [get]
+// @Security BearerAuth
+func (ep Endpoint) AllUserTransactions(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	transactions := []models.Transaction{}
+	filterData := models.Transaction{UserID: user.ID}
+
+	paymentStatus, errD := ValidatePaymentStatus(c)
+	if errD != nil {
+		return c.Status(400).JSON(errD)
+	}
+	empty := ""
+	if paymentStatus != &empty {
+		filterData.PaymentStatus = choices.PaymentStatus(*paymentStatus)
+	}
+	db.Where(filterData).Order("created_at DESC").Joins("Coin").Find(&transactions)
+	// Paginate and return transactions
+	paginatedData, paginatedTransactions, err := PaginateQueryset(transactions, c)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	transactions = paginatedTransactions.([]models.Transaction)
+	response := schemas.TransactionsResponseSchema{
+		ResponseSchema: ResponseMessage("Transactions fetched successfully"),
+		Data: schemas.TransactionsResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(transactions),
+	}
+	return c.Status(200).JSON(response)
+}

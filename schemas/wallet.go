@@ -63,3 +63,23 @@ type PaymentResponseSchema struct {
 	ResponseSchema
 	Data TransactionSchema `json:"data"`
 }
+
+type TransactionsResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []TransactionSchema `json:"transactions"`
+}
+
+func (t TransactionsResponseDataSchema) Init(transactions []models.Transaction) TransactionsResponseDataSchema {
+	// Set Initial Data
+	transactionItems := []TransactionSchema{}
+	for i := range transactions {
+		transactionItems = append(transactionItems, TransactionSchema{}.Init(transactions[i]))
+	}
+	t.Items = transactionItems
+	return t
+}
+
+type TransactionsResponseSchema struct {
+	ResponseSchema
+	Data TransactionsResponseDataSchema `json:"data"`
+}

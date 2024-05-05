@@ -44,6 +44,23 @@ func CreatePaymentIntent(db *gorm.DB, user models.User, coin models.Coin) (*mode
 	// Create Transaction Object
 	transaction := models.Transaction{Reference: pi.ID, ClientSecret: pi.ClientSecret, UserID: user.ID, CoinID: coin.ID, PaymentType: choices.PTYPE_STRIPE}
 	db.Create(&transaction)
-	transaction.Coin = coin 
+	transaction.Coin = coin
 	return &transaction, nil
+}
+
+func IsValidPaymentStatus(s string) bool {
+	switch choices.PaymentStatus(s) {
+	case choices.PSPENDING, choices.PSSUCCEEDED, choices.PSFAILED:
+		return true
+	}
+	return false
+}
+
+func ValidatePaymentStatus(c *fiber.Ctx) (*string, *utils.ErrorResponse) {
+	status := c.Query("payment_status", "")
+	if status != "" && !IsValidPaymentStatus(status) {
+		errD := utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid payment status")
+		return nil, &errD
+	}
+	return &status, nil
 }

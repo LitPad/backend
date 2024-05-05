@@ -300,6 +300,33 @@ definitions:
       reference:
         type: string
     type: object
+  schemas.TransactionsResponseDataSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/schemas.TransactionSchema'
+        type: array
+    type: object
+  schemas.TransactionsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.TransactionsResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.UpdatePasswordSchema:
     properties:
       new_password:
@@ -848,6 +875,33 @@ paths:
       security:
       - BearerAuth: []
       summary: Buy Coins
+      tags:
+      - Wallet
+  /wallet/transactions:
+    get:
+      description: This endpoint returns all transactions of a user
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      - description: Payment Status
+        in: query
+        name: payment_status
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.TransactionsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Current Transactions
       tags:
       - Wallet
 produces:
