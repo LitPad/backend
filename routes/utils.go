@@ -50,7 +50,7 @@ func CreatePaymentIntent(db *gorm.DB, user models.User, coin models.Coin) (*mode
 
 func IsValidPaymentStatus(s string) bool {
 	switch choices.PaymentStatus(s) {
-	case choices.PSPENDING, choices.PSSUCCEEDED, choices.PSFAILED:
+	case choices.PSPENDING, choices.PSSUCCEEDED, choices.PSFAILED, choices.PSCANCELED:
 		return true
 	}
 	return false

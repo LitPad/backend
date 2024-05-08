@@ -48,4 +48,5 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	walletRouter.Get("/coins", endpoint.AvailableCoins)
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
+	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 }

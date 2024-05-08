@@ -21,6 +21,7 @@ const (
 	PSPENDING PaymentStatus = "PENDING"
 	PSSUCCEEDED PaymentStatus = "SUCCEEDED"
 	PSFAILED PaymentStatus = "FAILED"
+	PSCANCELED PaymentStatus = "CANCELED"
 )
 
 type AgeType int
