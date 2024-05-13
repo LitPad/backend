@@ -92,6 +92,20 @@ func (ep Endpoint) GetUsers(c *fiber.Ctx) error{
 	return c.Status(200).JSON(response)
 }
 
+
+// @Summary List Books with Pagination
+// @Description Retrieves a list of books with support for pagination and optional filtering based on book title.
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Param title query string false "Title of the book to filter by"
+// @Param limit query int false "Limit number of book profiles per page (default is 10)" default(10)
+// @Param page query int false "Page number starting from 0 (default is 0)" default(0)
+// @Success 200 {object} schemas.BookResponseSchema "Successfully retrieved list of books"
+// @Failure 400 {object} utils.ErrorResponse "Invalid query parameters"
+// @Failure 404 {object} utils.ErrorResponse "No books found"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /books [get]
 func (ep Endpoint) GetBooks(c *fiber.Ctx) error{
 	db := ep.DB
 
