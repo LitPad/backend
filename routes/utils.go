@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
@@ -8,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v78"
-	"github.com/stripe/stripe-go/v78/paymentintent"
+	"github.com/stripe/stripe-go/v78/checkout/session"
 	"gorm.io/gorm"
 )
 
@@ -25,24 +26,37 @@ func GetBaseReferer(c *fiber.Ctx) string {
 	return string(referer[:])
 }
 
-func CreatePaymentIntent(db *gorm.DB, user models.User, coin models.Coin) (*models.Transaction, *utils.ErrorResponse) {
+func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin models.Coin, quantity int64) (*models.Transaction, *utils.ErrorResponse) {
+	baseUrl := GetBaseReferer(c)
 	stripe.Key = cfg.StripeSecretKey
 	price := coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
-	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(int64(price)),
-		Currency: stripe.String(string(stripe.CurrencyUSD)),
-		AutomaticPaymentMethods: &stripe.PaymentIntentAutomaticPaymentMethodsParams{
-			Enabled: stripe.Bool(true),
+	productName := fmt.Sprintf("%s coins", fmt.Sprint(coin.Amount))
+	params := &stripe.CheckoutSessionParams{
+		SuccessURL: stripe.String(baseUrl + cfg.StripeCheckoutSuccessUrlPath),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency: stripe.String(string(stripe.CurrencyUSD)),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: &productName,
+					},
+					TaxBehavior: stripe.String(string(stripe.PriceTaxBehaviorExclusive)),
+					UnitAmount:  stripe.Int64(price),
+				},
+				Quantity: stripe.Int64(quantity),
+			},
 		},
+		Mode:          stripe.String(string(stripe.CheckoutSessionModePayment)),
+		CustomerEmail: &user.Email,
 	}
-	pi, err := paymentintent.New(params)
+	s, err := session.New(params)
 	if err != nil {
 		errD := utils.RequestErr(utils.ERR_SERVER_ERROR, "Something went wrong")
 		return nil, &errD
 	}
 
 	// Create Transaction Object
-	transaction := models.Transaction{Reference: pi.ID, ClientSecret: pi.ClientSecret, UserID: user.ID, CoinID: coin.ID, PaymentType: choices.PTYPE_STRIPE}
+	transaction := models.Transaction{Reference: s.ID, UserID: user.ID, CoinID: coin.ID, PaymentType: choices.PTYPE_STRIPE, Quantity: quantity, CheckoutURL: s.URL}
 	db.Create(&transaction)
 	transaction.Coin = coin
 	return &transaction, nil

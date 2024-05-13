@@ -22,25 +22,32 @@ func (c CoinSchema) Init(coin models.Coin) CoinSchema {
 
 type BuyCoinSchema struct {
 	PaymentType choices.PaymentType `json:"payment_type" validate:"required,payment_type_validator" example:"STRIPE"`
+	Quantity    int64               `json:"quantity" validate:"required" example:"2"`
 	CoinID      uuid.UUID           `json:"coin_id" validate:"required" example:"19e8bd22-fab1-4bb4-ba82-77c41bea6b99"`
 }
 
 type TransactionSchema struct {
 	Reference     string                `json:"reference"`
-	ClientSecret  string                `json:"client_secret"`
 	Coins         int                   `json:"coins" example:"10"`
-	PaymentType   choices.PaymentType   `json:"payment_type" example:"STRIPR"`
+	CoinsTotal    int                   `json:"coins_total" example:"30"`
+	PaymentType   choices.PaymentType   `json:"payment_type" example:"STRIPE"`
+	Quantity      int64                 `json:"quantity" example:"10"`
 	Amount        decimal.Decimal       `json:"amount" example:"10.35"`
+	AmountTotal   decimal.Decimal       `json:"amount_total" example:"30.35"`
 	PaymentStatus choices.PaymentStatus `json:"payment_status"`
+	CheckoutURL   string                `json:"checkout_url"`
 }
 
 func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchema {
 	t.Reference = transaction.Reference
-	t.ClientSecret = transaction.ClientSecret
 	t.Coins = transaction.Coin.Amount
+	t.CoinsTotal = transaction.Coin.Amount * int(transaction.Quantity)
 	t.PaymentType = transaction.PaymentType
 	t.Amount = transaction.Coin.Price
+	t.AmountTotal = transaction.Coin.Price.Mul(decimal.NewFromInt(transaction.Quantity))
 	t.PaymentStatus = transaction.PaymentStatus
+	t.Quantity = transaction.Quantity
+	t.CheckoutURL = transaction.CheckoutURL
 	return t
 }
 

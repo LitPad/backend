@@ -14,16 +14,21 @@ type Coin struct {
 
 type Transaction struct {
 	BaseModel
-	Reference    string    `gorm:"type: varchar(1000);not null"` // Paymentintent id
-	ClientSecret string    `gorm:"type: varchar(1000);null"`     // Paymentintent client secret
+	Reference    string    `gorm:"type: varchar(1000);not null"` // payment id
 	UserID       uuid.UUID `json:"user_id"`
 	User         User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 
-	CoinID uuid.UUID `json:"coin_id"`
-	Coin   Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:CASCADE"`
+	CoinID   uuid.UUID `json:"coin_id"`
+	Coin     Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:CASCADE"`
+	Quantity int64     `gorm:"default:1"`
 
 	PaymentType   choices.PaymentType   `json:"payment_type"`
 	PaymentStatus choices.PaymentStatus `json:"payment_status" gorm:"default:PENDING"`
+	CheckoutURL		string
+}
+
+func (t Transaction) CoinsTotal() int {
+	return t.Coin.Amount * int(t.Quantity)
 }
 
 type BoughtBooks struct {

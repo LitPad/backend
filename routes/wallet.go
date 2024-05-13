@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/webhook"
 )
 
 // @Summary View Available Coins
@@ -58,7 +59,7 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 	var transaction models.Transaction
 	if data.PaymentType == choices.PTYPE_STRIPE {
 		// Create payment intent
-		trans, errD := CreatePaymentIntent(db, *user, coin)
+		trans, errD := CreateCheckoutSession(c, db, *user, coin, data.Quantity)
 		if errD != nil {
 			return c.Status(500).JSON(errD)
 		}
@@ -115,53 +116,39 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 	stripe.Key = cfg.StripeSecretKey
 	db := ep.DB
 	transaction := models.Transaction{}
-	event := stripe.Event{}
-
-	// Validate request
-	if errCode, errData := ValidateRequest(c, &event); errData != nil {
-		return c.Status(*errCode).JSON(errData)
+	sig := c.Get("Stripe-Signature")
+	event, err := webhook.ConstructEvent(c.BodyRaw(), sig, cfg.StripeWebhookSecret)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"err": err})
 	}
 
 	// Handle different event types
 	switch event.Type {
-	case "payment_intent.succeeded":
-		var paymentIntent stripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
+	case "checkout.session.completed":
+		var checkoutSession stripe.CheckoutSession
+		err := json.Unmarshal(event.Data.Raw, &checkoutSession)
 		if err != nil {
-			log.Printf("Error parsing webhook JSON: %v\n", err)
 			return c.SendStatus(fiber.StatusBadRequest)
 		}
 		// Payment was successful
-		transaction.Reference = paymentIntent.ID
+		transaction.Reference = checkoutSession.ID
 		db.Joins("User").Joins("Coin").Take(&transaction, transaction)
 		if transaction.ID != uuid.Nil {
 			user := transaction.User
-			coin := transaction.Coin
-			user.Coins = user.Coins + coin.Amount
+			user.Coins = user.Coins + transaction.CoinsTotal()
 			transaction.PaymentStatus = choices.PSSUCCEEDED
 			db.Save(&user)
 			db.Save(&transaction)
 		}
-	case "payment_intent.canceled":
-		var paymentIntent stripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
+	case "checkout.session.expired":
+		var checkoutSession stripe.CheckoutSession
+		err := json.Unmarshal(event.Data.Raw, &checkoutSession)
 		if err != nil {
-			log.Printf("Error parsing webhook JSON: %v\n", err)
 			return c.SendStatus(fiber.StatusBadRequest)
 		}
 		// Payment was canceled
-		transaction.Reference = paymentIntent.ID
+		transaction.Reference = checkoutSession.ID
 		db.Model(&transaction).Update("payment_status", choices.PSCANCELED)
-	case "payment_intent.payment_failed":
-		var paymentIntent stripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
-		if err != nil {
-			log.Printf("Error parsing webhook JSON: %v\n", err)
-			return c.SendStatus(fiber.StatusBadRequest)
-		}
-		// Payment failed
-		transaction.Reference = paymentIntent.ID
-		db.Model(&transaction).Update("payment_status", choices.PSFAILED)
 	default:
 		log.Printf("Unhandled event type: %s\n", event.Type)
 	}
