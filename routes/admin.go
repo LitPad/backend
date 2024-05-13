@@ -91,3 +91,59 @@ func (ep Endpoint) GetUsers(c *fiber.Ctx) error{
 
 	return c.Status(200).JSON(response)
 }
+
+func (ep Endpoint) GetBooks(c *fiber.Ctx) error{
+	db := ep.DB
+
+	limitQuery := c.Query("limit", "10")
+	pageQuery := c.Query("page", "0")
+	titleQuery := c.Query("title", "")
+
+	limit, err := strconv.Atoi(limitQuery)
+
+	if err !=nil{
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid query param `limit` "))
+	}
+
+	page, err := strconv.Atoi(pageQuery)
+
+	if err !=nil{
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid query param `page` "))
+	}
+
+	offset := (page - 1) * limit
+
+	var books []models.Book
+
+	query := db.Model(&models.Book{})
+
+	if len(titleQuery) > 0 {
+		query = query.Where("title ILIKE ?", "%" + titleQuery + "%")
+	}
+		
+	if err = query.Offset(offset).Limit(limit).Find(&books).Error; err != nil{
+		if err == gorm.ErrRecordNotFound{
+			response := schemas.BookResponseSchema{
+				ResponseSchema: ResponseMessage("No books exist"),
+				Data: []schemas.BookSchema{},
+			}
+
+			return c.Status(200).JSON(response)
+		}
+
+		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal Server Error"))
+	}
+
+	booksArr := make([]schemas.BookSchema, len(books))
+
+	for i, book := range books{
+		booksArr[i] = schemas.BookSchema{}.Init(book)
+	}
+
+	response := schemas.BookResponseSchema{
+		ResponseSchema: ResponseMessage("Books fetched successfully"),
+		Data: booksArr,
+	}
+
+	return c.Status(200).JSON(response)
+}
