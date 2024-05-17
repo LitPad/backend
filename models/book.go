@@ -2,17 +2,31 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"github.com/gosimple/slug"
+	"gorm.io/gorm"
 )
 
 type Tag struct {
 	BaseModel
-	Name string `json:"name"`
+	Name string `gorm:"unique"`
+	Slug string `gorm:"unique"`
+}
+
+func (tag *Tag) BeforeSave(tx *gorm.DB) (err error) {
+	tag.Slug = slug.Make(tag.Name)
+	return
 }
 
 type Genre struct {
 	BaseModel
-	Name string `json:"name"`
+	Name string `gorm:"unique"`
+	Slug string `gorm:"unique"`
 	Tags []Tag  `json:"tags" gorm:"many2many:genre_tags;"`
+}
+
+func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
+	genre.Slug = slug.Make(genre.Name)
+	return
 }
 
 type Book struct {

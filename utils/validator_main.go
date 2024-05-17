@@ -27,6 +27,7 @@ func init() {
 	translator, _ = uni.GetTranslator("en")
 
 	// Register Custom Validators
+	customValidator.RegisterValidation("payment_type_validator", PaymentTypeValidator)
 
 	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
@@ -54,6 +55,7 @@ func registerTranslations(param string) {
 	registerTranslation("required", "This field is required.", translator)
 	registerTranslation("required_if", "This field is required.", translator)
 	registerTranslation("required_without", "This field is required.", translator)
+	registerTranslation("payment_type_validator", "Invalid payment type", translator)
 
 	minErrMsg := fmt.Sprintf("%s characters min", param)
 	registerTranslation("min", minErrMsg, translator)

@@ -28,7 +28,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	authRouter.Post("/verify-email", endpoint.VerifyEmail)
 	authRouter.Post("/resend-verification-email", endpoint.ResendVerificationEmail)
 	authRouter.Post("/send-password-reset-otp", endpoint.SendPasswordResetOtp)
-	// authRouter.Get("/verify-password-reset-token/:token_string", endpoint.VerifyPasswordResetToken)
+	authRouter.Get("/verify-password-reset-token/:token_string", endpoint.VerifyPasswordResetToken)
 	authRouter.Post("/set-new-password", endpoint.SetNewPassword)
 	authRouter.Post("/login", endpoint.Login)
 	authRouter.Post("/google", endpoint.GoogleLogin)
@@ -49,9 +49,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/books", endpoint.AuthMiddleware, endpoint.GetBooks)
 
 	// Wallet Routes ()
-	// walletRouter := api.Group("/wallet")
-	// walletRouter.Get("/coins", endpoint.AvailableCoins)
-	// walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
-	// walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
-	// walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
+	walletRouter := api.Group("/wallet")
+	walletRouter.Get("/coins", endpoint.AvailableCoins)
+	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
+	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
+	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 }

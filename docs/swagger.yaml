@@ -10,6 +10,26 @@ definitions:
     x-enum-varnames:
     - ACCTYPE_READER
     - ACCTYPE_WRITER
+  choices.PaymentStatus:
+    enum:
+    - PENDING
+    - SUCCEEDED
+    - FAILED
+    type: string
+    x-enum-varnames:
+    - PSPENDING
+    - PSSUCCEEDED
+    - PSFAILED
+  choices.PaymentType:
+    enum:
+    - GOOGLE PAY
+    - STRIPE
+    - PAYPAL
+    type: string
+    x-enum-varnames:
+    - PTYPE_GPAY
+    - PTYPE_STRIPE
+    - PTYPE_PAYPAL
   models.SiteDetail:
     properties:
       address:
@@ -49,6 +69,44 @@ definitions:
     properties:
       success:
         example: pong
+        type: string
+    type: object
+  schemas.BuyCoinSchema:
+    properties:
+      coin_id:
+        example: 19e8bd22-fab1-4bb4-ba82-77c41bea6b99
+        type: string
+      payment_type:
+        allOf:
+        - $ref: '#/definitions/choices.PaymentType'
+        example: STRIPE
+    required:
+    - coin_id
+    - payment_type
+    type: object
+  schemas.CoinSchema:
+    properties:
+      amount:
+        example: 5
+        type: integer
+      id:
+        example: 19e8bd22-fab1-4bb4-ba82-77c41bea6b99
+        type: string
+      price:
+        example: 10.45
+        type: number
+    type: object
+  schemas.CoinsResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.CoinSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
         type: string
     type: object
   schemas.EmailRequestSchema:
@@ -97,6 +155,17 @@ definitions:
     required:
     - email
     - password
+    type: object
+  schemas.PaymentResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.TransactionSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
     type: object
   schemas.RefreshTokenSchema:
     properties:
@@ -210,6 +279,52 @@ definitions:
         type: string
       refresh:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
+        type: string
+    type: object
+  schemas.TransactionSchema:
+    properties:
+      amount:
+        example: 10.35
+        type: number
+      client_secret:
+        type: string
+      coins:
+        example: 10
+        type: integer
+      payment_status:
+        $ref: '#/definitions/choices.PaymentStatus'
+      payment_type:
+        allOf:
+        - $ref: '#/definitions/choices.PaymentType'
+        example: STRIPR
+      reference:
+        type: string
+    type: object
+  schemas.TransactionsResponseDataSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/schemas.TransactionSchema'
+        type: array
+    type: object
+  schemas.TransactionsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.TransactionsResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
         type: string
     type: object
   schemas.UpdatePasswordSchema:
@@ -476,7 +591,7 @@ paths:
       - Auth
   /auth/send-password-reset-otp:
     post:
-      description: '`This endpoint sends new password reset otp to the user''s email.`'
+      description: '`This endpoint sends new password reset link to the user''s email.`'
       parameters:
       - description: Email object
         in: body
@@ -497,12 +612,12 @@ paths:
           description: Unprocessable Entity
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
-      summary: Send Password Reset Otp
+      summary: Send Password Reset Link
       tags:
       - Auth
   /auth/set-new-password:
     post:
-      description: '`This endpoint verifies the password reset otp.`'
+      description: '`This endpoint verifies the password reset token and set new password.`'
       parameters:
       - description: Password reset object
         in: body
@@ -546,6 +661,31 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: Verify a user's email
+      tags:
+      - Auth
+  /auth/verify-password-reset-token/{token_string}:
+    get:
+      description: '`This endpoint checks the validity of a password reset token.`'
+      parameters:
+      - description: Token string
+        in: path
+        name: token_string
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Check Password Reset Token Validity
       tags:
       - Auth
   /general/site-detail:
@@ -699,6 +839,71 @@ paths:
       summary: Update User Password
       tags:
       - Profiles
+  /wallet/coins:
+    get:
+      description: This endpoint returns all available coins for sale
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.CoinsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View Available Coins
+      tags:
+      - Wallet
+    post:
+      description: This endpoint allows a user to buy coins
+      parameters:
+      - description: Payment object
+        in: body
+        name: coin
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BuyCoinSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.PaymentResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buy Coins
+      tags:
+      - Wallet
+  /wallet/transactions:
+    get:
+      description: This endpoint returns all transactions of a user
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      - description: Payment Status
+        in: query
+        name: payment_status
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.TransactionsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Current Transactions
+      tags:
+      - Wallet
 produces:
 - application/json
 securityDefinitions:

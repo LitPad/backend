@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: go-fiber-sia-service
+    env: docker
+    dockerfilePath: ./Dockerfile-Prod
+    envVars:
+      - key: SIA_API_URL
+        value: http://localhost:9980
+      - key: SIA_API_AUTH_KEY
+        value: dXNlcjpteV9zZWN1cmVfcGFzc3dvcmQ=
+    plan: free
