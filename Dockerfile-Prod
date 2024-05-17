@@ -1,11 +1,11 @@
 # Use an official Golang runtime as a parent image
 FROM golang:1.22.1-alpine3.18
 
-# Install wget and other dependencies
-RUN apk add --no-cache wget bash
+# Install required packages for building siad and other dependencies
+RUN apk add --no-cache wget git make gcc musl-dev
 
 # Create a directory for your app
-RUN mkdir build
+RUN mkdir -p /build
 
 # Set the working directory
 WORKDIR /build
@@ -25,12 +25,14 @@ EXPOSE 8000
 # Build the Go Fiber application
 RUN go build -tags netgo -ldflags '-s -w' -o app
 
-# Install siad
-RUN wget -O sia.tar.gz https://sia.tech/releases/Sia-v1.5.6-linux-amd64.tar.gz && \
-    tar -xzvf sia.tar.gz && \
-    mv Sia-v1.5.6-linux-amd64/siad /usr/local/bin/ && \
-    mv Sia-v1.5.6-linux-amd64/siac /usr/local/bin/ && \
-    rm -rf sia.tar.gz Sia-v1.5.6-linux-amd64
+# Clone the siad repository and build it
+RUN git clone https://github.com/SiaFoundation/siad && \
+    cd siad && \
+    make dependencies && \
+    make && \
+    mv siad /usr/local/bin/ && \
+    cd .. && \
+    rm -rf siad
 
 # Start both siad and the Go Fiber app
-CMD ["sh", "-c", "siad --authenticate-api=\"my_secure_password\" & ./app"]
+CMD ["sh", "-c", "siad --authenticate-api='my_secure_password' & ./app"]
