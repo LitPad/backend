@@ -1,38 +1,19 @@
-# Use an official Golang runtime as a parent image
 FROM golang:1.22.1-alpine3.18
 
-# Install required packages for building siad and other dependencies
-RUN apk add --no-cache wget git make gcc musl-dev
+RUN mkdir build
 
-# Create a directory for your app
-RUN mkdir -p /build
-
-# Set the working directory
+# We create folder named build for our app.
 WORKDIR /build
 
-# Copy go.mod and go.sum to download dependencies
 COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy the source code
 COPY . .
 
-# Expose the port your app runs on
 EXPOSE 8000
 
-# Build the Go Fiber application
 RUN go build -tags netgo -ldflags '-s -w' -o app
 
-# Clone the siad repository and build it
-RUN git clone https://github.com/SiaFoundation/siad && \
-    cd siad && \
-    make dependencies && \
-    make && \
-    mv siad /usr/local/bin/ && \
-    cd .. && \
-    rm -rf siad
-
-# Start both siad and the Go Fiber app
-CMD ["sh", "-c", "siad --authenticate-api='my_secure_password' & ./app"]
+CMD ["./app"]
