@@ -15,11 +15,13 @@ definitions:
     - PENDING
     - SUCCEEDED
     - FAILED
+    - CANCELED
     type: string
     x-enum-varnames:
     - PSPENDING
     - PSSUCCEEDED
     - PSFAILED
+    - PSCANCELED
   choices.PaymentType:
     enum:
     - GOOGLE PAY
@@ -30,6 +32,54 @@ definitions:
     - PTYPE_GPAY
     - PTYPE_STRIPE
     - PTYPE_PAYPAL
+  models.Book:
+    properties:
+      author:
+        $ref: '#/definitions/models.User'
+      author_id:
+        type: string
+      blurb:
+        type: string
+      chapters:
+        type: integer
+      cover_image:
+        type: string
+      fullViewFile:
+        description: Full File to view
+        type: string
+      genre:
+        $ref: '#/definitions/models.Genre'
+      genre_id:
+        type: string
+      partialViewChapters:
+        description: Amount of chapters allowed to view freely
+        type: integer
+      partialViewFile:
+        description: Partial File to view
+        type: string
+      price:
+        description: Book price in coins
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/models.Tag'
+        type: array
+      title:
+        type: string
+      word_count:
+        type: integer
+    type: object
+  models.Genre:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/models.Tag'
+        type: array
+    type: object
   models.SiteDetail:
     properties:
       address:
@@ -65,11 +115,123 @@ definitions:
     required:
     - email
     type: object
+  models.Tag:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  models.User:
+    properties:
+      access:
+        type: string
+      account_type:
+        $ref: '#/definitions/choices.AccType'
+      avatar:
+        type: string
+      bio:
+        type: string
+      books:
+        description: Back referenced
+        items:
+          $ref: '#/definitions/models.Book'
+        type: array
+      coins:
+        type: integer
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
+      first_name:
+        example: John
+        maxLength: 255
+        type: string
+      followers:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      followings:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+      last_name:
+        example: Doe
+        maxLength: 255
+        type: string
+      password:
+        example: strongpassword
+        maxLength: 50
+        minLength: 8
+        type: string
+      refresh:
+        type: string
+      socialLogin:
+        type: boolean
+      terms_agreement:
+        type: boolean
+      username:
+        example: john-doe
+        maxLength: 255
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - username
+    type: object
   routes.HealthCheckSchema:
     properties:
       success:
         example: pong
         type: string
+    type: object
+  schemas.BookResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.BookSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.BookSchema:
+    properties:
+      author:
+        $ref: '#/definitions/models.User'
+      author_id:
+        type: string
+      blurb:
+        type: string
+      chapters:
+        type: integer
+      cover_image:
+        type: string
+      full_view_file:
+        type: string
+      genre:
+        $ref: '#/definitions/models.Genre'
+      genre_id:
+        type: string
+      partial_view_chapters:
+        type: integer
+      partial_view_file:
+        type: string
+      price:
+        type: integer
+      tags:
+        items:
+          $ref: '#/definitions/models.Tag'
+        type: array
+      title:
+        type: string
+      word_count:
+        type: integer
     type: object
   schemas.BuyCoinSchema:
     properties:
@@ -80,9 +242,13 @@ definitions:
         allOf:
         - $ref: '#/definitions/choices.PaymentType'
         example: STRIPE
+      quantity:
+        example: 2
+        type: integer
     required:
     - coin_id
     - payment_type
+    - quantity
     type: object
   schemas.CoinSchema:
     properties:
@@ -277,8 +443,30 @@ definitions:
       access:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
         type: string
+      account_type:
+        $ref: '#/definitions/choices.AccType'
+      avatar:
+        type: string
+      bio:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      followers:
+        items:
+          $ref: '#/definitions/schemas.FollowerData'
+        type: array
+      followings:
+        items:
+          $ref: '#/definitions/schemas.FollowerData'
+        type: array
+      last_name:
+        type: string
       refresh:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
+        type: string
+      username:
         type: string
     type: object
   schemas.TransactionSchema:
@@ -286,17 +474,26 @@ definitions:
       amount:
         example: 10.35
         type: number
-      client_secret:
+      amount_total:
+        example: 30.35
+        type: number
+      checkout_url:
         type: string
       coins:
         example: 10
+        type: integer
+      coins_total:
+        example: 30
         type: integer
       payment_status:
         $ref: '#/definitions/choices.PaymentStatus'
       payment_type:
         allOf:
         - $ref: '#/definitions/choices.PaymentType'
-        example: STRIPR
+        example: STRIPE
+      quantity:
+        example: 10
+        type: integer
       reference:
         type: string
     type: object
@@ -388,6 +585,19 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.UserProfilesResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.UserProfile'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.VerifyEmailRequestSchema:
     properties:
       token_string:
@@ -415,6 +625,53 @@ info:
   title: LITPAD API
   version: "1.0"
 paths:
+  /admin/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of user profiles with support for pagination and
+        optional filtering based on user account type.
+      parameters:
+      - description: Type of user to filter by (all, reader, writer)
+        enum:
+        - all
+        - reader
+        - writer
+        in: query
+        name: type
+        type: string
+      - default: 10
+        description: Limit number of user profiles per page (default is 10)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Page number starting from 0 (default is 0)
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of user profiles
+          schema:
+            $ref: '#/definitions/schemas.UserProfilesResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: No users found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: List Users with Pagination
+      tags:
+      - Users
   /auth/facebook:
     post:
       description: |-
@@ -688,6 +945,49 @@ paths:
       summary: Check Password Reset Token Validity
       tags:
       - Auth
+  /books:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of books with support for pagination and optional
+        filtering based on book title.
+      parameters:
+      - description: Title of the book to filter by
+        in: query
+        name: title
+        type: string
+      - default: 10
+        description: Limit number of book profiles per page (default is 10)
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Page number starting from 0 (default is 0)
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of books
+          schema:
+            $ref: '#/definitions/schemas.BookResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: No books found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: List Books with Pagination
+      tags:
+      - Books
   /general/site-detail:
     get:
       description: This endpoint retrieves few details of the site/application.

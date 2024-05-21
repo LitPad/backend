@@ -36,15 +36,6 @@ type UserProfile struct {
 	Followings  []FollowerData  `json:"followings"`
 }
 
-func (dto *UserProfile) FromModel(user models.User) {
-	dto.FirstName = user.FirstName
-	dto.LastName = user.LastName
-	dto.Username = user.Username
-	dto.Avatar = user.Avatar
-	dto.Bio = user.Bio
-	dto.AccountType = user.AccountType
-}
-
 func (u UserProfile) Init(user models.User) UserProfile {
 	followers := []FollowerData{}
 	followings := []FollowerData{}

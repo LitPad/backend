@@ -1,5 +1,7 @@
 package schemas
 
+import "github.com/LitPad/backend/models"
+
 // REQUEST BODY SCHEMAS
 type RegisterUser struct {
 	FirstName      string `json:"first_name" validate:"required,max=50" example:"John"`
@@ -43,10 +45,15 @@ type RegisterResponseSchema struct {
 }
 
 type TokensResponseSchema struct {
+	UserProfile
 	Access			string					`json:"access" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 	Refresh			string					`json:"refresh" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 }
 
+func (t TokensResponseSchema) Init(user models.User) TokensResponseSchema {
+	t.UserProfile = t.UserProfile.Init(user)
+	return t
+}
 type LoginResponseSchema struct {
 	ResponseSchema
 	Data			TokensResponseSchema		`json:"data"`

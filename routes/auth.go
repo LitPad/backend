@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/senders"
 	"github.com/LitPad/backend/utils"
@@ -253,7 +254,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	}
 
 	user := models.User{Email: data.Email}
-	db.Take(&user, user)
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil || !utils.CheckPasswordHash(data.Password, user.Password) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_CREDENTIALS, "Invalid Credentials"))
 	}
@@ -270,7 +271,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	db.Save(&user)
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
+		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh}.Init(user),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -373,7 +374,7 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 
 	token := data.Refresh
 	user := models.User{Refresh: &token}
-	db.Take(&user, user)
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil || !DecodeRefreshToken(token) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Refresh token is invalid or expired"))
 
@@ -388,7 +389,7 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Tokens refresh successful"),
-		Data:           schemas.TokensResponseSchema{Access: access, Refresh: refresh},
+		Data:           schemas.TokensResponseSchema{Access: access, Refresh: refresh}.Init(user),
 	}
 	return c.Status(201).JSON(response)
 }

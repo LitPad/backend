@@ -8,6 +8,7 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -200,7 +201,7 @@ func GenerateUsername(db *gorm.DB, firstName string, lastName string, username *
 
 func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *utils.ErrorResponse) {
 	user := models.User{Email: email}
-	db.Take(&user, user)
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil {
 		name := strings.Split(name, " ")
 		firstName := name[0]

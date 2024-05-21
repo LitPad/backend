@@ -22,6 +22,74 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/users": {
+            "get": {
+                "description": "Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List Users with Pagination",
+                "parameters": [
+                    {
+                        "enum": [
+                            "all",
+                            "reader",
+                            "writer"
+                        ],
+                        "type": "string",
+                        "description": "Type of user to filter by (all, reader, writer)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit number of user profiles per page (default is 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page number starting from 0 (default is 0)",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of user profiles",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserProfilesResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No users found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/facebook": {
             "post": {
                 "description": "` + "`" + `This endpoint generates new access and refresh tokens for authentication via facebook` + "`" + `\n` + "`" + `Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization` + "`" + `",
@@ -436,6 +504,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/books": {
+            "get": {
+                "description": "Retrieves a list of books with support for pagination and optional filtering based on book title.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Books"
+                ],
+                "summary": "List Books with Pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Title of the book to filter by",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Limit number of book profiles per page (default is 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Page number starting from 0 (default is 0)",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of books",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No books found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/general/site-detail": {
             "get": {
                 "description": "This endpoint retrieves few details of the site/application.",
@@ -790,12 +921,14 @@ const docTemplate = `{
             "enum": [
                 "PENDING",
                 "SUCCEEDED",
-                "FAILED"
+                "FAILED",
+                "CANCELED"
             ],
             "x-enum-varnames": [
                 "PSPENDING",
                 "PSSUCCEEDED",
-                "PSFAILED"
+                "PSFAILED",
+                "PSCANCELED"
             ]
         },
         "choices.PaymentType": {
@@ -810,6 +943,77 @@ const docTemplate = `{
                 "PTYPE_STRIPE",
                 "PTYPE_PAYPAL"
             ]
+        },
+        "models.Book": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "author_id": {
+                    "type": "string"
+                },
+                "blurb": {
+                    "type": "string"
+                },
+                "chapters": {
+                    "type": "integer"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "fullViewFile": {
+                    "description": "Full File to view",
+                    "type": "string"
+                },
+                "genre": {
+                    "$ref": "#/definitions/models.Genre"
+                },
+                "genre_id": {
+                    "type": "string"
+                },
+                "partialViewChapters": {
+                    "description": "Amount of chapters allowed to view freely",
+                    "type": "integer"
+                },
+                "partialViewFile": {
+                    "description": "Partial File to view",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Book price in coins",
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tag"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Genre": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tag"
+                    }
+                }
+            }
         },
         "models.SiteDetail": {
             "type": "object",
@@ -860,6 +1064,98 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Tag": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "required": [
+                "email",
+                "first_name",
+                "last_name",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "access": {
+                    "type": "string"
+                },
+                "account_type": {
+                    "$ref": "#/definitions/choices.AccType"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "books": {
+                    "description": "Back referenced",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Book"
+                    }
+                },
+                "coins": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string",
+                    "minLength": 5,
+                    "example": "johndoe@email.com"
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "John"
+                },
+                "followers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "followings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Doe"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 8,
+                    "example": "strongpassword"
+                },
+                "refresh": {
+                    "type": "string"
+                },
+                "socialLogin": {
+                    "type": "boolean"
+                },
+                "terms_agreement": {
+                    "type": "boolean"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "john-doe"
+                }
+            }
+        },
         "routes.HealthCheckSchema": {
             "type": "object",
             "properties": {
@@ -869,11 +1165,81 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BookResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.BookSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.BookSchema": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "author_id": {
+                    "type": "string"
+                },
+                "blurb": {
+                    "type": "string"
+                },
+                "chapters": {
+                    "type": "integer"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "full_view_file": {
+                    "type": "string"
+                },
+                "genre": {
+                    "$ref": "#/definitions/models.Genre"
+                },
+                "genre_id": {
+                    "type": "string"
+                },
+                "partial_view_chapters": {
+                    "type": "integer"
+                },
+                "partial_view_file": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Tag"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "schemas.BuyCoinSchema": {
             "type": "object",
             "required": [
                 "coin_id",
-                "payment_type"
+                "payment_type",
+                "quantity"
             ],
             "properties": {
                 "coin_id": {
@@ -887,6 +1253,10 @@ const docTemplate = `{
                         }
                     ],
                     "example": "STRIPE"
+                },
+                "quantity": {
+                    "type": "integer",
+                    "example": 2
                 }
             }
         },
@@ -1164,9 +1534,42 @@ const docTemplate = `{
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
                 },
+                "account_type": {
+                    "$ref": "#/definitions/choices.AccType"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "followers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FollowerData"
+                    }
+                },
+                "followings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FollowerData"
+                    }
+                },
+                "last_name": {
+                    "type": "string"
+                },
                 "refresh": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -1177,12 +1580,20 @@ const docTemplate = `{
                     "type": "number",
                     "example": 10.35
                 },
-                "client_secret": {
+                "amount_total": {
+                    "type": "number",
+                    "example": 30.35
+                },
+                "checkout_url": {
                     "type": "string"
                 },
                 "coins": {
                     "type": "integer",
                     "example": 10
+                },
+                "coins_total": {
+                    "type": "integer",
+                    "example": 30
                 },
                 "payment_status": {
                     "$ref": "#/definitions/choices.PaymentStatus"
@@ -1193,7 +1604,11 @@ const docTemplate = `{
                             "$ref": "#/definitions/choices.PaymentType"
                         }
                     ],
-                    "example": "STRIPR"
+                    "example": "STRIPE"
+                },
+                "quantity": {
+                    "type": "integer",
+                    "example": 10
                 },
                 "reference": {
                     "type": "string"
@@ -1315,6 +1730,25 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/schemas.UserProfile"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.UserProfilesResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.UserProfile"
+                    }
                 },
                 "message": {
                     "type": "string",
