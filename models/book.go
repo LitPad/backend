@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"gorm.io/gorm"
@@ -34,6 +35,7 @@ type Book struct {
 	AuthorID uuid.UUID `json:"author_id"`
 	Author   User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE"`
 	Title    string    `json:"title" gorm:"type: varchar(255)"`
+	Slug     string    `gorm:"unique"`
 	Blurb    string    `json:"blurb" gorm:"type: varchar(255)"`
 
 	GenreID             uuid.UUID `json:"genre_id"`
@@ -47,6 +49,31 @@ type Book struct {
 	Price           int    `gorm:"default:0"`           // Book price in coins
 	PartialViewFile string `gorm:"type:varchar(10000)"` // Partial File to view
 	FullViewFile    string `gorm:"type:varchar(10000)"` // Full File to view
+	Completed       bool   `gorm:"default:false"`
+}
+
+func (b *Book) GenerateUniqueSlug(tx *gorm.DB) string {
+	uniqueSlug := slug.Make(b.Title)
+	slug := b.Slug
+	if slug != "" {
+		uniqueSlug = slug
+	}
+
+	existingBook := Book{Slug: uniqueSlug}
+	tx.Take(&existingBook, existingBook)
+	if existingBook.ID != uuid.Nil && existingBook.ID != b.ID { // slug is already taken
+		// Make it unique by attaching a random string
+		// to it and repeat the function
+		randomStr := utils.GetRandomString(6)
+		b.Slug = uniqueSlug + "-" + randomStr
+		return b.GenerateUniqueSlug(tx)
+	}
+	return uniqueSlug
+}
+
+func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
+	b.Slug = b.GenerateUniqueSlug(tx)
+	return
 }
 
 // Note:

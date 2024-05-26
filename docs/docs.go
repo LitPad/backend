@@ -506,60 +506,74 @@ const docTemplate = `{
         },
         "/books": {
             "get": {
-                "description": "Retrieves a list of books with support for pagination and optional filtering based on book title.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
+                "description": "This endpoint views a latest books",
                 "tags": [
                     "Books"
                 ],
-                "summary": "List Books with Pagination",
+                "summary": "View Latest Books",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Title of the book to filter by",
-                        "name": "title",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Limit number of book profiles per page (default is 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Page number starting from 0 (default is 0)",
-                        "name": "page",
+                        "description": "Filter by Tag slug",
+                        "name": "tag_slug",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully retrieved list of books",
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BookResponseSchema"
+                            "$ref": "#/definitions/schemas.BooksResponseSchema"
                         }
                     },
                     "400": {
-                        "description": "Invalid query parameters",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/books/genres": {
+            "get": {
+                "description": "This endpoint views available book genres",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Available Book Genres",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GenresResponseSchema"
+                        }
                     },
-                    "404": {
-                        "description": "No books found",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/books/tags": {
+            "get": {
+                "description": "This endpoint views available book tags",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Available Book Tags",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsResponseSchema"
+                        }
                     },
-                    "500": {
-                        "description": "Internal server error",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -944,77 +958,6 @@ const docTemplate = `{
                 "PTYPE_PAYPAL"
             ]
         },
-        "models.Book": {
-            "type": "object",
-            "properties": {
-                "author": {
-                    "$ref": "#/definitions/models.User"
-                },
-                "author_id": {
-                    "type": "string"
-                },
-                "blurb": {
-                    "type": "string"
-                },
-                "chapters": {
-                    "type": "integer"
-                },
-                "cover_image": {
-                    "type": "string"
-                },
-                "fullViewFile": {
-                    "description": "Full File to view",
-                    "type": "string"
-                },
-                "genre": {
-                    "$ref": "#/definitions/models.Genre"
-                },
-                "genre_id": {
-                    "type": "string"
-                },
-                "partialViewChapters": {
-                    "description": "Amount of chapters allowed to view freely",
-                    "type": "integer"
-                },
-                "partialViewFile": {
-                    "description": "Partial File to view",
-                    "type": "string"
-                },
-                "price": {
-                    "description": "Book price in coins",
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Tag"
-                    }
-                },
-                "title": {
-                    "type": "string"
-                },
-                "word_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "models.Genre": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Tag"
-                    }
-                }
-            }
-        },
         "models.SiteDetail": {
             "type": "object",
             "properties": {
@@ -1064,98 +1007,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Tag": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "slug": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.User": {
-            "type": "object",
-            "required": [
-                "email",
-                "first_name",
-                "last_name",
-                "password",
-                "username"
-            ],
-            "properties": {
-                "access": {
-                    "type": "string"
-                },
-                "account_type": {
-                    "$ref": "#/definitions/choices.AccType"
-                },
-                "avatar": {
-                    "type": "string"
-                },
-                "bio": {
-                    "type": "string"
-                },
-                "books": {
-                    "description": "Back referenced",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Book"
-                    }
-                },
-                "coins": {
-                    "type": "integer"
-                },
-                "email": {
-                    "type": "string",
-                    "minLength": 5,
-                    "example": "johndoe@email.com"
-                },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "John"
-                },
-                "followers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                },
-                "followings": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.User"
-                    }
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "Doe"
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 8,
-                    "example": "strongpassword"
-                },
-                "refresh": {
-                    "type": "string"
-                },
-                "socialLogin": {
-                    "type": "boolean"
-                },
-                "terms_agreement": {
-                    "type": "boolean"
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "example": "john-doe"
-                }
-            }
-        },
         "routes.HealthCheckSchema": {
             "type": "object",
             "properties": {
@@ -1188,10 +1039,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/models.User"
-                },
-                "author_id": {
-                    "type": "string"
+                    "$ref": "#/definitions/schemas.UserDataSchema"
                 },
                 "blurb": {
                     "type": "string"
@@ -1206,10 +1054,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "genre": {
-                    "$ref": "#/definitions/models.Genre"
-                },
-                "genre_id": {
-                    "type": "string"
+                    "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapters": {
                     "type": "integer"
@@ -1220,10 +1065,13 @@ const docTemplate = `{
                 "price": {
                     "type": "integer"
                 },
+                "slug": {
+                    "type": "string"
+                },
                 "tags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Tag"
+                        "$ref": "#/definitions/schemas.TagSchema"
                     }
                 },
                 "title": {
@@ -1231,6 +1079,45 @@ const docTemplate = `{
                 },
                 "word_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "schemas.BooksResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.BookSchema"
+                    }
+                },
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "schemas.BooksResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.BooksResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -1329,6 +1216,53 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "schemas.GenreSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TagSchema"
+                    }
+                }
+            }
+        },
+        "schemas.GenreWithoutTagSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.GenresResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.GenreSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -1527,6 +1461,36 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.TagSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.TagsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TagSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.TokensResponseSchema": {
             "type": "object",
             "properties": {
@@ -1684,6 +1648,21 @@ const docTemplate = `{
                     "maxLength": 1000,
                     "minLength": 3,
                     "example": "john-doe"
+                }
+            }
+        },
+        "schemas.UserDataSchema": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "description": "For short user data",
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

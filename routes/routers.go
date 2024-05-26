@@ -43,10 +43,11 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	profilesRouter.Put("/update-password", endpoint.AuthMiddleware, endpoint.UpdatePassword)
 	profilesRouter.Get("/profile/:username/follow", endpoint.AuthMiddleware, endpoint.FollowUser)
 
-	// Admin Routes ()
-	adminRouter := api.Group("/admin")
-	adminRouter.Get("/users", endpoint.AuthMiddleware, endpoint.GetUsers)
-	adminRouter.Get("/books", endpoint.AuthMiddleware, endpoint.GetBooks)
+	// Book Routes ()
+	bookRouter := api.Group("/books")
+	bookRouter.Get("", endpoint.GetLatestBooks)
+	bookRouter.Get("/genres", endpoint.GetAllBookGenres)
+	bookRouter.Get("/tags", endpoint.GetAllBookTags)
 
 	// Wallet Routes ()
 	walletRouter := api.Group("/wallet")
@@ -54,4 +55,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
+
+	// Admin Routes ()
+	adminRouter := api.Group("/admin")
+	adminRouter.Get("/users", endpoint.AuthMiddleware, endpoint.GetUsers)
+	adminRouter.Get("/books", endpoint.AuthMiddleware, endpoint.GetBooks)
 }
