@@ -32,7 +32,7 @@ type GenreSchema struct {
 }
 
 func (g GenreSchema) Init(genre models.Genre) GenreSchema {
-	g.GenreWithoutTagSchema.Init(genre)
+	g.GenreWithoutTagSchema = g.GenreWithoutTagSchema.Init(genre)
 	tags := genre.Tags
 	tagsToAdd := g.Tags
 	for i := range tags {

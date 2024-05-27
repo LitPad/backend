@@ -514,6 +514,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Filter by Genre slug",
+                        "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"

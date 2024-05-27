@@ -48,20 +48,22 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 // @Summary View Latest Books
 // @Description This endpoint views a latest books
 // @Tags Books
+// @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Success 200 {object} schemas.BooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [get]
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
-	tagSlug := c.Params("tag_slug")
-	books, err := bookManager.GetLatest(db, tagSlug)
+	genreSlug := c.Query("genre_slug")
+	tagSlug := c.Query("tag_slug")
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
 
 	// Paginate and return books
-	paginatedData, paginatedBooks, err := PaginateQueryset(books, c)
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}

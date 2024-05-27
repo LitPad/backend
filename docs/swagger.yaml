@@ -921,6 +921,10 @@ paths:
     get:
       description: This endpoint views a latest books
       parameters:
+      - description: Filter by Genre slug
+        in: query
+        name: genre_slug
+        type: string
       - description: Filter by Tag slug
         in: query
         name: tag_slug
