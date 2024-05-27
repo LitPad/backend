@@ -9,6 +9,7 @@ type ErrorResponse struct {
 
 // Error codes
 var ERR_UNAUTHORIZED_USER =	"unauthorized_user"
+var ERR_AUTHORS_ONLY =	"author_only"
 var ERR_NETWORK_FAILURE =	"network_failure"
 var ERR_SERVER_ERROR =	"server_error"
 var ERR_INVALID_REQUEST =	"invalid_request"

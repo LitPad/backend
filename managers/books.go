@@ -2,6 +2,7 @@ package managers
 
 import (
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ type BookManager struct {
 	ModelList	[]models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, usernameOpts ...string) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -35,6 +36,17 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string) ([
 		}
 		query = query.Where("books.id IN (?)", db.Table("book_tags").Select("book_id").Where("tag_id = ?", tag.ID))
 	}
+
+	if len(usernameOpts) > 0 {
+		username := usernameOpts[0]
+		author := models.User{Username: username, AccountType: choices.ACCTYPE_WRITER}
+		db.Take(&author, author)
+		if author.ID == uuid.Nil {
+			errData := utils.RequestErr(utils.ERR_NON_EXISTENT, "Invalid author username")
+			return books, &errData
+		}
+		query = query.Where(models.Book{AuthorID: author.ID})
+	} 
 	query.Omit("FullViewFile").Scopes(scopes.AuthorGenreTagBookScope).Order("created_at DESC").Find(&books)
 	return books, nil
 }

@@ -46,6 +46,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	// Book Routes ()
 	bookRouter := api.Group("/books")
 	bookRouter.Get("", endpoint.GetLatestBooks)
+	bookRouter.Post("", endpoint.AuthorMiddleware, endpoint.CreateBook)
+	bookRouter.Get("/author/:username", endpoint.GetLatestAuthorBooks)
 	bookRouter.Get("/genres", endpoint.GetAllBookGenres)
 	bookRouter.Get("/tags", endpoint.GetAllBookTags)
 

@@ -45,7 +45,7 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 type BookSchema struct {
 	Author              UserDataSchema        `json:"author"`
 	Title               string                `json:"title"`
-	Slug               string                `json:"slug"`
+	Slug                string                `json:"slug"`
 	Blurb               string                `json:"blurb"`
 	Genre               GenreWithoutTagSchema `json:"genre"`
 	Tags                []TagSchema           `json:"tags"`
@@ -84,6 +84,20 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.PartialViewChapters = book.PartialViewChapters
 	b.PartialViewFile = book.PartialViewFile
 	return b
+}
+
+type BookCreateSchema struct {
+	Title               string      `json:"title"`
+	Blurb               string      `json:"blurb"`
+	GenreSlug           string      `json:"genre_slug"`
+	TagSlugs            []string `json:"tag_slugs"`
+	Chapters            int         `json:"chapters"`
+	PartialViewChapters int         `json:"partial_view_chapters"`
+	WordCount           int         `json:"word_count"`
+	CoverImage          string      `json:"cover_image"`
+	Price               int         `json:"price"`
+	PartialViewFile     string      `json:"partial_view_file"`
+	FullViewFile        string      `json:"full_view_file"`
 }
 
 type TagsResponseSchema struct {
@@ -134,4 +148,9 @@ func (b BooksResponseDataSchema) Init(books []models.Book) BooksResponseDataSche
 type BooksResponseSchema struct {
 	ResponseSchema
 	Data BooksResponseDataSchema `json:"data"`
+}
+
+type BookResponseSchema struct {
+	ResponseSchema
+	Data BookSchema `json:"data"`
 }

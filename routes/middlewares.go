@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -30,6 +31,24 @@ func (ep Endpoint) AuthMiddleware(c *fiber.Ctx) error {
 	user, err := getUser(c, token, db)
 	if err != nil {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Access token is invalid or expired!"))
+	}
+	c.Locals("user", user)
+	return c.Next()
+}
+
+func (ep Endpoint) AuthorMiddleware(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+	db := ep.DB
+
+	if len(token) < 1 {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "Unauthorized User!"))
+	}
+	user, err := getUser(c, token, db)
+	if err != nil {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Access token is invalid or expired!"))
+	}
+	if user.AccountType != choices.ACCTYPE_WRITER {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Authors only!"))
 	}
 	c.Locals("user", user)
 	return c.Next()

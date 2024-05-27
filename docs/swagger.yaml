@@ -941,6 +941,35 @@ paths:
       summary: View Latest Books
       tags:
       - Books
+  /books/author/{username}:
+    get:
+      description: This endpoint views a latest books by an author
+      parameters:
+      - description: Filter by Author Username
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Filter by Genre slug
+        in: query
+        name: genre_slug
+        type: string
+      - description: Filter by Tag slug
+        in: query
+        name: tag_slug
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BooksResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View Latest Books By A Particular Author
+      tags:
+      - Books
   /books/genres:
     get:
       description: This endpoint views available book genres

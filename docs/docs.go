@@ -541,6 +541,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/books/author/{username}": {
+            "get": {
+                "description": "This endpoint views a latest books by an author",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Latest Books By A Particular Author",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by Author Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Genre slug",
+                        "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Tag slug",
+                        "name": "tag_slug",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BooksResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books/genres": {
             "get": {
                 "description": "This endpoint views available book genres",
