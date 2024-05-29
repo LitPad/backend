@@ -10,6 +10,16 @@ definitions:
     x-enum-varnames:
     - ACCTYPE_READER
     - ACCTYPE_WRITER
+  choices.ChapterStatus:
+    enum:
+    - DRAFT
+    - PUBLISHED
+    - TRASH
+    type: string
+    x-enum-varnames:
+    - CS_DRAFT
+    - CS_PUBLISHED
+    - CS_TRASH
   choices.PaymentStatus:
     enum:
     - PENDING
@@ -73,12 +83,37 @@ definitions:
         example: pong
         type: string
     type: object
+  schemas.BookCreateSchema:
+    properties:
+      blurb:
+        type: string
+      chapters:
+        type: integer
+      cover_image:
+        type: string
+      full_view_file:
+        type: string
+      genre_slug:
+        type: string
+      partial_view_chapters:
+        type: integer
+      partial_view_file:
+        type: string
+      price:
+        type: integer
+      tag_slugs:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      word_count:
+        type: integer
+    type: object
   schemas.BookResponseSchema:
     properties:
       data:
-        items:
-          $ref: '#/definitions/schemas.BookSchema'
-        type: array
+        $ref: '#/definitions/schemas.BookSchema'
       message:
         example: Data fetched/created/updated/deleted
         type: string
@@ -93,17 +128,19 @@ definitions:
       blurb:
         type: string
       chapters:
+        items:
+          $ref: '#/definitions/schemas.ChapterSchema'
+        type: array
+      chapters_count:
         type: integer
       cover_image:
         type: string
-      full_view_file:
+      file:
         type: string
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
-      partial_view_chapters:
-        type: integer
-      partial_view_file:
-        type: string
+      partial_view_chapter:
+        $ref: '#/definitions/schemas.ChapterSchema'
       price:
         type: integer
       slug:
@@ -160,6 +197,19 @@ definitions:
     - coin_id
     - payment_type
     - quantity
+    type: object
+  schemas.ChapterSchema:
+    properties:
+      chapter_status:
+        allOf:
+        - $ref: '#/definitions/choices.ChapterStatus'
+        example: PUBLISHED
+      text:
+        type: string
+      title:
+        type: string
+      word_count:
+        type: integer
     type: object
   schemas.CoinSchema:
     properties:
@@ -263,6 +313,60 @@ definitions:
     required:
     - email
     - password
+    type: object
+  schemas.PartialBookSchema:
+    properties:
+      author:
+        $ref: '#/definitions/schemas.UserDataSchema'
+      blurb:
+        type: string
+      chapters_count:
+        type: integer
+      cover_image:
+        type: string
+      genre:
+        $ref: '#/definitions/schemas.GenreWithoutTagSchema'
+      partial_view_chapter:
+        $ref: '#/definitions/schemas.ChapterSchema'
+      price:
+        type: integer
+      slug:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/schemas.TagSchema'
+        type: array
+      title:
+        type: string
+      word_count:
+        type: integer
+    type: object
+  schemas.PartialBooksResponseDataSchema:
+    properties:
+      books:
+        items:
+          $ref: '#/definitions/schemas.PartialBookSchema'
+        type: array
+      current_page:
+        example: 1
+        type: integer
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+    type: object
+  schemas.PartialBooksResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.PartialBooksResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
     type: object
   schemas.PaymentResponseSchema:
     properties:
@@ -921,6 +1025,11 @@ paths:
     get:
       description: This endpoint views a latest books
       parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
       - description: Filter by Genre slug
         in: query
         name: genre_slug
@@ -933,7 +1042,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.BooksResponseSchema'
+            $ref: '#/definitions/schemas.PartialBooksResponseSchema'
         "400":
           description: Bad Request
           schema:
@@ -941,10 +1050,38 @@ paths:
       summary: View Latest Books
       tags:
       - Books
+    post:
+      description: This endpoint allows a writer to create a book
+      parameters:
+      - description: Book object
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BookCreateSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BookResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create A Book
+      tags:
+      - Books
   /books/author/{username}:
     get:
       description: This endpoint views a latest books by an author
       parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
       - description: Filter by Author Username
         in: path
         name: username
@@ -962,7 +1099,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.BooksResponseSchema'
+            $ref: '#/definitions/schemas.PartialBooksResponseSchema'
         "400":
           description: Bad Request
           schema:

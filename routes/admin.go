@@ -98,66 +98,34 @@ func (ep Endpoint) GetUsers(c *fiber.Ctx) error{
 // @Tags Books
 // @Accept json
 // @Produce json
+// @Param page query int false "Current Page" default(1)
 // @Param title query string false "Title of the book to filter by"
-// @Param limit query int false "Limit number of book profiles per page (default is 10)" default(10)
-// @Param page query int false "Page number starting from 0 (default is 0)" default(0)
-// @Success 200 {object} schemas.BookResponseSchema "Successfully retrieved list of books"
-// @Failure 400 {object} utils.ErrorResponse "Invalid query parameters"
-// @Failure 404 {object} utils.ErrorResponse "No books found"
+// @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /books [get]
 func (ep Endpoint) GetBooks(c *fiber.Ctx) error{
 	db := ep.DB
 
-	limitQuery := c.Query("limit", "10")
-	pageQuery := c.Query("page", "0")
 	titleQuery := c.Query("title", "")
 
-	limit, err := strconv.Atoi(limitQuery)
-
-	if err !=nil{
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid query param `limit` "))
-	}
-
-	page, err := strconv.Atoi(pageQuery)
-
-	if err !=nil{
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid query param `page` "))
-	}
-
-	offset := (page - 1) * limit
-
-	var books []models.Book
-
-	query := db.Model(&models.Book{})
-
+	books := []models.Book{}
+	query := db
 	if len(titleQuery) > 0 {
 		query = query.Where("title ILIKE ?", "%" + titleQuery + "%")
 	}
+	query.Find(&books)
 		
-	if err = query.Offset(offset).Limit(limit).Find(&books).Error; err != nil{
-		if err == gorm.ErrRecordNotFound{
-			response := schemas.BookResponseSchema{
-				ResponseSchema: ResponseMessage("No books exist"),
-				Data: []schemas.BookSchema{},
-			}
-
-			return c.Status(200).JSON(response)
-		}
-
-		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal Server Error"))
+	// Paginate and return books
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 400)
+	if err != nil {
+		return c.Status(400).JSON(err)
 	}
-
-	booksArr := make([]schemas.BookSchema, len(books))
-
-	for i, book := range books{
-		booksArr[i] = schemas.BookSchema{}.Init(book)
-	}
-
-	response := schemas.BookResponseSchema{
+	books = paginatedBooks.([]models.Book)
+	response := schemas.BooksResponseSchema{
 		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: booksArr,
+		Data: schemas.BooksResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(books),
 	}
-
 	return c.Status(200).JSON(response)
 }

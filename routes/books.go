@@ -48,9 +48,10 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 // @Summary View Latest Books
 // @Description This endpoint views a latest books
 // @Tags Books
+// @Param page query int false "Current Page" default(1)
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
-// @Success 200 {object} schemas.BooksResponseSchema
+// @Success 200 {object} schemas.PartialBooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [get]
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
@@ -68,9 +69,9 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 	books = paginatedBooks.([]models.Book)
-	response := schemas.BooksResponseSchema{
+	response := schemas.PartialBooksResponseSchema{
 		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: schemas.BooksResponseDataSchema{
+		Data: schemas.PartialBooksResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(books),
 	}
@@ -80,10 +81,11 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 // @Summary View Latest Books By A Particular Author
 // @Description This endpoint views a latest books by an author
 // @Tags Books
+// @Param page query int false "Current Page" default(1)
 // @Param username path string true "Filter by Author Username"
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
-// @Success 200 {object} schemas.BooksResponseSchema
+// @Success 200 {object} schemas.PartialBooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books/author/{username} [get]
 func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
@@ -102,9 +104,9 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 	books = paginatedBooks.([]models.Book)
-	response := schemas.BooksResponseSchema{
+	response := schemas.PartialBooksResponseSchema{
 		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: schemas.BooksResponseDataSchema{
+		Data: schemas.PartialBooksResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(books),
 	}

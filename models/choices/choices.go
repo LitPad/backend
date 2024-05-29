@@ -32,3 +32,11 @@ const (
 	ATYPE_SIXTEEN AgeType = 16
 	ATYPE_EIGHTEEN AgeType = 18
 )
+
+type ChapterStatus string
+
+const (
+	CS_DRAFT ChapterStatus = "DRAFT"
+	CS_PUBLISHED ChapterStatus = "PUBLISHED"
+	CS_TRASH ChapterStatus = "TRASH"
+)

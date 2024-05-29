@@ -1,6 +1,9 @@
 package models
 
 import (
+	"strings"
+
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
@@ -41,15 +44,24 @@ type Book struct {
 	GenreID             uuid.UUID `json:"genre_id"`
 	Genre               Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE"`
 	Tags                []Tag     `json:"tags" gorm:"many2many:book_tags;"`
-	Chapters            int       `gorm:"default:0"`
-	PartialViewChapters int       `gorm:"default:0"` // Amount of chapters allowed to view freely
-	WordCount           int       `gorm:"default:0" json:"word_count"`
+	Chapters            []Chapter
 	CoverImage          string    `gorm:"type:varchar(10000)" json:"cover_image"`
 
 	Price           int    `gorm:"default:0"`           // Book price in coins
-	PartialViewFile string `gorm:"type:varchar(10000)"` // Partial File to view
-	FullViewFile    string `gorm:"type:varchar(10000)"` // Full File to view
+	File    string `gorm:"type:varchar(10000)"` // Full File to view
 	Completed       bool   `gorm:"default:false"`
+}
+
+func (b Book) WordCount() int {
+	wordCount := 0
+	for _, chapter := range b.Chapters {
+        wordCount += chapter.WordCount()
+    }
+	return wordCount
+}
+
+func (b Book) ChaptersCount() int {
+	return len(b.Chapters)
 }
 
 func (b *Book) GenerateUniqueSlug(tx *gorm.DB) string {
@@ -79,3 +91,18 @@ func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
 // Note:
 // Tags in book must be part of the selected genre
 // User can only see allowed chapters, but then the full book will be returned to the user if bought
+
+type Chapter struct {
+	BaseModel
+	BookID      uuid.UUID       `json:"book_id"`
+	Book        Book            `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
+	Title        string          `json:"title" gorm:"type: varchar(255)"`
+	Text        string          `json:"text" gorm:"type: varchar(100000)"`
+	ChapterStatus choices.ChapterStatus `gorm:"type:varchar(100); default:DRAFT" json:"chapter_status"`
+}
+
+func (c Chapter) WordCount() int {
+	words := strings.Fields(c.Text)
+	wordCount := len(words)
+	return wordCount
+}

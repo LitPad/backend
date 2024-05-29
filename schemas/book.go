@@ -2,6 +2,7 @@ package schemas
 
 import (
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 )
 
 type TagSchema struct {
@@ -42,23 +43,36 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 	return g
 }
 
-type BookSchema struct {
-	Author              UserDataSchema        `json:"author"`
-	Title               string                `json:"title"`
-	Slug                string                `json:"slug"`
-	Blurb               string                `json:"blurb"`
-	Genre               GenreWithoutTagSchema `json:"genre"`
-	Tags                []TagSchema           `json:"tags"`
-	Chapters            int                   `json:"chapters"`
-	PartialViewChapters int                   `json:"partial_view_chapters"`
-	WordCount           int                   `json:"word_count"`
-	CoverImage          string                `json:"cover_image"`
-	Price               int                   `json:"price"`
-	PartialViewFile     string                `json:"partial_view_file"`
-	FullViewFile        string                `json:"full_view_file"`
+type ChapterSchema struct {
+	Title         string                `json:"title"`
+	Text          string                `json:"text"`
+	ChapterStatus choices.ChapterStatus `json:"chapter_status" example:"PUBLISHED"`
+	WordCount     int                   `json:"word_count"`
 }
 
-func (b BookSchema) Init(book models.Book) BookSchema {
+func (c ChapterSchema) Init(chapter models.Chapter) ChapterSchema {
+	c.Title = chapter.Title
+	c.Text = chapter.Text
+	c.ChapterStatus = chapter.ChapterStatus
+	c.WordCount = chapter.WordCount()
+	return c
+}
+
+type PartialBookSchema struct {
+	Author             UserDataSchema        `json:"author"`
+	Title              string                `json:"title"`
+	Slug               string                `json:"slug"`
+	Blurb              string                `json:"blurb"`
+	Genre              GenreWithoutTagSchema `json:"genre"`
+	Tags               []TagSchema           `json:"tags"`
+	ChaptersCount      int                   `json:"chapters_count"`
+	PartialViewChapter *ChapterSchema         `json:"partial_view_chapter"`
+	WordCount          int                   `json:"word_count"`
+	CoverImage         string                `json:"cover_image"`
+	Price              int                   `json:"price"`
+}
+
+func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	b.Author = b.Author.Init(book.Author)
 	b.Blurb = book.Blurb
 	b.Price = book.Price
@@ -73,31 +87,49 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
-	b.WordCount = book.WordCount
-	b.Chapters = book.Chapters
-	b.CoverImage = book.CoverImage
-	bookFile := book.FullViewFile
-	b.FullViewFile = bookFile
-	if bookFile == "" {
-		b.FullViewFile = "Payment required"
+	b.WordCount = book.WordCount()
+	b.ChaptersCount = book.ChaptersCount()
+
+	chapters := book.Chapters
+	if len(chapters) > 0 {
+		chapter := ChapterSchema{}.Init(chapters[0])
+		b.PartialViewChapter = &chapter
 	}
-	b.PartialViewChapters = book.PartialViewChapters
-	b.PartialViewFile = book.PartialViewFile
+
+	b.CoverImage = book.CoverImage
+	return b
+}
+
+type BookSchema struct {
+	PartialBookSchema
+	Chapters []ChapterSchema `json:"chapters"`
+	File     string          `json:"file"`
+}
+
+func (b BookSchema) Init(book models.Book) BookSchema {
+	b.PartialBookSchema = b.PartialBookSchema.Init(book)
+	chaptersToAdd := b.Chapters
+	chapters := book.Chapters
+	for i := range chapters {
+		chaptersToAdd = append(chaptersToAdd, ChapterSchema{}.Init(chapters[i]))
+	}
+	b.Chapters = chaptersToAdd
+	b.File = book.File
 	return b
 }
 
 type BookCreateSchema struct {
-	Title               string      `json:"title"`
-	Blurb               string      `json:"blurb"`
-	GenreSlug           string      `json:"genre_slug"`
+	Title               string   `json:"title"`
+	Blurb               string   `json:"blurb"`
+	GenreSlug           string   `json:"genre_slug"`
 	TagSlugs            []string `json:"tag_slugs"`
-	Chapters            int         `json:"chapters"`
-	PartialViewChapters int         `json:"partial_view_chapters"`
-	WordCount           int         `json:"word_count"`
-	CoverImage          string      `json:"cover_image"`
-	Price               int         `json:"price"`
-	PartialViewFile     string      `json:"partial_view_file"`
-	FullViewFile        string      `json:"full_view_file"`
+	Chapters            int      `json:"chapters"`
+	PartialViewChapters int      `json:"partial_view_chapters"`
+	WordCount           int      `json:"word_count"`
+	CoverImage          string   `json:"cover_image"`
+	Price               int      `json:"price"`
+	PartialViewFile     string   `json:"partial_view_file"`
+	FullViewFile        string   `json:"full_view_file"`
 }
 
 type TagsResponseSchema struct {
@@ -130,6 +162,34 @@ func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	return g
 }
 
+// Partial Book Responses
+
+type PartialBooksResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []PartialBookSchema `json:"books"`
+}
+
+func (b PartialBooksResponseDataSchema) Init(books []models.Book) PartialBooksResponseDataSchema {
+	// Set Initial Data
+	bookItems := b.Items
+	for i := range books {
+		bookItems = append(bookItems, PartialBookSchema{}.Init(books[i]))
+	}
+	b.Items = bookItems
+	return b
+}
+
+type PartialBooksResponseSchema struct {
+	ResponseSchema
+	Data PartialBooksResponseDataSchema `json:"data"`
+}
+
+type PartialBookResponseSchema struct {
+	ResponseSchema
+	Data PartialBookSchema `json:"data"`
+}
+
+// Full Book Responses
 type BooksResponseDataSchema struct {
 	PaginatedResponseDataSchema
 	Items []BookSchema `json:"books"`

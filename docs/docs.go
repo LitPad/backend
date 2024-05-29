@@ -513,6 +513,13 @@ const docTemplate = `{
                 "summary": "View Latest Books",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Filter by Genre slug",
                         "name": "genre_slug",
@@ -529,7 +536,44 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BooksResponseSchema"
+                            "$ref": "#/definitions/schemas.PartialBooksResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a writer to create a book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Create A Book",
+                "parameters": [
+                    {
+                        "description": "Book object",
+                        "name": "profile",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookCreateSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookResponseSchema"
                         }
                     },
                     "400": {
@@ -549,6 +593,13 @@ const docTemplate = `{
                 ],
                 "summary": "View Latest Books By A Particular Author",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "Filter by Author Username",
@@ -573,7 +624,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.BooksResponseSchema"
+                            "$ref": "#/definitions/schemas.PartialBooksResponseSchema"
                         }
                     },
                     "400": {
@@ -980,6 +1031,19 @@ const docTemplate = `{
                 "ACCTYPE_WRITER"
             ]
         },
+        "choices.ChapterStatus": {
+            "type": "string",
+            "enum": [
+                "DRAFT",
+                "PUBLISHED",
+                "TRASH"
+            ],
+            "x-enum-varnames": [
+                "CS_DRAFT",
+                "CS_PUBLISHED",
+                "CS_TRASH"
+            ]
+        },
         "choices.PaymentStatus": {
             "type": "string",
             "enum": [
@@ -1066,14 +1130,52 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BookCreateSchema": {
+            "type": "object",
+            "properties": {
+                "blurb": {
+                    "type": "string"
+                },
+                "chapters": {
+                    "type": "integer"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "full_view_file": {
+                    "type": "string"
+                },
+                "genre_slug": {
+                    "type": "string"
+                },
+                "partial_view_chapters": {
+                    "type": "integer"
+                },
+                "partial_view_file": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "tag_slugs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "schemas.BookResponseSchema": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.BookSchema"
-                    }
+                    "$ref": "#/definitions/schemas.BookSchema"
                 },
                 "message": {
                     "type": "string",
@@ -1095,22 +1197,25 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "chapters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ChapterSchema"
+                    }
+                },
+                "chapters_count": {
                     "type": "integer"
                 },
                 "cover_image": {
                     "type": "string"
                 },
-                "full_view_file": {
+                "file": {
                     "type": "string"
                 },
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
-                "partial_view_chapters": {
-                    "type": "integer"
-                },
-                "partial_view_file": {
-                    "type": "string"
+                "partial_view_chapter": {
+                    "$ref": "#/definitions/schemas.ChapterSchema"
                 },
                 "price": {
                     "type": "integer"
@@ -1194,6 +1299,28 @@ const docTemplate = `{
                 "quantity": {
                     "type": "integer",
                     "example": 2
+                }
+            }
+        },
+        "schemas.ChapterSchema": {
+            "type": "object",
+            "properties": {
+                "chapter_status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.ChapterStatus"
+                        }
+                    ],
+                    "example": "PUBLISHED"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "word_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -1346,6 +1473,86 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "password"
+                }
+            }
+        },
+        "schemas.PartialBookSchema": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "blurb": {
+                    "type": "string"
+                },
+                "chapters_count": {
+                    "type": "integer"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "genre": {
+                    "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
+                },
+                "partial_view_chapter": {
+                    "$ref": "#/definitions/schemas.ChapterSchema"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TagSchema"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.PartialBooksResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.PartialBookSchema"
+                    }
+                },
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "schemas.PartialBooksResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.PartialBooksResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },

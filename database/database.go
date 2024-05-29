@@ -26,6 +26,7 @@ func Models() []interface{} {
 		&models.Tag{},
 		&models.Genre{},
 		&models.Book{},
+		&models.Chapter{},
 
 		// wallet
 		&models.Coin{},
