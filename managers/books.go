@@ -52,7 +52,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, us
 	return books, nil
 }
 
-func (b BookManager) GetByAuthorAndID(db *gorm.DB, author *models.User, slug string) (*models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{AuthorID: author.ID, Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
 	if book.ID == uuid.Nil {
@@ -100,6 +100,16 @@ type ChapterManager struct {
 	ModelList []models.Chapter
 }
 
+func (c ChapterManager) GetBySlug(db *gorm.DB, slug string) (*models.Chapter, *utils.ErrorResponse) {
+	chapter := models.Chapter{Slug: slug}
+	db.Joins("Book").Take(&chapter, chapter)
+	if chapter.ID == uuid.Nil {
+		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No chapter with that slug")
+		return nil, &errD
+	}
+	return &chapter, nil
+}
+
 func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.ChapterCreateSchema) models.Chapter {
 	chapter := models.Chapter{
 		BookID: book.ID,
@@ -108,6 +118,14 @@ func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.Chapt
 		ChapterStatus: data.ChapterStatus,
 	}
 	db.Create(&chapter)
+	return chapter
+}
+
+func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas.ChapterCreateSchema) models.Chapter {
+	chapter.Title = data.Title
+	chapter.Text = data.Text
+	chapter.ChapterStatus = data.ChapterStatus
+	db.Save(&chapter)
 	return chapter
 }
 

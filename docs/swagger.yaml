@@ -1133,8 +1133,8 @@ paths:
         name: chapter.text
         type: string
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/schemas.BookResponseSchema'
         "400":
@@ -1286,6 +1286,59 @@ paths:
         schema:
           $ref: '#/definitions/schemas.ChapterCreateSchema'
       responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.ChapterResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add A Chapter to a Book
+      tags:
+      - Books
+  /books/book/chapter/{slug}:
+    delete:
+      description: This endpoint allows a writer to delete a chapter from a book
+      parameters:
+      - description: Chapter slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete A Chapter
+      tags:
+      - Books
+    put:
+      description: |-
+        `This endpoint allows a writer to update a chapter in his/her book`
+        `Chapter status: DRAFT, PUBLISHED, TRASH`
+      parameters:
+      - description: Chapter slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Chapter object
+        in: body
+        name: chapter
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ChapterCreateSchema'
+      responses:
         "200":
           description: OK
           schema:
@@ -1296,7 +1349,7 @@ paths:
             $ref: '#/definitions/utils.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Add A Chapter to a Book
+      summary: Update A Chapter of a Book
       tags:
       - Books
   /books/genres:

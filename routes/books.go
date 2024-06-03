@@ -123,7 +123,7 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 // @Param cover_image formData file true "Cover Image to upload"
 // @Param chapter.title formData string false "First chapter title"
 // @Param chapter.text formData string false "First chapter title"
-// @Success 200 {object} schemas.BookResponseSchema
+// @Success 201 {object} schemas.BookResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [post]
 // @Security BearerAuth
@@ -167,7 +167,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 		ResponseSchema: ResponseMessage("Book created successfully"),
 		Data:           schemas.BookSchema{}.Init(book),
 	}
-	return c.Status(200).JSON(response)
+	return c.Status(201).JSON(response)
 }
 
 // @Summary Update A Book
@@ -183,7 +183,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 	db := ep.DB
 	author := RequestUser(c)
-	book, err := bookManager.GetByAuthorAndID(db, author, c.Params("slug"))
+	book, err := bookManager.GetByAuthorAndSlug(db, author, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -239,7 +239,7 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
 	db := ep.DB
 	author := RequestUser(c)
-	book, err := bookManager.GetByAuthorAndID(db, author, c.Params("slug"))
+	book, err := bookManager.GetByAuthorAndSlug(db, author, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -253,14 +253,14 @@ func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
 // @Tags Books
 // @Param slug path string true "Book slug"
 // @Param chapter body schemas.ChapterCreateSchema true "Chapter object"
-// @Success 200 {object} schemas.ChapterResponseSchema
+// @Success 201 {object} schemas.ChapterResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books/book/{slug}/add-chapter [post]
 // @Security BearerAuth
 func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
 	db := ep.DB
 	author := RequestUser(c)
-	book, err := bookManager.GetByAuthorAndID(db, author, c.Params("slug"))
+	book, err := bookManager.GetByAuthorAndSlug(db, author, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -275,5 +275,62 @@ func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
 		ResponseSchema: ResponseMessage("Chapter added successfully"),
 		Data:           schemas.ChapterSchema{}.Init(chapter),
 	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Update A Chapter of a Book
+// @Description `This endpoint allows a writer to update a chapter in his/her book`
+// @Description `Chapter status: DRAFT, PUBLISHED, TRASH`
+// @Tags Books
+// @Param slug path string true "Chapter slug"
+// @Param chapter body schemas.ChapterCreateSchema true "Chapter object"
+// @Success 200 {object} schemas.ChapterResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/chapter/{slug} [put]
+// @Security BearerAuth
+func (ep Endpoint) UpdateChapter(c *fiber.Ctx) error {
+	db := ep.DB
+	author := RequestUser(c)
+	chapter, err := chapterManager.GetBySlug(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	if chapter.Book.AuthorID != author.ID {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "Not yours to edit"))
+	}
+
+	data := schemas.ChapterCreateSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	updatedChapter := chapterManager.Update(db, *chapter, data)
+	response := schemas.ChapterResponseSchema{
+		ResponseSchema: ResponseMessage("Chapter updated successfully"),
+		Data:           schemas.ChapterSchema{}.Init(updatedChapter),
+	}
 	return c.Status(200).JSON(response)
+}
+
+// @Summary Delete A Chapter
+// @Description This endpoint allows a writer to delete a chapter from a book
+// @Tags Books
+// @Param slug path string true "Chapter slug"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/chapter/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
+	db := ep.DB
+	author := RequestUser(c)
+	chapter, err := chapterManager.GetBySlug(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	if chapter.Book.AuthorID != author.ID {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "Not yours to delete"))
+	}
+	db.Delete(&chapter)
+	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfuly"))
 }
