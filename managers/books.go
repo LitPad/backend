@@ -11,8 +11,8 @@ import (
 )
 
 type BookManager struct {
-	Model	models.Book
-	ModelList	[]models.Book
+	Model     models.Book
+	ModelList []models.Book
 }
 
 func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, usernameOpts ...string) ([]models.Book, *utils.ErrorResponse) {
@@ -47,19 +47,29 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, us
 			return books, &errData
 		}
 		query = query.Where(models.Book{AuthorID: author.ID})
-	} 
-	query.Omit("FullViewFile").Scopes(scopes.AuthorGenreTagBookScope).Order("created_at DESC").Find(&books)
+	}
+	query.Scopes(scopes.AuthorGenreTagBookScope).Order("created_at DESC").Find(&books)
 	return books, nil
+}
+
+func (b BookManager) GetByAuthorAndID(db *gorm.DB, author *models.User, slug string) (*models.Book, *utils.ErrorResponse) {
+	book := models.Book{AuthorID: author.ID, Slug: slug}
+	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
+	if book.ID == uuid.Nil {
+		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "Writer has no book with that slug")
+		return nil, &errD
+	}
+	return &book, nil
 }
 
 func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, coverImage string, Tags []models.Tag) models.Book {
 	book := models.Book{
-		AuthorID: author.ID, Author: author, Title: data.Title, 
+		AuthorID: author.ID, Author: author, Title: data.Title,
 		Blurb: data.Blurb, AgeDiscretion: data.AgeDiscretion,
 		GenreID: genre.ID, Genre: genre,
-		Tags: Tags,
+		Tags:       Tags,
 		CoverImage: coverImage,
-		Price: data.Price,
+		Price:      data.Price,
 	}
 	db.Omit("Tags.*").Create(&book)
 	if data.Chapter != nil {
@@ -70,9 +80,40 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 	return book
 }
 
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpdateSchema, genre models.Genre, coverImage *string, Tags []models.Tag) models.Book {
+	book.Title = data.Title
+	book.Blurb = data.Blurb
+	book.AgeDiscretion = data.AgeDiscretion
+	book.GenreID = genre.ID
+	book.Genre = genre
+	book.Tags = Tags
+	book.Price = data.Price
+	if coverImage != nil {
+		book.CoverImage = *coverImage
+	}
+	db.Omit("Tags.*").Save(&book)
+	return book
+}
+
+type ChapterManager struct {
+	Model     models.Chapter
+	ModelList []models.Chapter
+}
+
+func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.ChapterCreateSchema) models.Chapter {
+	chapter := models.Chapter{
+		BookID: book.ID,
+		Title: data.Title,
+		Text: data.Text,
+		ChapterStatus: data.ChapterStatus,
+	}
+	db.Create(&chapter)
+	return chapter
+}
+
 type TagManager struct {
-	Model	models.Tag
-	ModelList	[]models.Tag
+	Model     models.Tag
+	ModelList []models.Tag
 }
 
 func (t TagManager) GetAll(db *gorm.DB) []models.Tag {
@@ -82,8 +123,8 @@ func (t TagManager) GetAll(db *gorm.DB) []models.Tag {
 }
 
 type GenreManager struct {
-	Model	models.Genre
-	ModelList	[]models.Genre
+	Model     models.Genre
+	ModelList []models.Genre
 }
 
 func (t GenreManager) GetAll(db *gorm.DB) []models.Genre {

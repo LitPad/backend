@@ -29,6 +29,7 @@ func init() {
 	// Register Custom Validators
 	customValidator.RegisterValidation("payment_type_validator", PaymentTypeValidator)
 	customValidator.RegisterValidation("age_discretion_validator", AgeDiscretionValidator)
+	customValidator.RegisterValidation("chapter_status_validator", ChapterStatusValidator)
 
 
 	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
@@ -67,6 +68,7 @@ func registerTranslations(param string) {
 	registerTranslation("required_without", "This field is required.", translator)
 	registerTranslation("payment_type_validator", "Invalid payment type", translator)
 	registerTranslation("age_discretion_validator", "Invalid age discretion. Choices are 4, 12, 16, 18", translator)
+	registerTranslation("chapter_status_validator", "Invalid chapter status. Choices are DRAFT, PUBLISHED, TRASH", translator)
 
 	minErrMsg := fmt.Sprintf("%s characters min", param)
 	registerTranslation("min", minErrMsg, translator)

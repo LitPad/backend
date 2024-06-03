@@ -35,29 +35,29 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 
 type Book struct {
 	BaseModel
-	AuthorID uuid.UUID `json:"author_id"`
-	Author   User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
-	Title    string    `json:"title" gorm:"type: varchar(255)"`
-	Slug     string    `gorm:"unique"`
-	Blurb    string    `json:"blurb" gorm:"type: varchar(255)"`
-	AgeDiscretion choices.AgeType 
+	AuthorID      uuid.UUID `json:"author_id"`
+	Author        User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
+	Title         string    `json:"title" gorm:"type: varchar(255)"`
+	Slug          string    `gorm:"unique"`
+	Blurb         string    `json:"blurb" gorm:"type: varchar(255)"`
+	AgeDiscretion choices.AgeType
 
-	GenreID             uuid.UUID `json:"genre_id"`
-	Genre               Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
-	Tags                []Tag     `json:"tags" gorm:"many2many:book_tags;<-:false"`
-	Chapters            []Chapter
-	CoverImage          string    `gorm:"type:varchar(10000)" json:"cover_image"`
+	GenreID    uuid.UUID `json:"genre_id"`
+	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
+	Tags       []Tag     `json:"tags" gorm:"many2many:book_tags;<-:false"`
+	Chapters   []Chapter
+	CoverImage string `gorm:"type:varchar(10000)" json:"cover_image"`
 
-	Price           int    `gorm:"default:0"`           // Book price in coins
-	File    string `gorm:"type:varchar(10000)"` // Full File to view
-	Completed       bool   `gorm:"default:false"`
+	Price     int    `gorm:"default:0"`           // Book price in coins
+	File      string `gorm:"type:varchar(10000)"` // Full File to view
+	Completed bool   `gorm:"default:false"`
 }
 
 func (b Book) WordCount() int {
 	wordCount := 0
 	for _, chapter := range b.Chapters {
-        wordCount += chapter.WordCount()
-    }
+		wordCount += chapter.WordCount()
+	}
 	return wordCount
 }
 
@@ -95,11 +95,36 @@ func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
 
 type Chapter struct {
 	BaseModel
-	BookID      uuid.UUID       `json:"book_id"`
-	Book        Book            `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
-	Title        string          `json:"title" gorm:"type: varchar(255)"`
-	Text        string          `json:"text" gorm:"type: varchar(100000)"`
+	BookID        uuid.UUID             `json:"book_id"`
+	Book          Book                  `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
+	Title         string                `json:"title" gorm:"type: varchar(255)"`
+	Slug          string                `gorm:"unique"`
+	Text          string                `json:"text" gorm:"type: varchar(100000)"`
 	ChapterStatus choices.ChapterStatus `gorm:"type:varchar(100); default:DRAFT" json:"chapter_status"`
+}
+
+func (c *Chapter) GenerateUniqueSlug(tx *gorm.DB) string {
+	uniqueSlug := slug.Make(c.Title)
+	slug := c.Slug
+	if slug != "" {
+		uniqueSlug = slug
+	}
+
+	existingChapter := Chapter{Slug: uniqueSlug}
+	tx.Take(&existingChapter, existingChapter)
+	if existingChapter.ID != uuid.Nil && existingChapter.ID != c.ID { // slug is already taken
+		// Make it unique by attaching a random string
+		// to it and repeat the function
+		randomStr := utils.GetRandomString(6)
+		c.Slug = uniqueSlug + "-" + randomStr
+		return c.GenerateUniqueSlug(tx)
+	}
+	return uniqueSlug
+}
+
+func (c *Chapter) BeforeSave(tx *gorm.DB) (err error) {
+	c.Slug = c.GenerateUniqueSlug(tx)
+	return
 }
 
 func (c Chapter) WordCount() int {

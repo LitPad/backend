@@ -103,8 +103,8 @@ func CheckTagStrings(db *gorm.DB, submittedList []string) ([]models.Tag, *string
     }
 
     // Return a message based on the result
-	missingTags := strings.Join(missingStrings, ", ")
     if len(missingStrings) > 0 {
+		missingTags := strings.Join(missingStrings, ", ")
         errMsg := fmt.Sprintf("The following are invalid tag slugs: %v", missingTags)
 		return tags, &errMsg
     }
@@ -128,29 +128,32 @@ func ValidateAndUploadImage(c *fiber.Ctx, name string, folder string, required b
 	}
 
 	// Open the file
-	fileHandle, err := file.Open()
-	if err != nil {
+	if file != nil {
+		fileHandle, err := file.Open()
+		if err != nil {
+			return nil, &errData
+		}
+		
+		defer fileHandle.Close()
+
+		// Read the first 512 bytes for content type detection
+		buffer := make([]byte, 512)
+		_, err = fileHandle.Read(buffer)
+		if err != nil {
+			return nil, &errData
+		}
+
+		// Detect the content type
+		contentType := http.DetectContentType(buffer)
+		switch contentType {
+			case "image/jpeg", "image/png", "image/gif":
+				// Upload file
+				fileUrl := uploadToCloudinary(c, file, folder)
+				return &fileUrl, nil
+		}
 		return nil, &errData
 	}
-	
-	defer fileHandle.Close()
-
-	// Read the first 512 bytes for content type detection
-	buffer := make([]byte, 512)
-	_, err = fileHandle.Read(buffer)
-	if err != nil {
-		return nil, &errData
-	}
-
-	// Detect the content type
-	contentType := http.DetectContentType(buffer)
-	switch contentType {
-		case "image/jpeg", "image/png", "image/gif":
-			// Upload file
-			fileUrl := uploadToCloudinary(c, file, folder)
-			return &fileUrl, nil
-	}
-	return nil, &errData
+	return nil, nil
 }
 
 // uploadToCloudinary uploads the file to Cloudinary and returns the URL of the uploaded file

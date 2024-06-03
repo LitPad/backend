@@ -15,6 +15,16 @@ func PaymentTypeValidator(fl validator.FieldLevel) bool {
 	return false // Error. Value doesn't match the required
 }
 
+// Validates if a chapter status value is the correct one
+func ChapterStatusValidator(fl validator.FieldLevel) bool {
+	chapterStatusValue := fl.Field().Interface().(choices.ChapterStatus)
+	switch chapterStatusValue {
+	case choices.CS_DRAFT, choices.CS_PUBLISHED, choices.CS_TRASH:
+		return true
+	}
+	return false // Error. Value doesn't match the required
+}
+
 // Validates if a age discretion value is the correct one
 func AgeDiscretionValidator(fl validator.FieldLevel) bool {
 	paymentTypeValue := fl.Field().Interface().(choices.AgeType)

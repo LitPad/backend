@@ -11,6 +11,7 @@ import (
 
 var (
 	bookManager  = managers.BookManager{}
+	chapterManager  = managers.ChapterManager{}
 	tagManager   = managers.TagManager{}
 	genreManager = managers.GenreManager{}
 )
@@ -118,7 +119,10 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 // @Summary Create A Book
 // @Description This endpoint allows a writer to create a book
 // @Tags Books
-// @Param profile body schemas.BookCreateSchema true "Book object"
+// @Param book formData schemas.BookCreateSchema true "Book object"
+// @Param cover_image formData file true "Cover Image to upload"
+// @Param chapter.title formData string false "First chapter title"
+// @Param chapter.text formData string false "First chapter title"
 // @Success 200 {object} schemas.BookResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [post]
@@ -129,11 +133,6 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 	data := schemas.BookCreateSchema{}
 	if errCode, errData := ValidateFormRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
-	}
-
-	fileUrl, err := ValidateAndUploadImage(c, "cover_image", "books", true)
-	if err != nil {
-		return c.Status(422).JSON(err)
 	}
 
 	// Validate Genre
@@ -157,10 +156,124 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
 	}
 
+	// Check and validate image
+	fileUrl, err := ValidateAndUploadImage(c, "cover_image", "books", true)
+	if err != nil {
+		return c.Status(422).JSON(err)
+	}
+
 	book := bookManager.Create(db, *author, data, genre, *fileUrl, tags)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
 		Data:           schemas.BookSchema{}.Init(book),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Update A Book
+// @Description This endpoint allows a writer to update a book
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Param book formData schemas.BookUpdateSchema true "Book object"
+// @Param cover_image formData file false "Cover Image to upload"
+// @Success 200 {object} schemas.BookResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug} [put]
+// @Security BearerAuth
+func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
+	db := ep.DB
+	author := RequestUser(c)
+	book, err := bookManager.GetByAuthorAndID(db, author, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	data := schemas.BookUpdateSchema{}
+	if errCode, errData := ValidateFormRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	// Validate Genre
+	genreSlug := data.GenreSlug
+	genre := models.Genre{Slug: genreSlug}
+	db.Take(&genre, genre)
+	if genre.ID == uuid.Nil {
+		data := map[string]string{
+			"genre_slug": "Invalid genre slug!",
+		}
+		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+	}
+
+	// Validate Tags
+	tagSlugs := data.TagSlugs
+	tags, errStr := CheckTagStrings(db, tagSlugs)
+	if errStr != nil {
+		data := map[string]string{
+			"tag_slugs": *errStr,
+		}
+		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+	}
+
+	// Check and validate image
+	fileUrl, err := ValidateAndUploadImage(c, "cover_image", "books", false)
+	if err != nil {
+		return c.Status(422).JSON(err)
+	}
+
+	updatedBook := bookManager.Update(db, *book, data, genre, fileUrl, tags)
+	response := schemas.BookResponseSchema{
+		ResponseSchema: ResponseMessage("Book updated successfully"),
+		Data:           schemas.BookSchema{}.Init(updatedBook),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Delete A Book
+// @Description This endpoint allows a writer to delete a book
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
+	db := ep.DB
+	author := RequestUser(c)
+	book, err := bookManager.GetByAuthorAndID(db, author, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	db.Delete(&book)
+	return c.Status(200).JSON(ResponseMessage("Book deleted successfuly"))
+}
+
+// @Summary Add A Chapter to a Book
+// @Description `This endpoint allows a writer to add a chapter to his/her book`
+// @Description `Chapter status: DRAFT, PUBLISHED, TRASH`
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Param chapter body schemas.ChapterCreateSchema true "Chapter object"
+// @Success 200 {object} schemas.ChapterResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/add-chapter [post]
+// @Security BearerAuth
+func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
+	db := ep.DB
+	author := RequestUser(c)
+	book, err := bookManager.GetByAuthorAndID(db, author, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	data := schemas.ChapterCreateSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	chapter := chapterManager.Create(db, *book, data)
+	response := schemas.ChapterResponseSchema{
+		ResponseSchema: ResponseMessage("Chapter added successfully"),
+		Data:           schemas.ChapterSchema{}.Init(chapter),
 	}
 	return c.Status(200).JSON(response)
 }

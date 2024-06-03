@@ -1,8 +1,6 @@
 package schemas
 
 import (
-	"mime/multipart"
-
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 )
@@ -47,6 +45,7 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 
 type ChapterSchema struct {
 	Title         string                `json:"title"`
+	Slug          string                `json:"slug"`
 	Text          string                `json:"text"`
 	ChapterStatus choices.ChapterStatus `json:"chapter_status" example:"PUBLISHED"`
 	WordCount     int                   `json:"word_count"`
@@ -54,6 +53,7 @@ type ChapterSchema struct {
 
 func (c ChapterSchema) Init(chapter models.Chapter) ChapterSchema {
 	c.Title = chapter.Title
+	c.Slug = chapter.Slug
 	c.Text = chapter.Text
 	c.ChapterStatus = chapter.ChapterStatus
 	c.WordCount = chapter.WordCount()
@@ -125,15 +125,24 @@ type BookChapterCreateSchema struct {
 	Text  string `json:"text" validate:"required,max=100000"`
 }
 
+type BookUpdateSchema struct {
+	Title         string          `form:"title" validate:"required,max=200"`
+	Blurb         string          `form:"blurb" validate:"required,max=200"`
+	GenreSlug     string          `form:"genre_slug" validate:"required"`
+	TagSlugs      []string        `form:"tag_slugs" validate:"required"`
+	Price         int             `form:"price" validate:"required"`
+	AgeDiscretion choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
+}
+
 type BookCreateSchema struct {
-	Title         string                   `form:"title" validate:"required,max=200"`
-	Blurb         string                   `form:"blurb" validate:"required,max=200"`
-	GenreSlug     string                   `form:"genre_slug" validate:"required"`
-	TagSlugs      []string                 `form:"tag_slugs" validate:"required"`
-	Price         int                      `form:"price" validate:"required"`
-	AgeDiscretion choices.AgeType          `form:"age_discretion" validate:"required,age_discretion_validator"`
-	CoverImage    multipart.FileHeader   `form:"cover_image" validate:"required"`
-	Chapter       *BookChapterCreateSchema `form:"chapter"`
+	BookUpdateSchema
+	Chapter *BookChapterCreateSchema `form:"chapter"`
+}
+
+type ChapterCreateSchema struct {
+	Title         string                `json:"title" validate:"required,max=100"`
+	Text          string                `json:"text" validate:"required,max=10000"`
+	ChapterStatus choices.ChapterStatus `json:"chapter_status" validate:"required,chapter_status_validator"`
 }
 
 type TagsResponseSchema struct {
@@ -217,4 +226,9 @@ type BooksResponseSchema struct {
 type BookResponseSchema struct {
 	ResponseSchema
 	Data BookSchema `json:"data"`
+}
+
+type ChapterResponseSchema struct {
+	ResponseSchema
+	Data ChapterSchema `json:"data"`
 }

@@ -560,13 +560,77 @@ const docTemplate = `{
                 "summary": "Create A Book",
                 "parameters": [
                     {
-                        "description": "Book object",
-                        "name": "profile",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.BookCreateSchema"
-                        }
+                        "enum": [
+                            4,
+                            12,
+                            16,
+                            18
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "ATYPE_FOUR",
+                            "ATYPE_TWELVE",
+                            "ATYPE_SIXTEEN",
+                            "ATYPE_EIGHTEEN"
+                        ],
+                        "name": "age_discretion",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 200,
+                        "type": "string",
+                        "name": "blurb",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "genre_slug",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "price",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "tag_slugs",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 200,
+                        "type": "string",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Cover Image to upload",
+                        "name": "cover_image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First chapter title",
+                        "name": "chapter.title",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "First chapter title",
+                        "name": "chapter.text",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -625,6 +689,184 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.PartialBooksResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/{slug}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a writer to update a book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Update A Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            4,
+                            12,
+                            16,
+                            18
+                        ],
+                        "type": "integer",
+                        "x-enum-varnames": [
+                            "ATYPE_FOUR",
+                            "ATYPE_TWELVE",
+                            "ATYPE_SIXTEEN",
+                            "ATYPE_EIGHTEEN"
+                        ],
+                        "name": "age_discretion",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 200,
+                        "type": "string",
+                        "name": "blurb",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "genre_slug",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "price",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "name": "tag_slugs",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 200,
+                        "type": "string",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Cover Image to upload",
+                        "name": "cover_image",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a writer to delete a book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Delete A Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/{slug}/add-chapter": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a writer to add a chapter to his/her book` + "`" + `\n` + "`" + `Chapter status: DRAFT, PUBLISHED, TRASH` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Add A Chapter to a Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Chapter object",
+                        "name": "chapter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ChapterCreateSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ChapterResponseSchema"
                         }
                     },
                     "400": {
@@ -1145,8 +1387,22 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.BookCreateSchema": {
-            "type": "object"
+        "schemas.BookChapterCreateSchema": {
+            "type": "object",
+            "required": [
+                "text",
+                "title"
+            ],
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "maxLength": 100000
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 200
+                }
+            }
         },
         "schemas.BookResponseSchema": {
             "type": "object",
@@ -1279,6 +1535,43 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.ChapterCreateSchema": {
+            "type": "object",
+            "required": [
+                "chapter_status",
+                "text",
+                "title"
+            ],
+            "properties": {
+                "chapter_status": {
+                    "$ref": "#/definitions/choices.ChapterStatus"
+                },
+                "text": {
+                    "type": "string",
+                    "maxLength": 10000
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
+        "schemas.ChapterResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.ChapterSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.ChapterSchema": {
             "type": "object",
             "properties": {
@@ -1289,6 +1582,9 @@ const docTemplate = `{
                         }
                     ],
                     "example": "PUBLISHED"
+                },
+                "slug": {
+                    "type": "string"
                 },
                 "text": {
                     "type": "string"

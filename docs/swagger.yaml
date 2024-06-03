@@ -95,7 +95,17 @@ definitions:
         example: pong
         type: string
     type: object
-  schemas.BookCreateSchema:
+  schemas.BookChapterCreateSchema:
+    properties:
+      text:
+        maxLength: 100000
+        type: string
+      title:
+        maxLength: 200
+        type: string
+    required:
+    - text
+    - title
     type: object
   schemas.BookResponseSchema:
     properties:
@@ -185,12 +195,40 @@ definitions:
     - payment_type
     - quantity
     type: object
+  schemas.ChapterCreateSchema:
+    properties:
+      chapter_status:
+        $ref: '#/definitions/choices.ChapterStatus'
+      text:
+        maxLength: 10000
+        type: string
+      title:
+        maxLength: 100
+        type: string
+    required:
+    - chapter_status
+    - text
+    - title
+    type: object
+  schemas.ChapterResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.ChapterSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.ChapterSchema:
     properties:
       chapter_status:
         allOf:
         - $ref: '#/definitions/choices.ChapterStatus'
         example: PUBLISHED
+      slug:
+        type: string
       text:
         type: string
       title:
@@ -1042,12 +1080,58 @@ paths:
     post:
       description: This endpoint allows a writer to create a book
       parameters:
-      - description: Book object
-        in: body
-        name: profile
+      - enum:
+        - 4
+        - 12
+        - 16
+        - 18
+        in: formData
+        name: age_discretion
         required: true
-        schema:
-          $ref: '#/definitions/schemas.BookCreateSchema'
+        type: integer
+        x-enum-varnames:
+        - ATYPE_FOUR
+        - ATYPE_TWELVE
+        - ATYPE_SIXTEEN
+        - ATYPE_EIGHTEEN
+      - in: formData
+        maxLength: 200
+        name: blurb
+        required: true
+        type: string
+      - in: formData
+        name: genre_slug
+        required: true
+        type: string
+      - in: formData
+        name: price
+        required: true
+        type: integer
+      - collectionFormat: csv
+        in: formData
+        items:
+          type: string
+        name: tag_slugs
+        required: true
+        type: array
+      - in: formData
+        maxLength: 200
+        name: title
+        required: true
+        type: string
+      - description: Cover Image to upload
+        in: formData
+        name: cover_image
+        required: true
+        type: file
+      - description: First chapter title
+        in: formData
+        name: chapter.title
+        type: string
+      - description: First chapter title
+        in: formData
+        name: chapter.text
+        type: string
       responses:
         "200":
           description: OK
@@ -1094,6 +1178,125 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: View Latest Books By A Particular Author
+      tags:
+      - Books
+  /books/book/{slug}:
+    delete:
+      description: This endpoint allows a writer to delete a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete A Book
+      tags:
+      - Books
+    put:
+      description: This endpoint allows a writer to update a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - enum:
+        - 4
+        - 12
+        - 16
+        - 18
+        in: formData
+        name: age_discretion
+        required: true
+        type: integer
+        x-enum-varnames:
+        - ATYPE_FOUR
+        - ATYPE_TWELVE
+        - ATYPE_SIXTEEN
+        - ATYPE_EIGHTEEN
+      - in: formData
+        maxLength: 200
+        name: blurb
+        required: true
+        type: string
+      - in: formData
+        name: genre_slug
+        required: true
+        type: string
+      - in: formData
+        name: price
+        required: true
+        type: integer
+      - collectionFormat: csv
+        in: formData
+        items:
+          type: string
+        name: tag_slugs
+        required: true
+        type: array
+      - in: formData
+        maxLength: 200
+        name: title
+        required: true
+        type: string
+      - description: Cover Image to upload
+        in: formData
+        name: cover_image
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BookResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update A Book
+      tags:
+      - Books
+  /books/book/{slug}/add-chapter:
+    post:
+      description: |-
+        `This endpoint allows a writer to add a chapter to his/her book`
+        `Chapter status: DRAFT, PUBLISHED, TRASH`
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Chapter object
+        in: body
+        name: chapter
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ChapterCreateSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ChapterResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add A Chapter to a Book
       tags:
       - Books
   /books/genres:
