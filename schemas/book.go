@@ -1,6 +1,8 @@
 package schemas
 
 import (
+	"mime/multipart"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 )
@@ -63,10 +65,11 @@ type PartialBookSchema struct {
 	Title              string                `json:"title"`
 	Slug               string                `json:"slug"`
 	Blurb              string                `json:"blurb"`
+	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
-	PartialViewChapter *ChapterSchema         `json:"partial_view_chapter"`
+	PartialViewChapter *ChapterSchema        `json:"partial_view_chapter"`
 	WordCount          int                   `json:"word_count"`
 	CoverImage         string                `json:"cover_image"`
 	Price              int                   `json:"price"`
@@ -76,6 +79,7 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	b.Author = b.Author.Init(book.Author)
 	b.Blurb = book.Blurb
 	b.Price = book.Price
+	b.AgeDiscretion = book.AgeDiscretion
 
 	tags := book.Tags
 	tagsToAdd := b.Tags
@@ -103,7 +107,6 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 type BookSchema struct {
 	PartialBookSchema
 	Chapters []ChapterSchema `json:"chapters"`
-	File     string          `json:"file"`
 }
 
 func (b BookSchema) Init(book models.Book) BookSchema {
@@ -114,22 +117,23 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 		chaptersToAdd = append(chaptersToAdd, ChapterSchema{}.Init(chapters[i]))
 	}
 	b.Chapters = chaptersToAdd
-	b.File = book.File
 	return b
 }
 
+type BookChapterCreateSchema struct {
+	Title string `json:"title" validate:"required,max=200"`
+	Text  string `json:"text" validate:"required,max=100000"`
+}
+
 type BookCreateSchema struct {
-	Title               string   `json:"title"`
-	Blurb               string   `json:"blurb"`
-	GenreSlug           string   `json:"genre_slug"`
-	TagSlugs            []string `json:"tag_slugs"`
-	Chapters            int      `json:"chapters"`
-	PartialViewChapters int      `json:"partial_view_chapters"`
-	WordCount           int      `json:"word_count"`
-	CoverImage          string   `json:"cover_image"`
-	Price               int      `json:"price"`
-	PartialViewFile     string   `json:"partial_view_file"`
-	FullViewFile        string   `json:"full_view_file"`
+	Title         string                   `form:"title" validate:"required,max=200"`
+	Blurb         string                   `form:"blurb" validate:"required,max=200"`
+	GenreSlug     string                   `form:"genre_slug" validate:"required"`
+	TagSlugs      []string                 `form:"tag_slugs" validate:"required"`
+	Price         int                      `form:"price" validate:"required"`
+	AgeDiscretion choices.AgeType          `form:"age_discretion" validate:"required,age_discretion_validator"`
+	CoverImage    multipart.FileHeader   `form:"cover_image" validate:"required"`
+	Chapter       *BookChapterCreateSchema `form:"chapter"`
 }
 
 type TagsResponseSchema struct {

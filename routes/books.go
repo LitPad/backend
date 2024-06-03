@@ -4,7 +4,9 @@ import (
 	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/schemas"
+	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 var (
@@ -122,17 +124,43 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 // @Router /books [post]
 // @Security BearerAuth
 func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
-	// db := ep.DB
-	// author := RequestUser(c)
-
+	db := ep.DB
+	author := RequestUser(c)
 	data := schemas.BookCreateSchema{}
-	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+	if errCode, errData := ValidateFormRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	book := models.Book{}
+
+	fileUrl, err := ValidateAndUploadImage(c, "cover_image", "books", true)
+	if err != nil {
+		return c.Status(422).JSON(err)
+	}
+
+	// Validate Genre
+	genreSlug := data.GenreSlug
+	genre := models.Genre{Slug: genreSlug}
+	db.Take(&genre, genre)
+	if genre.ID == uuid.Nil {
+		data := map[string]string{
+			"genre_slug": "Invalid genre slug!",
+		}
+		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+	}
+
+	// Validate Tags
+	tagSlugs := data.TagSlugs
+	tags, errStr := CheckTagStrings(db, tagSlugs)
+	if errStr != nil {
+		data := map[string]string{
+			"tag_slugs": *errStr,
+		}
+		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+	}
+
+	book := bookManager.Create(db, *author, data, genre, *fileUrl, tags)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
-		Data: schemas.BookSchema{}.Init(book),
+		Data:           schemas.BookSchema{}.Init(book),
 	}
 	return c.Status(200).JSON(response)
 }

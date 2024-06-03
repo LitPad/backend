@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+var validator = utils.Validator()
 
 func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 	var errData *utils.ErrorResponse
@@ -36,33 +37,33 @@ func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 		var unmarshalTypeError *json.UnmarshalTypeError
 		errStr := err.Error()
 		switch {
-			case errors.As(err, &syntaxError):
-				msg = fmt.Sprintf(
-					"Request body contains badly-formed JSON (at position %d)",
-					syntaxError.Offset,
-				)
+		case errors.As(err, &syntaxError):
+			msg = fmt.Sprintf(
+				"Request body contains badly-formed JSON (at position %d)",
+				syntaxError.Offset,
+			)
 
-			case errors.Is(err, io.ErrUnexpectedEOF):
-				status_code = http.StatusBadRequest
-				msg="Request body contains badly-formed JSON"
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			status_code = http.StatusBadRequest
+			msg = "Request body contains badly-formed JSON"
 
-			case errors.As(err, &unmarshalTypeError):
-				fieldName := unmarshalTypeError.Field
-				fieldErrors[fieldName] = "Invalid format"
-			case strings.HasPrefix(errStr, "json: unknown field "):
-				fieldName := strings.TrimPrefix(errStr, "json: unknown field ")
-				fieldErrors[fieldName] = "Unknown field"
-			case errors.Is(err, io.EOF):
-				status_code = http.StatusBadRequest
-				msg = "Request body must not be empty"
+		case errors.As(err, &unmarshalTypeError):
+			fieldName := unmarshalTypeError.Field
+			fieldErrors[fieldName] = "Invalid format"
+		case strings.HasPrefix(errStr, "json: unknown field "):
+			fieldName := strings.TrimPrefix(errStr, "json: unknown field ")
+			fieldErrors[fieldName] = "Unknown field"
+		case errors.Is(err, io.EOF):
+			status_code = http.StatusBadRequest
+			msg = "Request body must not be empty"
 
-			case errStr == "http: request body too large":
-				status_code = http.StatusRequestEntityTooLarge
-				msg = "Request body must not be larger than 1MB"
+		case errStr == "http: request body too large":
+			status_code = http.StatusRequestEntityTooLarge
+			msg = "Request body must not be larger than 1MB"
 
-			default:
-				status_code = 400
-				msg = "Invalid request"
+		default:
+			status_code = 400
+			msg = "Invalid request"
 		}
 		errData := utils.RequestErr(utils.ERR_INVALID_REQUEST, msg)
 		if len(fieldErrors) > 0 {
@@ -81,7 +82,6 @@ func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 }
 
 func ValidateRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse) {
-	validator := utils.Validator()
 	if errCode, errData := DecodeJSONBody(c, &data); errData != nil {
 		return &errCode, errData
 	}
@@ -92,8 +92,26 @@ func ValidateRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse
 	return nil, nil
 }
 
-func ValidatePathParams(c *fiber.Ctx, pathParams map[string]string) (*int, *utils.ErrorResponse){
-	for paramName, paramValue := range pathParams{
+func ValidateFormRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse) {
+	errC := 400
+	if !strings.Contains(c.Get("Content-Type"), "multipart/form-data") {
+		errD := utils.RequestErr(utils.ERR_INVALID_REQUEST, "Content-Type header is not multipart/form-data")
+		return &errC, &errD
+	}
+
+	if err := c.BodyParser(data); err != nil {
+		errD := utils.RequestErr(utils.ERR_INVALID_REQUEST, "Unable to parse form body")
+		return &errC, &errD
+	}
+	if errData := validator.Validate(data); errData != nil {
+		errC = 422
+		return &errC, errData
+	}
+	return nil, nil
+}
+
+func ValidatePathParams(c *fiber.Ctx, pathParams map[string]string) (*int, *utils.ErrorResponse) {
+	for paramName, paramValue := range pathParams {
 		if paramValue == "" {
 			errData := utils.RequestErr(utils.ERR_INVALID_REQUEST, fmt.Sprintf("Missing or invalid value for path parameter: %s", paramName))
 			errCode := 400

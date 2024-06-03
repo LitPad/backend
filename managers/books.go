@@ -4,6 +4,7 @@ import (
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
+	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -49,6 +50,24 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, us
 	} 
 	query.Omit("FullViewFile").Scopes(scopes.AuthorGenreTagBookScope).Order("created_at DESC").Find(&books)
 	return books, nil
+}
+
+func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, coverImage string, Tags []models.Tag) models.Book {
+	book := models.Book{
+		AuthorID: author.ID, Author: author, Title: data.Title, 
+		Blurb: data.Blurb, AgeDiscretion: data.AgeDiscretion,
+		GenreID: genre.ID, Genre: genre,
+		Tags: Tags,
+		CoverImage: coverImage,
+		Price: data.Price,
+	}
+	db.Omit("Tags.*").Create(&book)
+	if data.Chapter != nil {
+		chapter := models.Chapter{BookID: book.ID, Title: data.Chapter.Title, Text: data.Chapter.Text, ChapterStatus: choices.CS_PUBLISHED}
+		db.Create(&chapter)
+		book.Chapters = []models.Chapter{chapter}
+	}
+	return book
 }
 
 type TagManager struct {

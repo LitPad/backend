@@ -36,14 +36,15 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 type Book struct {
 	BaseModel
 	AuthorID uuid.UUID `json:"author_id"`
-	Author   User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE"`
+	Author   User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
 	Title    string    `json:"title" gorm:"type: varchar(255)"`
 	Slug     string    `gorm:"unique"`
 	Blurb    string    `json:"blurb" gorm:"type: varchar(255)"`
+	AgeDiscretion choices.AgeType 
 
 	GenreID             uuid.UUID `json:"genre_id"`
-	Genre               Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE"`
-	Tags                []Tag     `json:"tags" gorm:"many2many:book_tags;"`
+	Genre               Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
+	Tags                []Tag     `json:"tags" gorm:"many2many:book_tags;<-:false"`
 	Chapters            []Chapter
 	CoverImage          string    `gorm:"type:varchar(10000)" json:"cover_image"`
 

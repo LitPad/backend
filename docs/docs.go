@@ -1031,6 +1031,21 @@ const docTemplate = `{
                 "ACCTYPE_WRITER"
             ]
         },
+        "choices.AgeType": {
+            "type": "integer",
+            "enum": [
+                4,
+                12,
+                16,
+                18
+            ],
+            "x-enum-varnames": [
+                "ATYPE_FOUR",
+                "ATYPE_TWELVE",
+                "ATYPE_SIXTEEN",
+                "ATYPE_EIGHTEEN"
+            ]
+        },
         "choices.ChapterStatus": {
             "type": "string",
             "enum": [
@@ -1131,45 +1146,7 @@ const docTemplate = `{
             }
         },
         "schemas.BookCreateSchema": {
-            "type": "object",
-            "properties": {
-                "blurb": {
-                    "type": "string"
-                },
-                "chapters": {
-                    "type": "integer"
-                },
-                "cover_image": {
-                    "type": "string"
-                },
-                "full_view_file": {
-                    "type": "string"
-                },
-                "genre_slug": {
-                    "type": "string"
-                },
-                "partial_view_chapters": {
-                    "type": "integer"
-                },
-                "partial_view_file": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "tag_slugs": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "title": {
-                    "type": "string"
-                },
-                "word_count": {
-                    "type": "integer"
-                }
-            }
+            "type": "object"
         },
         "schemas.BookResponseSchema": {
             "type": "object",
@@ -1190,6 +1167,9 @@ const docTemplate = `{
         "schemas.BookSchema": {
             "type": "object",
             "properties": {
+                "age_discretion": {
+                    "$ref": "#/definitions/choices.AgeType"
+                },
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
                 },
@@ -1206,9 +1186,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "cover_image": {
-                    "type": "string"
-                },
-                "file": {
                     "type": "string"
                 },
                 "genre": {
@@ -1479,6 +1456,9 @@ const docTemplate = `{
         "schemas.PartialBookSchema": {
             "type": "object",
             "properties": {
+                "age_discretion": {
+                    "$ref": "#/definitions/choices.AgeType"
+                },
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
                 },

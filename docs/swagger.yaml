@@ -10,6 +10,18 @@ definitions:
     x-enum-varnames:
     - ACCTYPE_READER
     - ACCTYPE_WRITER
+  choices.AgeType:
+    enum:
+    - 4
+    - 12
+    - 16
+    - 18
+    type: integer
+    x-enum-varnames:
+    - ATYPE_FOUR
+    - ATYPE_TWELVE
+    - ATYPE_SIXTEEN
+    - ATYPE_EIGHTEEN
   choices.ChapterStatus:
     enum:
     - DRAFT
@@ -84,31 +96,6 @@ definitions:
         type: string
     type: object
   schemas.BookCreateSchema:
-    properties:
-      blurb:
-        type: string
-      chapters:
-        type: integer
-      cover_image:
-        type: string
-      full_view_file:
-        type: string
-      genre_slug:
-        type: string
-      partial_view_chapters:
-        type: integer
-      partial_view_file:
-        type: string
-      price:
-        type: integer
-      tag_slugs:
-        items:
-          type: string
-        type: array
-      title:
-        type: string
-      word_count:
-        type: integer
     type: object
   schemas.BookResponseSchema:
     properties:
@@ -123,6 +110,8 @@ definitions:
     type: object
   schemas.BookSchema:
     properties:
+      age_discretion:
+        $ref: '#/definitions/choices.AgeType'
       author:
         $ref: '#/definitions/schemas.UserDataSchema'
       blurb:
@@ -134,8 +123,6 @@ definitions:
       chapters_count:
         type: integer
       cover_image:
-        type: string
-      file:
         type: string
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
@@ -316,6 +303,8 @@ definitions:
     type: object
   schemas.PartialBookSchema:
     properties:
+      age_discretion:
+        $ref: '#/definitions/choices.AgeType'
       author:
         $ref: '#/definitions/schemas.UserDataSchema'
       blurb:

@@ -28,9 +28,19 @@ func init() {
 
 	// Register Custom Validators
 	customValidator.RegisterValidation("payment_type_validator", PaymentTypeValidator)
+	customValidator.RegisterValidation("age_discretion_validator", AgeDiscretionValidator)
+
 
 	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
+	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("form"), ",", 2)[0]
 		if name == "-" {
 			return ""
 		}
@@ -56,6 +66,7 @@ func registerTranslations(param string) {
 	registerTranslation("required_if", "This field is required.", translator)
 	registerTranslation("required_without", "This field is required.", translator)
 	registerTranslation("payment_type_validator", "Invalid payment type", translator)
+	registerTranslation("age_discretion_validator", "Invalid age discretion. Choices are 4, 12, 16, 18", translator)
 
 	minErrMsg := fmt.Sprintf("%s characters min", param)
 	registerTranslation("min", minErrMsg, translator)
