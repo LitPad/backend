@@ -96,7 +96,7 @@ func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
 type Chapter struct {
 	BaseModel
 	BookID        uuid.UUID             `json:"book_id"`
-	Book          Book                  `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
+	Book          Book                  `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Title         string                `json:"title" gorm:"type: varchar(255)"`
 	Slug          string                `gorm:"unique"`
 	Text          string                `json:"text" gorm:"type: varchar(100000)"`
@@ -131,4 +131,13 @@ func (c Chapter) WordCount() int {
 	words := strings.Fields(c.Text)
 	wordCount := len(words)
 	return wordCount
+}
+
+type BoughtBook struct {
+	BaseModel
+	BuyerID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id"`
+	Buyer   User      `gorm:"foreignKey:BuyerID;constraint:OnDelete:CASCADE;<-:false"`
+
+	BookID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id"`
+	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 }

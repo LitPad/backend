@@ -30,12 +30,3 @@ type Transaction struct {
 func (t Transaction) CoinsTotal() int {
 	return t.Coin.Amount * int(t.Quantity)
 }
-
-type BoughtBooks struct {
-	BaseModel
-	ReaderID uuid.UUID
-	Reader   User `gorm:"foreignKey:ReaderID;constraint:OnDelete:CASCADE"`
-
-	BookID uuid.UUID
-	Book   Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
-}

@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	bookManager  = managers.BookManager{}
-	chapterManager  = managers.ChapterManager{}
-	tagManager   = managers.TagManager{}
-	genreManager = managers.GenreManager{}
+	bookManager       = managers.BookManager{}
+	chapterManager    = managers.ChapterManager{}
+	boughtBookManager = managers.BoughtBookManager{}
+	tagManager        = managers.TagManager{}
+	genreManager      = managers.GenreManager{}
 )
 
 // @Summary View Available Book Tags
@@ -333,4 +334,69 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	}
 	db.Delete(&chapter)
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfuly"))
+}
+
+// @Summary Buy A Book
+// @Description This endpoint allows a user to buy a book
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Success 201 {object} schemas.BookResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/buy [get]
+// @Security BearerAuth
+func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	book, err := bookManager.GetBySlug(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	if user.ID == book.AuthorID {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy your own book"))
+	}
+
+	bookAlreadyBought := boughtBookManager.GetByBuyerAndBook(db, user, *book)
+	if bookAlreadyBought != nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_ALREADY_BOUGHT, "You have bought this book already"))
+	}
+
+	if book.Price > user.Coins {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins"))
+	}
+
+	// Create bought book
+	boughtBook := boughtBookManager.Create(db, user, *book)
+	response := schemas.BookResponseSchema{
+		ResponseSchema: ResponseMessage("Book bought successfully"),
+		Data:           schemas.BookSchema{}.Init(boughtBook.Book),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Bought Books
+// @Description This endpoint views all books bought by a user
+// @Tags Books
+// @Param page query int false "Current Page" default(1)
+// @Success 200 {object} schemas.BooksResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/bought [get]
+// @Security BearerAuth
+func (ep Endpoint) GetBoughtBooks(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	books := boughtBookManager.GetLatest(db, user)
+	// Paginate and return books
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	books = paginatedBooks.([]models.Book)
+	response := schemas.BooksResponseSchema{
+		ResponseSchema: ResponseMessage("Books fetched successfully"),
+		Data: schemas.BooksResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(books),
+	}
+	return c.Status(200).JSON(response)
 }

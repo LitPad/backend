@@ -52,6 +52,16 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, us
 	return books, nil
 }
 
+func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
+	book := models.Book{Slug: slug}
+	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
+	if book.ID == uuid.Nil {
+		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No book with that slug")
+		return nil, &errD
+	}
+	return &book, nil
+}
+
 func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{AuthorID: author.ID, Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
@@ -112,9 +122,9 @@ func (c ChapterManager) GetBySlug(db *gorm.DB, slug string) (*models.Chapter, *u
 
 func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.ChapterCreateSchema) models.Chapter {
 	chapter := models.Chapter{
-		BookID: book.ID,
-		Title: data.Title,
-		Text: data.Text,
+		BookID:        book.ID,
+		Title:         data.Title,
+		Text:          data.Text,
 		ChapterStatus: data.ChapterStatus,
 	}
 	db.Create(&chapter)
@@ -149,4 +159,43 @@ func (t GenreManager) GetAll(db *gorm.DB) []models.Genre {
 	genres := t.ModelList
 	db.Preload("Tags").Find(&genres)
 	return genres
+}
+
+type BoughtBookManager struct {
+	Model     models.BoughtBook
+	ModelList []models.BoughtBook
+}
+
+func (b BoughtBookManager) GetLatest(db *gorm.DB, buyer *models.User) []models.Book {
+	boughtBooks := b.ModelList
+	books := []models.Book{}
+	db.Where(models.BoughtBook{BuyerID: buyer.ID}).Scopes(scopes.BoughtAuthorGenreTagBookScope).Order("created_at DESC").Find(&boughtBooks)
+	for i := range boughtBooks {
+		books = append(books, boughtBooks[i].Book)
+	}
+	return books
+}
+
+func (b BoughtBookManager) GetByBuyerAndBook(db *gorm.DB, buyer *models.User, book models.Book) *models.BoughtBook {
+	boughtBook := models.BoughtBook{
+		BuyerID: buyer.ID,
+		BookID:  book.ID,
+	}
+	db.Take(&boughtBook, boughtBook)
+	if boughtBook.ID == uuid.Nil {
+		return nil
+	}
+	return &boughtBook
+}
+
+func (b BoughtBookManager) Create(db *gorm.DB, buyer *models.User, book models.Book) models.BoughtBook {
+	boughtBook := models.BoughtBook{
+		BuyerID: buyer.ID,
+		BookID:  book.ID,
+		Book:    book,
+	}
+	db.Create(&boughtBook)
+	buyer.Coins = buyer.Coins - book.Price
+	db.Save((&buyer))
+	return boughtBook
 }

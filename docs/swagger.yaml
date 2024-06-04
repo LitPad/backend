@@ -1299,6 +1299,29 @@ paths:
       summary: Add A Chapter to a Book
       tags:
       - Books
+  /books/book/{slug}/buy:
+    get:
+      description: This endpoint allows a user to buy a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.BookResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Buy A Book
+      tags:
+      - Books
   /books/book/chapter/{slug}:
     delete:
       description: This endpoint allows a writer to delete a chapter from a book
@@ -1350,6 +1373,29 @@ paths:
       security:
       - BearerAuth: []
       summary: Update A Chapter of a Book
+      tags:
+      - Books
+  /books/bought:
+    get:
+      description: This endpoint views all books bought by a user
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BooksResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Bought Books
       tags:
       - Books
   /books/genres:

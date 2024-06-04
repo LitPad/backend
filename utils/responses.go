@@ -33,6 +33,9 @@ var ERR_NOT_ALLOWED =	"not_allowed"
 var ERR_INVALID_DATA_TYPE =	"invalid_data_type"
 var ERR_PASSWORD_MISMATCH = "password_does_not_match"
 var ERR_PASSWORD_SAME = "same_password"
+var ERR_INSUFFICIENT_COINS = "insufficient_coins"
+var ERR_ALREADY_BOUGHT = "already_bought"
+
 
 func RequestErr(code string, message string, opts ...map[string]string) ErrorResponse {
 	var data *map[string]string
