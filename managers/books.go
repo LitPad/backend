@@ -195,7 +195,16 @@ func (b BoughtBookManager) Create(db *gorm.DB, buyer *models.User, book models.B
 		Book:    book,
 	}
 	db.Create(&boughtBook)
-	buyer.Coins = buyer.Coins - book.Price
-	db.Save((&buyer))
+
+	bookPrice := book.Price
+
+	// Move coins from buyer to author
+	buyer.Coins = buyer.Coins - bookPrice
+	db.Save(&buyer)
+
+	// Increase user coins
+	author := book.Author
+	author.Coins = author.Coins + bookPrice
+	db.Save(&author)
 	return boughtBook
 }
