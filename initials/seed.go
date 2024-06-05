@@ -14,3 +14,4 @@ var GENRES []string = []string{
 	"Historical", "YA/Teen", "Paranormal", "Urban", "Sci-fi", "Chicklit",
 }
 
+var GIFTNAMES []string = []string{"Red rose", "Black dahlia", "Scroll", "Magic wand", "Wolf", "Baby Dragon"}

@@ -27,6 +27,8 @@ func Models() []interface{} {
 		&models.Genre{},
 		&models.Book{},
 		&models.Chapter{},
+		&models.Gift{},
+		&models.SentGift{},
 
 		// wallet
 		&models.Coin{},

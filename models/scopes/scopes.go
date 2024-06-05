@@ -20,3 +20,7 @@ func AuthorGenreTagBookScope(db *gorm.DB) *gorm.DB {
 func BoughtAuthorGenreTagBookScope(db *gorm.DB) *gorm.DB {
 	return db.Preload("Book").Preload("Book.Author").Preload("Book.Genre").Preload("Book.Tags").Preload("Book.Chapters")
 }
+
+func SentGiftRelatedScope(db *gorm.DB) *gorm.DB {
+	return db.Joins("Sender").Joins("Receiver").Joins("Gift")
+}

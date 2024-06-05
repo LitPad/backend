@@ -1,6 +1,8 @@
 package schemas
 
 import (
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 )
@@ -36,8 +38,8 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 	g.GenreWithoutTagSchema = g.GenreWithoutTagSchema.Init(genre)
 	tags := genre.Tags
 	tagsToAdd := g.Tags
-	for i := range tags {
-		tagsToAdd = append(tagsToAdd, TagSchema{}.Init(tags[i]))
+	for _, tag := range tags {
+		tagsToAdd = append(tagsToAdd, TagSchema{}.Init(tag))
 	}
 	g.Tags = tagsToAdd
 	return g
@@ -73,6 +75,8 @@ type PartialBookSchema struct {
 	WordCount          int                   `json:"word_count"`
 	CoverImage         string                `json:"cover_image"`
 	Price              int                   `json:"price"`
+	CreatedAt          time.Time             `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	UpdatedAt          time.Time             `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
 func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
@@ -83,8 +87,8 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 
 	tags := book.Tags
 	tagsToAdd := b.Tags
-	for i := range tags {
-		tagsToAdd = append(tagsToAdd, TagSchema{}.Init(tags[i]))
+	for _, tag := range tags {
+		tagsToAdd = append(tagsToAdd, TagSchema{}.Init(tag))
 	}
 	b.Tags = tagsToAdd
 
@@ -101,6 +105,8 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	}
 
 	b.CoverImage = book.CoverImage
+	b.CreatedAt = book.CreatedAt
+	b.UpdatedAt = book.UpdatedAt
 	return b
 }
 
@@ -113,8 +119,8 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.PartialBookSchema = b.PartialBookSchema.Init(book)
 	chaptersToAdd := b.Chapters
 	chapters := book.Chapters
-	for i := range chapters {
-		chaptersToAdd = append(chaptersToAdd, ChapterSchema{}.Init(chapters[i]))
+	for _, chapter := range chapters {
+		chaptersToAdd = append(chaptersToAdd, ChapterSchema{}.Init(chapter))
 	}
 	b.Chapters = chaptersToAdd
 	return b
@@ -153,8 +159,8 @@ type TagsResponseSchema struct {
 func (t TagsResponseSchema) Init(tags []models.Tag) TagsResponseSchema {
 	// Set Initial Data
 	tagItems := t.Data
-	for i := range tags {
-		tagItems = append(tagItems, TagSchema{}.Init(tags[i]))
+	for _, tag := range tags {
+		tagItems = append(tagItems, TagSchema{}.Init(tag))
 	}
 	t.Data = tagItems
 	return t
@@ -168,8 +174,8 @@ type GenresResponseSchema struct {
 func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	// Set Initial Data
 	genreItems := g.Data
-	for i := range genres {
-		genreItems = append(genreItems, GenreSchema{}.Init(genres[i]))
+	for _, genre := range genres {
+		genreItems = append(genreItems, GenreSchema{}.Init(genre))
 	}
 	g.Data = genreItems
 	return g
@@ -185,8 +191,8 @@ type PartialBooksResponseDataSchema struct {
 func (b PartialBooksResponseDataSchema) Init(books []models.Book) PartialBooksResponseDataSchema {
 	// Set Initial Data
 	bookItems := b.Items
-	for i := range books {
-		bookItems = append(bookItems, PartialBookSchema{}.Init(books[i]))
+	for _, book := range books {
+		bookItems = append(bookItems, PartialBookSchema{}.Init(book))
 	}
 	b.Items = bookItems
 	return b
@@ -211,8 +217,8 @@ type BooksResponseDataSchema struct {
 func (b BooksResponseDataSchema) Init(books []models.Book) BooksResponseDataSchema {
 	// Set Initial Data
 	bookItems := b.Items
-	for i := range books {
-		bookItems = append(bookItems, BookSchema{}.Init(books[i]))
+	for _, book := range books {
+		bookItems = append(bookItems, BookSchema{}.Init(book))
 	}
 	b.Items = bookItems
 	return b

@@ -12,6 +12,7 @@ type Endpoint struct {
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	endpoint := Endpoint{DB: db}
 
+	// ROUTES (40)
 	api := app.Group("/api/v1")
 
 	// HealthCheck Route (1)
@@ -36,14 +37,14 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	authRouter.Post("/refresh", endpoint.Refresh)
 	authRouter.Get("/logout", endpoint.AuthMiddleware, endpoint.Logout)
 
-	// Profile Routes ()
+	// Profile Routes (4)
 	profilesRouter := api.Group("/profiles")
 	profilesRouter.Get("/profile/:username", endpoint.GetProfile)
 	profilesRouter.Patch("/update", endpoint.AuthMiddleware, endpoint.UpdateProfile)
 	profilesRouter.Put("/update-password", endpoint.AuthMiddleware, endpoint.UpdatePassword)
 	profilesRouter.Get("/profile/:username/follow", endpoint.AuthMiddleware, endpoint.FollowUser)
 
-	// Book Routes ()
+	// Book Routes (12)
 	bookRouter := api.Group("/books")
 	bookRouter.Get("", endpoint.GetLatestBooks)
 	bookRouter.Post("", endpoint.AuthorMiddleware, endpoint.CreateBook)
@@ -58,14 +59,21 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	bookRouter.Get("/genres", endpoint.GetAllBookGenres)
 	bookRouter.Get("/tags", endpoint.GetAllBookTags)
 
-	// Wallet Routes ()
+	// Gifts Routes (4)
+	giftsRouter := api.Group("/gifts")
+	giftsRouter.Get("", endpoint.GetAllGifts)
+	giftsRouter.Get("/:username/:gift_slug/send", endpoint.AuthMiddleware, endpoint.SendGift)
+	giftsRouter.Get("/sent", endpoint.AuthorMiddleware, endpoint.GetAllSentGifts)
+	giftsRouter.Get("/sent/:id/claim", endpoint.AuthorMiddleware, endpoint.ClaimGift)
+
+	// Wallet Routes (4)
 	walletRouter := api.Group("/wallet")
 	walletRouter.Get("/coins", endpoint.AvailableCoins)
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 
-	// Admin Routes ()
+	// Admin Routes (2)
 	adminRouter := api.Group("/admin")
 	adminRouter.Get("/users", endpoint.AuthMiddleware, endpoint.GetUsers)
 	adminRouter.Get("/books", endpoint.AuthMiddleware, endpoint.GetBooks)

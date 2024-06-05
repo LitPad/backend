@@ -134,6 +134,9 @@ definitions:
         type: integer
       cover_image:
         type: string
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
       partial_view_chapter:
@@ -147,6 +150,9 @@ definitions:
           $ref: '#/definitions/schemas.TagSchema'
         type: array
       title:
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
         type: string
       word_count:
         type: integer
@@ -316,6 +322,37 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.GiftSchema:
+    properties:
+      image:
+        example: https://img.url
+        type: string
+      lanterns:
+        example: 2
+        type: integer
+      name:
+        example: Red rose
+        type: string
+      price:
+        example: 500
+        type: integer
+      slug:
+        example: red-rose
+        type: string
+    type: object
+  schemas.GiftsResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.GiftSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.LoginResponseSchema:
     properties:
       data:
@@ -351,6 +388,9 @@ definitions:
         type: integer
       cover_image:
         type: string
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
       partial_view_chapter:
@@ -364,6 +404,9 @@ definitions:
           $ref: '#/definitions/schemas.TagSchema'
         type: array
       title:
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
         type: string
       word_count:
         type: integer
@@ -459,6 +502,61 @@ definitions:
     type: object
   schemas.ResponseSchema:
     properties:
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SentGiftResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.SentGiftSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SentGiftSchema:
+    properties:
+      claimed:
+        type: boolean
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      gift:
+        $ref: '#/definitions/schemas.GiftSchema'
+      id:
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      receiver:
+        $ref: '#/definitions/schemas.UserDataSchema'
+      sender:
+        $ref: '#/definitions/schemas.UserDataSchema'
+    type: object
+  schemas.SentGiftsResponseDataSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      gifts:
+        items:
+          $ref: '#/definitions/schemas.SentGiftSchema'
+        type: array
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+    type: object
+  schemas.SentGiftsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.SentGiftsResponseDataSchema'
       message:
         example: Data fetched/created/updated/deleted
         type: string
@@ -1461,6 +1559,100 @@ paths:
       summary: Add a subscriber
       tags:
       - General
+  /gifts:
+    get:
+      description: This endpoint shows a user gifts that can be sent
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.GiftsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View All Available Gifts
+      tags:
+      - Gifts
+  /gifts/{username}/{gift_slug}/send/:
+    get:
+      description: This endpoint allows a user to send a gift
+      parameters:
+      - description: Username of the writer
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Slug of the gift being sent
+        in: path
+        name: gift_slug
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.SentGiftResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send Gift
+      tags:
+      - Gifts
+  /gifts/sent:
+    get:
+      description: This endpoint allows a writer to view all gifts that was sent to
+        him/her
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      - description: 'Filter by claimed value: CLAIMED or NOT_CLAIMED '
+        in: query
+        name: claimed
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SentGiftsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View All Gifts Sent To A Writer
+      tags:
+      - Gifts
+  /gifts/sent/{id}/claim:
+    get:
+      description: This endpoint allows a writer to claim a gift
+      parameters:
+      - description: ID of the sent gift (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SentGiftResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Claim Gift
+      tags:
+      - Gifts
   /healthcheck:
     get:
       description: This endpoint checks the health of our application.

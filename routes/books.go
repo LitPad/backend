@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	userManager       = managers.UserManager{}
 	bookManager       = managers.BookManager{}
 	chapterManager    = managers.ChapterManager{}
 	boughtBookManager = managers.BoughtBookManager{}
@@ -371,7 +372,7 @@ func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
 		ResponseSchema: ResponseMessage("Book bought successfully"),
 		Data:           schemas.BookSchema{}.Init(boughtBook.Book),
 	}
-	return c.Status(200).JSON(response)
+	return c.Status(201).JSON(response)
 }
 
 // @Summary View Bought Books

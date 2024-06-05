@@ -1130,6 +1130,153 @@ const docTemplate = `{
                 }
             }
         },
+        "/gifts": {
+            "get": {
+                "description": "This endpoint shows a user gifts that can be sent",
+                "tags": [
+                    "Gifts"
+                ],
+                "summary": "View All Available Gifts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GiftsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gifts/sent": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a writer to view all gifts that was sent to him/her",
+                "tags": [
+                    "Gifts"
+                ],
+                "summary": "View All Gifts Sent To A Writer",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by claimed value: CLAIMED or NOT_CLAIMED ",
+                        "name": "claimed",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SentGiftsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gifts/sent/{id}/claim": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a writer to claim a gift",
+                "tags": [
+                    "Gifts"
+                ],
+                "summary": "Claim Gift",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the sent gift (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SentGiftResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/gifts/{username}/{gift_slug}/send/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to send a gift",
+                "tags": [
+                    "Gifts"
+                ],
+                "summary": "Send Gift",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of the writer",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Slug of the gift being sent",
+                        "name": "gift_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SentGiftResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/healthcheck": {
             "get": {
                 "description": "This endpoint checks the health of our application.",
@@ -1599,6 +1746,10 @@ const docTemplate = `{
                 "cover_image": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
@@ -1619,6 +1770,10 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
                 },
                 "word_count": {
                     "type": "integer"
@@ -1871,6 +2026,50 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.GiftSchema": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "string",
+                    "example": "https://img.url"
+                },
+                "lanterns": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Red rose"
+                },
+                "price": {
+                    "type": "integer",
+                    "example": 500
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "red-rose"
+                }
+            }
+        },
+        "schemas.GiftsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.GiftSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.LoginResponseSchema": {
             "type": "object",
             "properties": {
@@ -1922,6 +2121,10 @@ const docTemplate = `{
                 "cover_image": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
@@ -1942,6 +2145,10 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
                 },
                 "word_count": {
                     "type": "integer"
@@ -2075,6 +2282,86 @@ const docTemplate = `{
         "schemas.ResponseSchema": {
             "type": "object",
             "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.SentGiftResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.SentGiftSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.SentGiftSchema": {
+            "type": "object",
+            "properties": {
+                "claimed": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "gift": {
+                    "$ref": "#/definitions/schemas.GiftSchema"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "receiver": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "sender": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                }
+            }
+        },
+        "schemas.SentGiftsResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "gifts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SentGiftSchema"
+                    }
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "schemas.SentGiftsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.SentGiftsResponseDataSchema"
+                },
                 "message": {
                     "type": "string",
                     "example": "Data fetched/created/updated/deleted"

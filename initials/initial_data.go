@@ -73,8 +73,8 @@ func createTags(db *gorm.DB) []models.Tag {
 	tags := []models.Tag{}
 	db.Find(&tags)
 	if len(tags) < 1 {
-		for i := range TAGS {
-			tag := models.Tag{Name: TAGS[i]}
+		for _, item := range TAGS {
+			tag := models.Tag{Name: item}
 			tags = append(tags, tag)
 		}
 		db.Create(&tags)
@@ -87,16 +87,28 @@ func createGenres(db *gorm.DB, tags []models.Tag) {
 	db.Find(&genres)
 
 	if len(genres) < 1 {
-		for i := range GENRES {
+		for _, item := range GENRES {
 			// Shuffle the list
 			rand.New(rand.NewSource(time.Now().UnixNano()))
 			rand.Shuffle(len(tags), func(i, j int) {
 				tags[i], tags[j] = tags[j], tags[i]
 			})
-			genre := models.Genre{Name: GENRES[i], Tags: tags[:10]}
+			genre := models.Genre{Name: item, Tags: tags[:10]}
 			genres = append(genres, genre)
 		}
 		db.Omit("Tags.*").Create(&genres)
+	}
+}
+
+func createGifts(db *gorm.DB) {
+	gifts := []models.Gift{}
+	db.Find(&gifts)
+	if len(gifts) < 1 {
+		for i, name := range GIFTNAMES {
+			gift := models.Gift{Name: name, Price: 100 * i, Image: "https://img.com", Lanterns: 2 * i}
+			gifts = append(gifts, gift)
+		}
+		db.Create(&gifts)
 	}
 }
 
@@ -108,5 +120,6 @@ func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	createCoins(db)
 	tags := createTags(db)
 	createGenres(db, tags)
+	createGifts(db)
 	log.Println("Initial Data Created....")
 }
