@@ -5,6 +5,7 @@ import (
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/google/uuid"
 )
 
 type TagSchema struct {
@@ -75,6 +76,7 @@ type PartialBookSchema struct {
 	WordCount          int                   `json:"word_count"`
 	CoverImage         string                `json:"cover_image"`
 	Price              int                   `json:"price"`
+	Views              int                   `json:"views"`
 	CreatedAt          time.Time             `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt          time.Time             `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
@@ -105,6 +107,7 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	}
 
 	b.CoverImage = book.CoverImage
+	b.Views = book.ViewsCount()
 	b.CreatedAt = book.CreatedAt
 	b.UpdatedAt = book.UpdatedAt
 	return b
@@ -124,6 +127,80 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	}
 	b.Chapters = chaptersToAdd
 	return b
+}
+
+type ReviewSchema struct {
+	ID           uuid.UUID            `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
+	User         UserDataSchema       `json:"user"`
+	Rating       choices.RatingChoice `json:"rating"`
+	Text         string               `json:"text"`
+	LikesCount   int                  `json:"likes_count"`
+	RepliesCount int                  `json:"replies_count"`
+	CreatedAt    time.Time            `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	UpdatedAt    time.Time            `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
+}
+
+func (r ReviewSchema) Init(review models.Review) ReviewSchema {
+	r.ID = review.ID
+	r.User = r.User.Init(review.User)
+	r.Rating = review.Rating
+	r.Text = review.Text
+	r.LikesCount = review.LikesCount()
+	r.RepliesCount = review.RepliesCount()
+	r.CreatedAt = review.CreatedAt
+	r.UpdatedAt = review.UpdatedAt
+	return r
+}
+
+type ReviewsResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []ReviewSchema `json:"items"`
+}
+
+type PartialBookDetailSchema struct {
+	PartialBookSchema
+	Reviews ReviewsResponseDataSchema `json:"reviews"`
+}
+
+func (b PartialBookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Review) PartialBookDetailSchema {
+	b.PartialBookSchema = b.PartialBookSchema.Init(book)
+	reviewsToAdd := b.Reviews.Items
+	for _, review := range reviews {
+		reviewsToAdd = append(reviewsToAdd, ReviewSchema{}.Init(review))
+	}
+	b.Reviews = ReviewsResponseDataSchema{
+		PaginatedResponseDataSchema: reviewsPaginatedData,
+		Items:                       reviewsToAdd,
+	}
+	return b
+}
+
+type PartialBookDetailResponseSchema struct {
+	ResponseSchema
+	Data PartialBookDetailSchema `json:"data"`
+}
+
+type BookDetailSchema struct {
+	BookSchema
+	Reviews ReviewsResponseDataSchema `json:"reviews"`
+}
+
+func (b BookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Review) BookDetailSchema {
+	b.BookSchema = b.BookSchema.Init(book)
+	reviewsToAdd := b.Reviews.Items
+	for _, review := range reviews {
+		reviewsToAdd = append(reviewsToAdd, ReviewSchema{}.Init(review))
+	}
+	b.Reviews = ReviewsResponseDataSchema{
+		PaginatedResponseDataSchema: reviewsPaginatedData,
+		Items:                       reviewsToAdd,
+	}
+	return b
+}
+
+type BookDetailResponseSchema struct {
+	ResponseSchema
+	Data BookDetailSchema `json:"data"`
 }
 
 type BookChapterCreateSchema struct {
@@ -237,4 +314,23 @@ type BookResponseSchema struct {
 type ChapterResponseSchema struct {
 	ResponseSchema
 	Data ChapterSchema `json:"data"`
+}
+
+type ReplySchema struct {
+	ID         uuid.UUID      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
+	User       UserDataSchema `json:"user"`
+	Text       string         `json:"text"`
+	LikesCount int            `json:"likes_count"`
+	CreatedAt  time.Time      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	UpdatedAt  time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
+}
+
+func (r ReplySchema) Init(reply models.Reply) ReplySchema {
+	r.ID = reply.ID
+	r.User = r.User.Init(reply.User)
+	r.Text = reply.Text
+	r.LikesCount = reply.LikesCount()
+	r.CreatedAt = reply.CreatedAt
+	r.UpdatedAt = reply.UpdatedAt
+	return r
 }

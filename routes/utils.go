@@ -181,3 +181,17 @@ func uploadToCloudinary(c *fiber.Ctx, file *multipart.FileHeader, folder string)
 
 	return uploadResult.SecureURL
 }
+
+func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {
+	views := book.Views
+	ip := c.IP()
+	if !strings.Contains(views, ip) {
+		if views != "" {
+			book.Views = fmt.Sprintf("%s, %s", views, ip)
+		} else {
+			book.Views = ip
+		}
+		db.Save(&book)
+	}
+	return &book
+}

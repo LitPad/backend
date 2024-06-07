@@ -40,3 +40,13 @@ const (
 	CS_PUBLISHED ChapterStatus = "PUBLISHED"
 	CS_TRASH ChapterStatus = "TRASH"
 )
+
+type RatingChoice int
+
+const (
+	RC_1 RatingChoice = 1
+	RC_2 RatingChoice = 2
+	RC_3 RatingChoice = 3
+	RC_4 RatingChoice = 4
+	RC_5 RatingChoice = 5
+)

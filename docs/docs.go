@@ -700,6 +700,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/books/book-full/{slug}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint views a single book with all chapters",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Single Book (All chapters - For The Author and User who has bought it)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page (for reviews pagination)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookDetailResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books/book/chapter/{slug}": {
             "put": {
                 "security": [
@@ -782,6 +826,43 @@ const docTemplate = `{
             }
         },
         "/books/book/{slug}": {
+            "get": {
+                "description": "This endpoint views a single book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Single Book (partial chapters)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page (for reviews pagination)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.PartialBookDetailResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -1631,6 +1712,23 @@ const docTemplate = `{
                 "PTYPE_PAYPAL"
             ]
         },
+        "choices.RatingChoice": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "x-enum-varnames": [
+                "RC_1",
+                "RC_2",
+                "RC_3",
+                "RC_4",
+                "RC_5"
+            ]
+        },
         "models.SiteDetail": {
             "type": "object",
             "properties": {
@@ -1706,6 +1804,86 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BookDetailResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.BookDetailSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.BookDetailSchema": {
+            "type": "object",
+            "properties": {
+                "age_discretion": {
+                    "$ref": "#/definitions/choices.AgeType"
+                },
+                "author": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "blurb": {
+                    "type": "string"
+                },
+                "chapters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ChapterSchema"
+                    }
+                },
+                "chapters_count": {
+                    "type": "integer"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "genre": {
+                    "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
+                },
+                "partial_view_chapter": {
+                    "$ref": "#/definitions/schemas.ChapterSchema"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "reviews": {
+                    "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TagSchema"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "views": {
+                    "type": "integer"
+                },
+                "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "schemas.BookResponseSchema": {
             "type": "object",
             "properties": {
@@ -1774,6 +1952,9 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "views": {
+                    "type": "integer"
                 },
                 "word_count": {
                     "type": "integer"
@@ -2103,6 +2284,80 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.PartialBookDetailResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.PartialBookDetailSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.PartialBookDetailSchema": {
+            "type": "object",
+            "properties": {
+                "age_discretion": {
+                    "$ref": "#/definitions/choices.AgeType"
+                },
+                "author": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "blurb": {
+                    "type": "string"
+                },
+                "chapters_count": {
+                    "type": "integer"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "genre": {
+                    "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
+                },
+                "partial_view_chapter": {
+                    "$ref": "#/definitions/schemas.ChapterSchema"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "reviews": {
+                    "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.TagSchema"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "views": {
+                    "type": "integer"
+                },
+                "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "schemas.PartialBookSchema": {
             "type": "object",
             "properties": {
@@ -2149,6 +2404,9 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "views": {
+                    "type": "integer"
                 },
                 "word_count": {
                     "type": "integer"
@@ -2289,6 +2547,61 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.ReviewSchema": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "$ref": "#/definitions/choices.RatingChoice"
+                },
+                "replies_count": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "user": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                }
+            }
+        },
+        "schemas.ReviewsResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ReviewSchema"
+                    }
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },

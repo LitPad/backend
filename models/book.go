@@ -35,22 +35,32 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 
 type Book struct {
 	BaseModel
-	AuthorID      uuid.UUID `json:"author_id"`
-	Author        User      `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
-	Title         string    `json:"title" gorm:"type: varchar(255)"`
-	Slug          string    `gorm:"unique"`
-	Blurb         string    `json:"blurb" gorm:"type: varchar(255)"`
+	AuthorID      uuid.UUID
+	Author        User   `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
+	Title         string `gorm:"type: varchar(255)"`
+	Slug          string `gorm:"unique"`
+	Blurb         string `gorm:"type: varchar(255)"`
 	AgeDiscretion choices.AgeType
 
 	GenreID    uuid.UUID `json:"genre_id"`
 	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
-	Tags       []Tag     `json:"tags" gorm:"many2many:book_tags;<-:false"`
-	Chapters   []Chapter
-	CoverImage string `gorm:"type:varchar(10000)" json:"cover_image"`
+	Tags       []Tag     `gorm:"many2many:book_tags;<-:false"`
+	Chapters   []Chapter `gorm:"<-:false"`
+	CoverImage string    `gorm:"type:varchar(10000)"`
 
-	Price     int    `gorm:"default:0"`           // Book price in coins
-	File      string `gorm:"type:varchar(10000)"` // Full File to view
-	Completed bool   `gorm:"default:false"`
+	Price     int      `gorm:"default:0"` // Book price in coins
+	Completed bool     `gorm:"default:false"`
+	Views     string   `gorm:"type:varchar(10000000)"`
+	Reviews   []Review `gorm:"<-:false"`
+}
+
+func (b Book) ViewsCount() int {
+	views := b.Views
+	if len(views) > 0 {
+		addresses := strings.Split(b.Views, ", ")
+		return len(addresses)
+	}
+	return 0
 }
 
 func (b Book) WordCount() int {
@@ -88,10 +98,6 @@ func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
 	b.Slug = b.GenerateUniqueSlug(tx)
 	return
 }
-
-// Note:
-// Tags in book must be part of the selected genre
-// User can only see allowed chapters, but then the full book will be returned to the user if bought
 
 type Chapter struct {
 	BaseModel
@@ -135,9 +141,47 @@ func (c Chapter) WordCount() int {
 
 type BoughtBook struct {
 	BaseModel
-	BuyerID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id"`
+	BuyerID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id_bought_book"`
 	Buyer   User      `gorm:"foreignKey:BuyerID;constraint:OnDelete:CASCADE;<-:false"`
 
-	BookID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id"`
+	BookID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id_bought_book"`
 	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+}
+
+type Review struct {
+	BaseModel
+	UserID uuid.UUID `gorm:"index:,unique,composite:user_id_book_id_reviews"`
+	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+
+	BookID uuid.UUID `gorm:"index:,unique,composite:user_id_book_id_reviews"`
+	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+
+	Rating  choices.RatingChoice
+	Likes   []User `gorm:"many2many:review_likes;<-:false"`
+	Text    string
+	Replies []Reply `gorm:"<-:false"`
+}
+
+func (r Review) LikesCount() int {
+	return len(r.Likes)
+}
+
+func (r Review) RepliesCount() int {
+	return len(r.Replies)
+}
+
+type Reply struct {
+	BaseModel
+	UserID uuid.UUID
+	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+
+	ReviewID uuid.UUID
+	Review   Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
+
+	Likes []User `gorm:"many2many:review_reply_likes;<-:false"`
+	Text  string
+}
+
+func (r Reply) LikesCount() int {
+	return len(r.Likes)
 }

@@ -54,7 +54,17 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, us
 
 func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
-	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
+	db.Scopes(scopes.AuthorGenreTagBookScope).Take(&book, book)
+	if book.ID == uuid.Nil {
+		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No book with that slug")
+		return nil, &errD
+	}
+	return &book, nil
+}
+
+func (b BookManager) GetBySlugWithReviews(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
+	book := models.Book{Slug: slug}
+	db.Scopes(scopes.AuthorGenreTagReviewsBookScope).Take(&book, book)
 	if book.ID == uuid.Nil {
 		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No book with that slug")
 		return nil, &errD

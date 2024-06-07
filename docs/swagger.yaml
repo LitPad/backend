@@ -54,6 +54,20 @@ definitions:
     - PTYPE_GPAY
     - PTYPE_STRIPE
     - PTYPE_PAYPAL
+  choices.RatingChoice:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    type: integer
+    x-enum-varnames:
+    - RC_1
+    - RC_2
+    - RC_3
+    - RC_4
+    - RC_5
   models.SiteDetail:
     properties:
       address:
@@ -107,6 +121,60 @@ definitions:
     - text
     - title
     type: object
+  schemas.BookDetailResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.BookDetailSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.BookDetailSchema:
+    properties:
+      age_discretion:
+        $ref: '#/definitions/choices.AgeType'
+      author:
+        $ref: '#/definitions/schemas.UserDataSchema'
+      blurb:
+        type: string
+      chapters:
+        items:
+          $ref: '#/definitions/schemas.ChapterSchema'
+        type: array
+      chapters_count:
+        type: integer
+      cover_image:
+        type: string
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      genre:
+        $ref: '#/definitions/schemas.GenreWithoutTagSchema'
+      partial_view_chapter:
+        $ref: '#/definitions/schemas.ChapterSchema'
+      price:
+        type: integer
+      reviews:
+        $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
+      slug:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/schemas.TagSchema'
+        type: array
+      title:
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      views:
+        type: integer
+      word_count:
+        type: integer
+    type: object
   schemas.BookResponseSchema:
     properties:
       data:
@@ -154,6 +222,8 @@ definitions:
       updated_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
+      views:
+        type: integer
       word_count:
         type: integer
     type: object
@@ -376,6 +446,56 @@ definitions:
     - email
     - password
     type: object
+  schemas.PartialBookDetailResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.PartialBookDetailSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.PartialBookDetailSchema:
+    properties:
+      age_discretion:
+        $ref: '#/definitions/choices.AgeType'
+      author:
+        $ref: '#/definitions/schemas.UserDataSchema'
+      blurb:
+        type: string
+      chapters_count:
+        type: integer
+      cover_image:
+        type: string
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      genre:
+        $ref: '#/definitions/schemas.GenreWithoutTagSchema'
+      partial_view_chapter:
+        $ref: '#/definitions/schemas.ChapterSchema'
+      price:
+        type: integer
+      reviews:
+        $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
+      slug:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/schemas.TagSchema'
+        type: array
+      title:
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      views:
+        type: integer
+      word_count:
+        type: integer
+    type: object
   schemas.PartialBookSchema:
     properties:
       age_discretion:
@@ -408,6 +528,8 @@ definitions:
       updated_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
+      views:
+        type: integer
       word_count:
         type: integer
     type: object
@@ -508,6 +630,44 @@ definitions:
       status:
         example: success
         type: string
+    type: object
+  schemas.ReviewSchema:
+    properties:
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      id:
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      likes_count:
+        type: integer
+      rating:
+        $ref: '#/definitions/choices.RatingChoice'
+      replies_count:
+        type: integer
+      text:
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      user:
+        $ref: '#/definitions/schemas.UserDataSchema'
+    type: object
+  schemas.ReviewsResponseDataSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/schemas.ReviewSchema'
+        type: array
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
     type: object
   schemas.SentGiftResponseSchema:
     properties:
@@ -1278,6 +1438,35 @@ paths:
       summary: View Latest Books By A Particular Author
       tags:
       - Books
+  /books/book-full/{slug}:
+    get:
+      description: This endpoint views a single book with all chapters
+      parameters:
+      - default: 1
+        description: Current Page (for reviews pagination)
+        in: query
+        name: page
+        type: integer
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BookDetailResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Single Book (All chapters - For The Author and User who has bought
+        it)
+      tags:
+      - Books
   /books/book/{slug}:
     delete:
       description: This endpoint allows a writer to delete a book
@@ -1299,6 +1488,31 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete A Book
+      tags:
+      - Books
+    get:
+      description: This endpoint views a single book
+      parameters:
+      - default: 1
+        description: Current Page (for reviews pagination)
+        in: query
+        name: page
+        type: integer
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.PartialBookDetailResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View Single Book (partial chapters)
       tags:
       - Books
     put:

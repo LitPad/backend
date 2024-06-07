@@ -118,6 +118,77 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
+// @Summary View Single Book (partial chapters)
+// @Description This endpoint views a single book
+// @Tags Books
+// @Param page query int false "Current Page (for reviews pagination)" default(1)
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.PartialBookDetailResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug} [get]
+func (ep Endpoint) GetSingleBookPartial(c *fiber.Ctx) error {
+	db := ep.DB
+	book, err := bookManager.GetBySlugWithReviews(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	// Paginate book reviews
+	paginatedData, paginatedReviews, err := PaginateQueryset(book.Reviews, c, 30)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+
+	book = ViewBook(c, db, *book)
+
+	reviews := paginatedReviews.([]models.Review)
+	response := schemas.PartialBookDetailResponseSchema{
+		ResponseSchema: ResponseMessage("Book details fetched successfully"),
+		Data:           schemas.PartialBookDetailSchema{}.Init(*book, *paginatedData, reviews),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Single Book (All chapters - For The Author and User who has bought it)
+// @Description This endpoint views a single book with all chapters
+// @Tags Books
+// @Param page query int false "Current Page (for reviews pagination)" default(1)
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.BookDetailResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book-full/{slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) GetSingleBookFull(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	book, err := bookManager.GetBySlugWithReviews(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	if user.ID != book.AuthorID {
+		// Check if current user has bought the book
+		boughtBook := boughtBookManager.GetByBuyerAndBook(db, user, *book)
+		if boughtBook == nil {
+			return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Only the author or user who has bought the book can see it in full"))
+		}
+	}
+
+	// Paginate book reviews
+	paginatedData, paginatedReviews, err := PaginateQueryset(book.Reviews, c, 30)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	book = ViewBook(c, db, *book)
+
+	reviews := paginatedReviews.([]models.Review)
+	response := schemas.BookDetailResponseSchema{
+		ResponseSchema: ResponseMessage("Book details fetched successfully"),
+		Data:           schemas.BookDetailSchema{}.Init(*book, *paginatedData, reviews),
+	}
+	return c.Status(200).JSON(response)
+}
+
 // @Summary Create A Book
 // @Description This endpoint allows a writer to create a book
 // @Tags Books
