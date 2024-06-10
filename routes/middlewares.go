@@ -54,6 +54,24 @@ func (ep Endpoint) AuthorMiddleware(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+func (ep Endpoint) AdminMiddleware(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+	db := ep.DB
+
+	if len(token) < 1 {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "Unauthorized User!"))
+	}
+	user, err := getUser(c, token, db)
+	if err != nil {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Access token is invalid or expired!"))
+	}
+	if !user.IsStaff {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Admin only!"))
+	}
+	c.Locals("user", user)
+	return c.Next()
+}
+
 func ParseUUID(input string) *uuid.UUID {
     uuidVal, err := uuid.Parse(input)
 	if err != nil {

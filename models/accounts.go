@@ -13,25 +13,27 @@ import (
 
 type User struct {
 	BaseModel
-	FirstName       string          `json:"first_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"John"`
-	LastName        string          `json:"last_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"Doe"`
-	Username        string          `json:"username" gorm:"type: varchar(1000);not null;unique;" validate:"required,max=255" example:"john-doe"`
-	Email           string          `json:"email" gorm:"not null;unique;" validate:"required,min=5,email" example:"johndoe@email.com"`
-	Password        string          `json:"password" gorm:"not null" validate:"required,min=8,max=50" example:"strongpassword"`
-	IsEmailVerified bool            `json:"is_email_verified" gorm:"default:false" swaggerignore:"true"`
-	IsSuperuser     bool            `json:"is_superuser" gorm:"default:false" swaggerignore:"true"`
-	IsStaff         bool            `json:"is_staff" gorm:"default:false" swaggerignore:"true"`
-	TermsAgreement  bool            `json:"terms_agreement" gorm:"default:false" validate:"eq=true"`
-	Avatar          *string         `gorm:"type:varchar(1000);null;" json:"avatar"`
-	Access          *string         `gorm:"type:varchar(1000);null;" json:"access"`
-	Refresh         *string         `gorm:"type:varchar(1000);null;" json:"refresh"`
-	SocialLogin     bool            `gorm:"default:false"`
-	Bio             *string         `gorm:"type:varchar(1000);null;" json:"bio"`
-	AccountType     choices.AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
-	Followings      []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
-	Followers       []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
-	Coins           int             `json:"coins" gorm:"default:0"`
-	Lanterns        int             `json:"lanterns" gorm:"default:0"`
+	FirstName         string          `json:"first_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"John"`
+	LastName          string          `json:"last_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"Doe"`
+	Username          string          `json:"username" gorm:"type: varchar(1000);not null;unique;" validate:"required,max=255" example:"john-doe"`
+	Email             string          `json:"email" gorm:"not null;unique;" validate:"required,min=5,email" example:"johndoe@email.com"`
+	Password          string          `json:"password" gorm:"not null" validate:"required,min=8,max=50" example:"strongpassword"`
+	IsEmailVerified   bool            `json:"is_email_verified" gorm:"default:false" swaggerignore:"true"`
+	IsSuperuser       bool            `json:"is_superuser" gorm:"default:false" swaggerignore:"true"`
+	IsStaff           bool            `json:"is_staff" gorm:"default:false" swaggerignore:"true"`
+	TermsAgreement    bool            `json:"terms_agreement" gorm:"default:false" validate:"eq=true"`
+	Avatar            *string         `gorm:"type:varchar(1000);null;" json:"avatar"`
+	Access            *string         `gorm:"type:varchar(1000);null;" json:"access"`
+	Refresh           *string         `gorm:"type:varchar(1000);null;" json:"refresh"`
+	SocialLogin       bool            `gorm:"default:false"`
+	Bio               *string         `gorm:"type:varchar(1000);null;" json:"bio"`
+	AccountType       choices.AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
+	Followings        []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
+	Followers         []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
+	Coins             int             `json:"coins" gorm:"default:0"`
+	Lanterns          int             `json:"lanterns" gorm:"default:0"`
+	LikeNotification  bool            `gorm:"default:false"`
+	ReplyNotification bool            `gorm:"default:false"`
 
 	// Back referenced
 	Books []Book `gorm:"foreignKey:AuthorID"`
@@ -75,4 +77,24 @@ func (obj Token) CheckExpiration() bool {
 	diff := int64(currentTime.Sub(obj.UpdatedAt).Seconds())
 	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds
 	return diff > emailExpirySecondsTimeout
+}
+
+type Notification struct {
+	BaseModel
+	SenderID   uuid.UUID
+	Sender     User `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE"`
+	ReceiverID uuid.UUID
+	Receiver   User `gorm:"foreignKey:ReceiverID;constraint:OnDelete:CASCADE"`
+	Ntype      choices.NotificationTypeChoice
+	Text       string
+
+	BookID *uuid.UUID
+	Book   *Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+
+	ReviewID *uuid.UUID
+	Review   *Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
+
+	ReplyID *uuid.UUID
+	Reply   *Reply `gorm:"foreignKey:ReplyID;constraint:OnDelete:CASCADE;<-:false"`
+	IsRead  bool   `gorm:"default:false"`
 }

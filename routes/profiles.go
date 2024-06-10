@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
@@ -11,6 +12,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+var notificationManager = managers.NotificationManager{}
 
 // @Summary View User Profile
 // @Description This endpoint views a user profile
@@ -183,4 +186,66 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 		message = "User unfollowed successfully"
 	}
 	return c.Status(200).JSON(ResponseMessage(message))
+}
+
+// @Summary View Notifications
+// @Description This endpoint allows a user to view his/her notificatios
+// @Tags Profiles
+// @Success 200 {object} schemas.NotificationsResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /profiles/notifications [get]
+// @Security BearerAuth
+func (ep Endpoint) GetNotifications(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	notifications := notificationManager.GetAllByUser(db, user)
+
+	// Paginate and return notifications
+	paginatedData, paginatedNotifications, err := PaginateQueryset(notifications, c, 50)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	notifications = paginatedNotifications.([]models.Notification)
+	response := schemas.NotificationsResponseSchema{
+		ResponseSchema: ResponseMessage("Notifications fetched successfully"),
+		Data: schemas.NotificationsResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(notifications),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Read Notification
+// @Description This endpoint allows a user to read his/her notification.
+// @Tags Profiles
+// @Param notification body schemas.ReadNotificationSchema true "Notification Read object"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /profiles/notifications/read [post]
+// @Security BearerAuth
+func (ep Endpoint) ReadNotification(c *fiber.Ctx) error {
+	db := ep.DB
+
+	data := schemas.ReadNotificationSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	user := RequestUser(c)
+	notificationID := data.ID
+	markAllAsRead := data.MarkAllAsRead
+	
+	respMessage := "Notifications read"
+	if markAllAsRead {
+        // Mark all notifications as read
+		notificationManager.MarkAsRead(db, user)
+	} else if notificationID != nil {
+        // Mark single notification as read
+		err := notificationManager.ReadOne(db, user, *notificationID)
+		if err != nil {
+			return c.Status(404).JSON(err)
+		}
+		respMessage = "Notification read"
+	}
+	
+	return c.Status(200).JSON(ResponseMessage(respMessage))
 }

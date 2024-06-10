@@ -21,7 +21,7 @@ import (
 
 // @Summary List Users with Pagination
 // @Description Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.
-// @Tags Users
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Param type query string false "Type of user to filter by (all, reader, writer)" Enums(all, reader, writer)
@@ -32,7 +32,7 @@ import (
 // @Failure 404 {object} utils.ErrorResponse "No users found"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/users [get]
-func (ep Endpoint) GetUsers(c *fiber.Ctx) error{
+func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error{
 	db := ep.DB
 
 	limitQuery := c.Query("limit", "10")
@@ -95,15 +95,15 @@ func (ep Endpoint) GetUsers(c *fiber.Ctx) error{
 
 // @Summary List Books with Pagination
 // @Description Retrieves a list of books with support for pagination and optional filtering based on book title.
-// @Tags Books
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Param page query int false "Current Page" default(1)
 // @Param title query string false "Title of the book to filter by"
 // @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /books [get]
-func (ep Endpoint) GetBooks(c *fiber.Ctx) error{
+// @Router /admin/books [get]
+func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error{
 	db := ep.DB
 
 	titleQuery := c.Query("title", "")

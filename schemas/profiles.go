@@ -1,17 +1,20 @@
 package schemas
 
 import (
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/google/uuid"
 )
 
 type FollowerData struct {
-	Name           string  `json:"name"`
-	Username       string  `json:"username"`
-	AccountType choices.AccType `json:"account_type"`
-	Avatar         *string `json:"avatar"`
-	FollowersCount int     `json:"followers_count"`
-	StoriesCount   int     `json:"stories_count"`
+	Name           string          `json:"name"`
+	Username       string          `json:"username"`
+	AccountType    choices.AccType `json:"account_type"`
+	Avatar         *string         `json:"avatar"`
+	FollowersCount int             `json:"followers_count"`
+	StoriesCount   int             `json:"stories_count"`
 }
 
 func (dto FollowerData) FromModel(user models.User) FollowerData {
@@ -76,4 +79,65 @@ type UpdateUserProfileSchema struct {
 type UpdatePasswordSchema struct {
 	NewPassword string `json:"new_password" validate:"required,min=8,max=50" example:"oldpassword"`
 	OldPassword string `json:"old_password" validate:"required,min=8,max=50" example:"newstrongpassword"`
+}
+
+// NOTIFICATIONS
+type NotificationBookSchema struct {
+	Title      string
+	Slug       string
+	CoverImage string
+}
+
+type NotificationSchema struct {
+	ID        uuid.UUID                      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
+	Sender    UserDataSchema                 `json:"sender"`
+	Ntype     choices.NotificationTypeChoice `json:"ntype"`
+	Text      string                         `json:"text"`
+	Book      *NotificationBookSchema        `json:"book"`      // Bought book, vote, comment and reply
+	ReviewID  *uuid.UUID                     `json:"review_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"` // reviewed, reply, like
+	ReplyID   *uuid.UUID                     `json:"reply_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`  // If someone liked your reply
+	IsRead    bool                           `json:"is_read"`
+	CreatedAt time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+}
+
+func (n NotificationSchema) Init(notification models.Notification) NotificationSchema {
+	n.ID = notification.ID
+	n.Sender = n.Sender.Init(notification.Sender)
+	n.Ntype = notification.Ntype
+	n.Text = notification.Text
+	n.Book = &NotificationBookSchema{
+		Title:      notification.Book.Title,
+		Slug:       notification.Book.Slug,
+		CoverImage: notification.Book.CoverImage,
+	}
+	n.ReviewID = notification.ReviewID
+	n.ReplyID = notification.ReplyID
+	n.IsRead = notification.IsRead
+	n.CreatedAt = notification.CreatedAt
+	return n
+}
+
+type NotificationsResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []NotificationSchema `json:"notifications"`
+}
+
+func (n NotificationsResponseDataSchema) Init(notifications []models.Notification) NotificationsResponseDataSchema {
+	// Set Initial Data
+	notificationItems := n.Items
+	for _, notification := range notifications {
+		notificationItems = append(notificationItems, NotificationSchema{}.Init(notification))
+	}
+	n.Items = notificationItems
+	return n
+}
+
+type NotificationsResponseSchema struct {
+	ResponseSchema
+	Data NotificationsResponseDataSchema `json:"data"`
+}
+
+type ReadNotificationSchema struct {
+	MarkAllAsRead		bool			`json:"mark_all_as_read" example:"false"`
+	ID					*uuid.UUID		`json:"id" validate:"required_if=MarkAllAsRead false,omitempty" example:"d10dde64-a242-4ed0-bd75-4c759644b3a6"`
 }

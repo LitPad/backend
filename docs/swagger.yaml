@@ -32,6 +32,24 @@ definitions:
     - CS_DRAFT
     - CS_PUBLISHED
     - CS_TRASH
+  choices.NotificationTypeChoice:
+    enum:
+    - LIKE
+    - REPLY
+    - FOLLOWING
+    - BOOK_PURCHASE
+    - GIFT
+    - REVIEW
+    - VOTE
+    type: string
+    x-enum-varnames:
+    - NT_LIKE
+    - NT_REPLY
+    - NT_FOLLOWING
+    - NT_BOOK_PURCHASE
+    - NT_GIFT
+    - NT_REVIEW
+    - NT_VOTE
   choices.PaymentStatus:
     enum:
     - PENDING
@@ -446,6 +464,71 @@ definitions:
     - email
     - password
     type: object
+  schemas.NotificationBookSchema:
+    properties:
+      coverImage:
+        type: string
+      slug:
+        type: string
+      title:
+        type: string
+    type: object
+  schemas.NotificationSchema:
+    properties:
+      book:
+        allOf:
+        - $ref: '#/definitions/schemas.NotificationBookSchema'
+        description: Bought book, vote, comment and reply
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      id:
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      is_read:
+        type: boolean
+      ntype:
+        $ref: '#/definitions/choices.NotificationTypeChoice'
+      reply_id:
+        description: If someone liked your reply
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      review_id:
+        description: reviewed, reply, like
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      sender:
+        $ref: '#/definitions/schemas.UserDataSchema'
+      text:
+        type: string
+    type: object
+  schemas.NotificationsResponseDataSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      last_page:
+        example: 100
+        type: integer
+      notifications:
+        items:
+          $ref: '#/definitions/schemas.NotificationSchema'
+        type: array
+      per_page:
+        example: 100
+        type: integer
+    type: object
+  schemas.NotificationsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.NotificationsResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.PartialBookDetailResponseSchema:
     properties:
       data:
@@ -570,6 +653,15 @@ definitions:
       status:
         example: success
         type: string
+    type: object
+  schemas.ReadNotificationSchema:
+    properties:
+      id:
+        example: d10dde64-a242-4ed0-bd75-4c759644b3a6
+        type: string
+      mark_all_as_read:
+        example: false
+        type: boolean
     type: object
   schemas.RefreshTokenSchema:
     properties:
@@ -986,6 +1078,36 @@ info:
   title: LITPAD API
   version: "1.0"
 paths:
+  /admin/books:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of books with support for pagination and optional
+        filtering based on book title.
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      - description: Title of the book to filter by
+        in: query
+        name: title
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of books
+          schema:
+            $ref: '#/definitions/schemas.BooksResponseSchema'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: List Books with Pagination
+      tags:
+      - Admin
   /admin/users:
     get:
       consumes:
@@ -1032,7 +1154,7 @@ paths:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: List Users with Pagination
       tags:
-      - Users
+      - Admin
   /auth/facebook:
     post:
       description: |-
@@ -1878,6 +2000,47 @@ paths:
       summary: HealthCheck
       tags:
       - HealthCheck
+  /profiles/notifications:
+    get:
+      description: This endpoint allows a user to view his/her notificatios
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.NotificationsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Notifications
+      tags:
+      - Profiles
+  /profiles/notifications/read:
+    post:
+      description: This endpoint allows a user to read his/her notification.
+      parameters:
+      - description: Notification Read object
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ReadNotificationSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Read Notification
+      tags:
+      - Profiles
   /profiles/profile/{username}:
     get:
       description: This endpoint views a user profile

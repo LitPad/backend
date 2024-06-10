@@ -32,3 +32,7 @@ func BoughtAuthorGenreTagReviewsBookScope(db *gorm.DB) *gorm.DB {
 func SentGiftRelatedScope(db *gorm.DB) *gorm.DB {
 	return db.Joins("Sender").Joins("Receiver").Joins("Gift")
 }
+
+func NotificationRelatedScope(db *gorm.DB) *gorm.DB {
+	return db.Joins("Sender").Joins("Book")
+}

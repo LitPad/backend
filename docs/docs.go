@@ -22,6 +22,50 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/books": {
+            "get": {
+                "description": "Retrieves a list of books with support for pagination and optional filtering based on book title.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List Books with Pagination",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Title of the book to filter by",
+                        "name": "title",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of books",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BooksResponseSchema"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "description": "Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.",
@@ -32,7 +76,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Admin"
                 ],
                 "summary": "List Users with Pagination",
                 "parameters": [
@@ -1375,6 +1419,73 @@ const docTemplate = `{
                 }
             }
         },
+        "/profiles/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to view his/her notificatios",
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "View Notifications",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.NotificationsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profiles/notifications/read": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to read his/her notification.",
+                "tags": [
+                    "Profiles"
+                ],
+                "summary": "Read Notification",
+                "parameters": [
+                    {
+                        "description": "Notification Read object",
+                        "name": "notification",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ReadNotificationSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profiles/profile/{username}": {
             "get": {
                 "description": "This endpoint views a user profile",
@@ -1682,6 +1793,27 @@ const docTemplate = `{
                 "CS_DRAFT",
                 "CS_PUBLISHED",
                 "CS_TRASH"
+            ]
+        },
+        "choices.NotificationTypeChoice": {
+            "type": "string",
+            "enum": [
+                "LIKE",
+                "REPLY",
+                "FOLLOWING",
+                "BOOK_PURCHASE",
+                "GIFT",
+                "REVIEW",
+                "VOTE"
+            ],
+            "x-enum-varnames": [
+                "NT_LIKE",
+                "NT_REPLY",
+                "NT_FOLLOWING",
+                "NT_BOOK_PURCHASE",
+                "NT_GIFT",
+                "NT_REVIEW",
+                "NT_VOTE"
             ]
         },
         "choices.PaymentStatus": {
@@ -2284,6 +2416,102 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.NotificationBookSchema": {
+            "type": "object",
+            "properties": {
+                "coverImage": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.NotificationSchema": {
+            "type": "object",
+            "properties": {
+                "book": {
+                    "description": "Bought book, vote, comment and reply",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/schemas.NotificationBookSchema"
+                        }
+                    ]
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "is_read": {
+                    "type": "boolean"
+                },
+                "ntype": {
+                    "$ref": "#/definitions/choices.NotificationTypeChoice"
+                },
+                "reply_id": {
+                    "description": "If someone liked your reply",
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "review_id": {
+                    "description": "reviewed, reply, like",
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "sender": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "text": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.NotificationsResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "notifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.NotificationSchema"
+                    }
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "schemas.NotificationsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.NotificationsResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.PartialBookDetailResponseSchema": {
             "type": "object",
             "properties": {
@@ -2465,6 +2693,19 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.ReadNotificationSchema": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "d10dde64-a242-4ed0-bd75-4c759644b3a6"
+                },
+                "mark_all_as_read": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
