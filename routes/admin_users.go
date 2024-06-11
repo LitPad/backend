@@ -32,7 +32,7 @@ import (
 // @Failure 404 {object} utils.ErrorResponse "No users found"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/users [get]
-func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error{
+func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 	db := ep.DB
 
 	limitQuery := c.Query("limit", "10")
@@ -41,13 +41,13 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error{
 
 	limit, err := strconv.Atoi(limitQuery)
 
-	if err !=nil{
+	if err != nil {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid query param `limit` "))
 	}
 
 	page, err := strconv.Atoi(pageQuery)
 
-	if err !=nil{
+	if err != nil {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid query param `page` "))
 	}
 
@@ -56,20 +56,20 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error{
 	var users []models.User
 
 	query := db.Scopes(scopes.FollowerFollowingPreloaderScope)
-	
-	if userType == strings.ToLower(string(choices.ACCTYPE_READER)) {
-        query = query.Where("account_type = ?", "READER")
-		
-    } else if userType == strings.ToLower(string(choices.ACCTYPE_WRITER)) {
-		
-        query = query.Where("account_type = ?", "WRITER")
-    }
 
-	if err = query.Offset(offset).Limit(limit).Find(&users).Error; err != nil{
-		if err == gorm.ErrRecordNotFound{
+	if userType == strings.ToLower(string(choices.ACCTYPE_READER)) {
+		query = query.Where("account_type = ?", "READER")
+
+	} else if userType == strings.ToLower(string(choices.ACCTYPE_WRITER)) {
+
+		query = query.Where("account_type = ?", "WRITER")
+	}
+
+	if err = query.Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
 			response := schemas.UserProfilesResponseSchema{
 				ResponseSchema: ResponseMessage("No profiles exist"),
-				Data: []schemas.UserProfile{},
+				Data:           []schemas.UserProfile{},
 			}
 
 			return c.Status(200).JSON(response)
@@ -80,52 +80,14 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error{
 
 	profiles := make([]schemas.UserProfile, len(users))
 
-	for i, user := range users{
+	for i, user := range users {
 		profiles[i] = schemas.UserProfile{}.Init(user)
 	}
 
 	response := schemas.UserProfilesResponseSchema{
 		ResponseSchema: ResponseMessage("Profiles fetched successfully"),
-		Data: profiles,
+		Data:           profiles,
 	}
 
-	return c.Status(200).JSON(response)
-}
-
-
-// @Summary List Books with Pagination
-// @Description Retrieves a list of books with support for pagination and optional filtering based on book title.
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param page query int false "Current Page" default(1)
-// @Param title query string false "Title of the book to filter by"
-// @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
-// @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /admin/books [get]
-func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error{
-	db := ep.DB
-
-	titleQuery := c.Query("title", "")
-
-	books := []models.Book{}
-	query := db
-	if len(titleQuery) > 0 {
-		query = query.Where("title ILIKE ?", "%" + titleQuery + "%")
-	}
-	query.Find(&books)
-		
-	// Paginate and return books
-	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 400)
-	if err != nil {
-		return c.Status(400).JSON(err)
-	}
-	books = paginatedBooks.([]models.Book)
-	response := schemas.BooksResponseSchema{
-		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: schemas.BooksResponseDataSchema{
-			PaginatedResponseDataSchema: *paginatedData,
-		}.Init(books),
-	}
 	return c.Status(200).JSON(response)
 }

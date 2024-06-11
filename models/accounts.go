@@ -39,6 +39,10 @@ type User struct {
 	Books []Book `gorm:"foreignKey:AuthorID"`
 }
 
+func (user User) BooksCount() int {
+	return len(user.Books)
+}
+
 func (user User) FullName() string {
 	return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 }

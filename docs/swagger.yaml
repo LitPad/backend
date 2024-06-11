@@ -489,6 +489,8 @@ definitions:
         type: boolean
       ntype:
         $ref: '#/definitions/choices.NotificationTypeChoice'
+      receiver_id:
+        type: string
       reply_id:
         description: If someone liked your reply
         example: 2b3bd817-135e-41bd-9781-33807c92ff40
@@ -499,6 +501,10 @@ definitions:
         type: string
       sender:
         $ref: '#/definitions/schemas.UserDataSchema'
+      sent_gift_id:
+        description: If someone sent you a gift
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
       text:
         type: string
     type: object

@@ -2455,6 +2455,9 @@ const docTemplate = `{
                 "ntype": {
                     "$ref": "#/definitions/choices.NotificationTypeChoice"
                 },
+                "receiver_id": {
+                    "type": "string"
+                },
                 "reply_id": {
                     "description": "If someone liked your reply",
                     "type": "string",
@@ -2467,6 +2470,11 @@ const docTemplate = `{
                 },
                 "sender": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "sent_gift_id": {
+                    "description": "If someone sent you a gift",
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
                 },
                 "text": {
                     "type": "string"

@@ -91,13 +91,13 @@ type NotificationBookSchema struct {
 type NotificationSchema struct {
 	ID         uuid.UUID                      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
 	Sender     UserDataSchema                 `json:"sender"`
-	ReceiverID   *uuid.UUID                     `json:"receiver_id,omitempty"`
+	ReceiverID *uuid.UUID                     `json:"receiver_id,omitempty"`
 	Ntype      choices.NotificationTypeChoice `json:"ntype"`
 	Text       string                         `json:"text"`
-	Book       *NotificationBookSchema        `json:"book"`                                                     // Bought book, vote, comment and reply
-	ReviewID   *uuid.UUID                     `json:"review_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"` // reviewed, reply, like
-	ReplyID    *uuid.UUID                     `json:"reply_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`  // If someone liked your reply
-	SentGiftID *uuid.UUID                     `json:"sent_gift_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`  // If someone sent you a gift
+	Book       *NotificationBookSchema        `json:"book"`                                                        // Bought book, vote, comment and reply
+	ReviewID   *uuid.UUID                     `json:"review_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`    // reviewed, reply, like
+	ReplyID    *uuid.UUID                     `json:"reply_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`     // If someone liked your reply
+	SentGiftID *uuid.UUID                     `json:"sent_gift_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"` // If someone sent you a gift
 	IsRead     bool                           `json:"is_read"`
 	CreatedAt  time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
