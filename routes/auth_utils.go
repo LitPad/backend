@@ -207,7 +207,7 @@ func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) 
 		firstName := name[0]
 		lastName := name[1]
 		username := GenerateUsername(db, firstName, lastName, nil)
-		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: avatar, SocialLogin: true}
+		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: *avatar, SocialLogin: true}
 		db.Create(&user)
 	} else {
 		if !user.SocialLogin {

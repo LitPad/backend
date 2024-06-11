@@ -39,9 +39,10 @@ type Config struct {
 	StripeSecretKey              string `mapstructure:"STRIPE_SECRET_KEY"`
 	StripeCheckoutSuccessUrlPath string `mapstructure:"STRIPE_CHECKOUT_SUCCESS_URL_PATH"`
 	StripeWebhookSecret          string `mapstructure:"STRIPE_WEBHOOK_SECRET"`
-	CloudinaryCloudName			 string `mapstructure:"CLOUDINARY_CLOUD_NAME"`
-	CloudinaryApiKey			 string `mapstructure:"CLOUDINARY_API_KEY"`
-	CloudinaryApiSecret			 string `mapstructure:"CLOUDINARY_API_SECRET"`
+	CloudinaryCloudName          string `mapstructure:"CLOUDINARY_CLOUD_NAME"`
+	CloudinaryApiKey             string `mapstructure:"CLOUDINARY_API_KEY"`
+	CloudinaryApiSecret          string `mapstructure:"CLOUDINARY_API_SECRET"`
+	SocketSecret                 string `mapstructure:"SOCKET_SECRET"`
 }
 
 func GetConfig() (config Config) {

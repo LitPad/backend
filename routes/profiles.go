@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
@@ -10,7 +12,6 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 var notificationManager = managers.NotificationManager{}
@@ -30,18 +31,14 @@ func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path params"))
 	}
 
-	var user models.User
-	err := db.Scopes(scopes.FollowerFollowingPreloaderScope).Where(models.User{Username: username}).Take(&user).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
-		}
-		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Internal server error"))
+	user := userManager.GetByUsername(db, username)
+	if user == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
 	}
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: ResponseMessage("Profile fetched successfully"),
-		Data:           schemas.UserProfile{}.Init(user),
+		Data:           schemas.UserProfile{}.Init(*user),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -184,6 +181,14 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 	message := "User followed successfully"
 	if alreadyFollowing {
 		message = "User unfollowed successfully"
+	} else {
+		// Create notification and send in socket
+		notification := notificationManager.Create(
+			db, user, toFollowUser, choices.NT_FOLLOWING, 
+			fmt.Sprintf("%s started following you.", user.FullName()),
+			nil, nil, nil, nil,
+		)
+		SendNotificationInSocket(c, notification)
 	}
 	return c.Status(200).JSON(ResponseMessage(message))
 }
@@ -246,6 +251,5 @@ func (ep Endpoint) ReadNotification(c *fiber.Ctx) error {
 		}
 		respMessage = "Notification read"
 	}
-	
 	return c.Status(200).JSON(ResponseMessage(respMessage))
 }

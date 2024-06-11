@@ -62,3 +62,10 @@ const (
 	NT_REVIEW        NotificationTypeChoice = "REVIEW"
 	NT_VOTE          NotificationTypeChoice = "VOTE"
 )
+
+type NotificationStatus string
+
+const (
+	NS_CREATED NotificationStatus = "CREATED"
+	NS_DELETED NotificationStatus = "DELETED"
+)

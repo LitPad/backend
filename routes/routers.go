@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -81,4 +82,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter := api.Group("/admin")
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
+
+	// Register Sockets (1)
+	api.Get("/ws/notifications", websocket.New(endpoint.NotificationSocket))
 }

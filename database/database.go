@@ -62,7 +62,7 @@ func DropTables(db *gorm.DB) {
 	}
 }
 
-func ConnectDb(cfg config.Config) *gorm.DB {
+func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s"
 	dsn := fmt.Sprintf(
 		dsnTemplate,
@@ -83,7 +83,9 @@ func ConnectDb(cfg config.Config) *gorm.DB {
 		os.Exit(2)
 	}
 	log.Println("Connected to the database successfully")
-	db.Logger = logger.Default.LogMode(logger.Info)
+	if len(loggedOpts) == 0 {
+		db.Logger = logger.Default.LogMode(logger.Info)
+	}
 	log.Println("Running Migrations")
 
 	// Add UUID extension

@@ -1,8 +1,11 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -66,6 +69,14 @@ func (ep Endpoint) SendGift(c *fiber.Ctx) error {
 	// Send gift
 	sentGift := sendGiftManager.Create(db, *gift, *user, *writer)
 	
+	// Create and send notification in socket
+	notification := notificationManager.Create(
+		db, user, *writer, choices.NT_GIFT, 
+		fmt.Sprintf("%s sent you a gift.", user.FullName()),
+		nil, nil, nil, &sentGift.ID,
+	)
+	SendNotificationInSocket(c, notification)
+
 	response := schemas.SentGiftResponseSchema{
 		ResponseSchema: ResponseMessage("Gift sent successfully"),
 		Data:           schemas.SentGiftSchema{}.Init(sentGift),

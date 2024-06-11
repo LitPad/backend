@@ -7,7 +7,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "`LitPAD API built with Fiber and GORM`",
+        "description": "## LitPAD API built with Fiber and GORM\n\n### WEBSOCKETS:\n\n#### Notifications\n\n- URL: `wss://{host}/api/v1/ws/notifications`\n\n- Requires authorization, so pass in the Bearer Authorization header.\n\n- You can only read and not send notification messages into this socket.",
         "title": "LITPAD API",
         "contact": {},
         "version": "1.0"

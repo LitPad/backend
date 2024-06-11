@@ -20,7 +20,7 @@ type FollowerData struct {
 func (dto FollowerData) FromModel(user models.User) FollowerData {
 	dto.Name = user.FullName()
 	dto.Username = user.Username
-	dto.Avatar = user.Avatar
+	dto.Avatar = &user.Avatar
 	dto.AccountType = user.AccountType
 	dto.FollowersCount = len(user.Followers)
 	dto.StoriesCount = len(user.Books)
@@ -57,7 +57,7 @@ func (u UserProfile) Init(user models.User) UserProfile {
 		LastName:    user.LastName,
 		Username:    user.Username,
 		Email:       user.Email,
-		Avatar:      user.Avatar,
+		Avatar:      &user.Avatar,
 		Bio:         user.Bio,
 		AccountType: user.AccountType,
 		Followers:   followers,
@@ -89,31 +89,39 @@ type NotificationBookSchema struct {
 }
 
 type NotificationSchema struct {
-	ID        uuid.UUID                      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
-	Sender    UserDataSchema                 `json:"sender"`
-	Ntype     choices.NotificationTypeChoice `json:"ntype"`
-	Text      string                         `json:"text"`
-	Book      *NotificationBookSchema        `json:"book"`      // Bought book, vote, comment and reply
-	ReviewID  *uuid.UUID                     `json:"review_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"` // reviewed, reply, like
-	ReplyID   *uuid.UUID                     `json:"reply_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`  // If someone liked your reply
-	IsRead    bool                           `json:"is_read"`
-	CreatedAt time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	ID         uuid.UUID                      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
+	Sender     UserDataSchema                 `json:"sender"`
+	ReceiverID   *uuid.UUID                     `json:"receiver_id,omitempty"`
+	Ntype      choices.NotificationTypeChoice `json:"ntype"`
+	Text       string                         `json:"text"`
+	Book       *NotificationBookSchema        `json:"book"`                                                     // Bought book, vote, comment and reply
+	ReviewID   *uuid.UUID                     `json:"review_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"` // reviewed, reply, like
+	ReplyID    *uuid.UUID                     `json:"reply_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`  // If someone liked your reply
+	SentGiftID *uuid.UUID                     `json:"sent_gift_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`  // If someone sent you a gift
+	IsRead     bool                           `json:"is_read"`
+	CreatedAt  time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
-func (n NotificationSchema) Init(notification models.Notification) NotificationSchema {
+func (n NotificationSchema) Init(notification models.Notification, showReceiver ...bool) NotificationSchema {
 	n.ID = notification.ID
 	n.Sender = n.Sender.Init(notification.Sender)
 	n.Ntype = notification.Ntype
 	n.Text = notification.Text
-	n.Book = &NotificationBookSchema{
-		Title:      notification.Book.Title,
-		Slug:       notification.Book.Slug,
-		CoverImage: notification.Book.CoverImage,
+	if notification.Book != nil {
+		n.Book = &NotificationBookSchema{
+			Title:      notification.Book.Title,
+			Slug:       notification.Book.Slug,
+			CoverImage: notification.Book.CoverImage,
+		}
 	}
 	n.ReviewID = notification.ReviewID
 	n.ReplyID = notification.ReplyID
+	n.SentGiftID = notification.SentGiftID
 	n.IsRead = notification.IsRead
 	n.CreatedAt = notification.CreatedAt
+	if len(showReceiver) > 0 {
+		n.ReceiverID = &notification.ReceiverID
+	}
 	return n
 }
 
@@ -138,6 +146,6 @@ type NotificationsResponseSchema struct {
 }
 
 type ReadNotificationSchema struct {
-	MarkAllAsRead		bool			`json:"mark_all_as_read" example:"false"`
-	ID					*uuid.UUID		`json:"id" validate:"required_if=MarkAllAsRead false,omitempty" example:"d10dde64-a242-4ed0-bd75-4c759644b3a6"`
+	MarkAllAsRead bool       `json:"mark_all_as_read" example:"false"`
+	ID            *uuid.UUID `json:"id" validate:"required_if=MarkAllAsRead false,omitempty" example:"d10dde64-a242-4ed0-bd75-4c759644b3a6"`
 }

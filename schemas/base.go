@@ -30,6 +30,6 @@ type UserDataSchema struct {
 func (u UserDataSchema) Init(user models.User) UserDataSchema {
 	u.FullName = user.FullName()
 	u.Username = user.Username
-	u.Avatar = user.Username
+	u.Avatar = user.Avatar
 	return u
 }

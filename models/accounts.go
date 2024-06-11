@@ -22,7 +22,7 @@ type User struct {
 	IsSuperuser       bool            `json:"is_superuser" gorm:"default:false" swaggerignore:"true"`
 	IsStaff           bool            `json:"is_staff" gorm:"default:false" swaggerignore:"true"`
 	TermsAgreement    bool            `json:"terms_agreement" gorm:"default:false" validate:"eq=true"`
-	Avatar            *string         `gorm:"type:varchar(1000);null;" json:"avatar"`
+	Avatar            string          `gorm:"type:varchar(1000);null;" json:"avatar"`
 	Access            *string         `gorm:"type:varchar(1000);null;" json:"access"`
 	Refresh           *string         `gorm:"type:varchar(1000);null;" json:"refresh"`
 	SocialLogin       bool            `gorm:"default:false"`
@@ -92,9 +92,13 @@ type Notification struct {
 	Book   *Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 
 	ReviewID *uuid.UUID
-	Review   *Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
+	Review   *Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:SET NULL;<-:false"`
 
 	ReplyID *uuid.UUID
-	Reply   *Reply `gorm:"foreignKey:ReplyID;constraint:OnDelete:CASCADE;<-:false"`
-	IsRead  bool   `gorm:"default:false"`
+	Reply   *Reply `gorm:"foreignKey:ReplyID;constraint:OnDelete:SET NULL;<-:false"`
+
+	SentGiftID *uuid.UUID
+	SentGift   *SentGift `gorm:"foreignKey:SentGiftID;constraint:OnDelete:CASCADE;<-:false"`
+
+	IsRead bool `gorm:"default:false"`
 }

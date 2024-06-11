@@ -1,8 +1,11 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -439,6 +442,15 @@ func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
 
 	// Create bought book
 	boughtBook := boughtBookManager.Create(db, user, *book)
+
+	// Create and send notification in socket
+	notification := notificationManager.Create(
+		db, user, book.Author, choices.NT_BOOK_PURCHASE, 
+		fmt.Sprintf("%s bought one of your books.", user.FullName()),
+		book, nil, nil, nil,
+	)
+	SendNotificationInSocket(c, notification)
+
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book bought successfully"),
 		Data:           schemas.BookSchema{}.Init(boughtBook.Book),

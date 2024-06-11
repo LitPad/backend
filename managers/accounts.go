@@ -13,7 +13,7 @@ type UserManager struct{}
 
 func (u UserManager) GetByUsername(db *gorm.DB, username string) *models.User {
 	user := models.User{Username: username}
-	db.Scopes(scopes.VerifiedUserScope).Take(&user, user)
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil {
 		return nil
 	}
@@ -46,8 +46,17 @@ func (n NotificationManager) GetAllByUser(db *gorm.DB, user *models.User) []mode
 	return notifications
 }
 
+func (n NotificationManager) GetOneByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Notification {
+	notification := models.Notification{ReceiverID: user.ID}
+	db.Where("id = ?", id).Take(&notification, notification)
+	if notification.ID == uuid.Nil {
+		return nil
+	}
+	return &notification
+}
+
 func (n NotificationManager) MarkAsRead(db *gorm.DB, user *models.User) {
-	db.Model(&models.Notification{ReceiverID: user.ID}).Updates(models.Notification{IsRead: true})
+	db.Model(&models.Notification{}).Where("receiver_id = ?", user.ID).Updates(models.Notification{IsRead: true})
 }
 
 func (n NotificationManager) ReadOne(db *gorm.DB, user *models.User, id uuid.UUID) *utils.ErrorResponse {
@@ -60,4 +69,17 @@ func (n NotificationManager) ReadOne(db *gorm.DB, user *models.User, id uuid.UUI
 	notification.IsRead = true
 	db.Save(&notification)
 	return nil
+}
+
+func (n NotificationManager) Create(db *gorm.DB, sender *models.User, receiver models.User, ntype choices.NotificationTypeChoice, text string, book *models.Book, reviewID *uuid.UUID, replyID *uuid.UUID, sentGiftID *uuid.UUID) models.Notification {
+	notification := models.Notification{
+		SenderID: sender.ID, Sender: *sender, ReceiverID: receiver.ID,
+		Ntype: ntype, ReviewID: reviewID, ReplyID: replyID, SentGiftID: sentGiftID, Text: text,
+	}
+	if book != nil {
+		notification.Book = book
+		notification.BookID = &book.ID
+	}
+	db.Create(&notification)
+	return notification
 }

@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"strings"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
@@ -9,9 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func getUser(c *fiber.Ctx, token string, db *gorm.DB) (*models.User, *string) {
-	if len(token) < 8 {
-		err := "Auth Token is Invalid or Expired!"
+func GetUser(token string, db *gorm.DB) (*models.User, *string) {
+	if !strings.HasPrefix(token, "Bearer ") {
+		err := "Auth Bearer Not Provided!"
 		return nil, &err
 	}
 	user, err := DecodeAccessToken(token[7:], db)
@@ -28,9 +30,9 @@ func (ep Endpoint) AuthMiddleware(c *fiber.Ctx) error {
 	if len(token) < 1 {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "Unauthorized User!"))
 	}
-	user, err := getUser(c, token, db)
+	user, err := GetUser(token, db)
 	if err != nil {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Access token is invalid or expired!"))
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
 	}
 	c.Locals("user", user)
 	return c.Next()
@@ -43,9 +45,9 @@ func (ep Endpoint) AuthorMiddleware(c *fiber.Ctx) error {
 	if len(token) < 1 {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "Unauthorized User!"))
 	}
-	user, err := getUser(c, token, db)
+	user, err := GetUser(token, db)
 	if err != nil {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Access token is invalid or expired!"))
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
 	}
 	if user.AccountType != choices.ACCTYPE_WRITER {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Authors only!"))
@@ -61,9 +63,9 @@ func (ep Endpoint) AdminMiddleware(c *fiber.Ctx) error {
 	if len(token) < 1 {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_UNAUTHORIZED_USER, "Unauthorized User!"))
 	}
-	user, err := getUser(c, token, db)
+	user, err := GetUser(token, db)
 	if err != nil {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Access token is invalid or expired!"))
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
 	}
 	if !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Admin only!"))
