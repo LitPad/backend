@@ -195,3 +195,11 @@ func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {
 	}
 	return &book
 }
+
+func IsAmongUserType(target string) bool {
+    switch target {
+    case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_WRITER):
+        return true
+    }
+    return false
+}

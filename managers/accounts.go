@@ -11,6 +11,19 @@ import (
 
 type UserManager struct{}
 
+func (u UserManager) GetAll(db *gorm.DB, accountType *choices.AccType, staff *bool) []models.User {
+	users := []models.User{}
+	query := db
+	if accountType != nil {
+		query = query.Where(models.User{AccountType: *accountType})
+	}
+	if staff != nil {
+		query = query.Where(models.User{IsStaff: *staff})
+	}
+	query.Scopes(scopes.FollowerFollowingBooksPreloaderScope).Order("created_at DESC").Find(&users)
+	return users
+}
+
 func (u UserManager) GetByUsername(db *gorm.DB, username string) *models.User {
 	user := models.User{Username: username}
 	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)

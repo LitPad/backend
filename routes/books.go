@@ -66,7 +66,7 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug)
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "")
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -101,7 +101,7 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, username)
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", username)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}

@@ -24,6 +24,11 @@ const docTemplate = `{
     "paths": {
         "/admin/books": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of books with support for pagination and optional filtering based on book title.",
                 "consumes": [
                     "application/json"
@@ -68,6 +73,11 @@ const docTemplate = `{
         },
         "/admin/users": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.",
                 "consumes": [
                     "application/json"
@@ -82,26 +92,19 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "enum": [
-                            "all",
-                            "reader",
-                            "writer"
+                            "READER",
+                            "WRITER",
+                            "ADMIN"
                         ],
                         "type": "string",
-                        "description": "Type of user to filter by (all, reader, writer)",
-                        "name": "type",
+                        "description": "Type of user to filter by",
+                        "name": "account_type",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "default": 10,
-                        "description": "Limit number of user profiles per page (default is 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Page number starting from 0 (default is 0)",
+                        "default": 1,
+                        "description": "Current page",
                         "name": "page",
                         "in": "query"
                     }
@@ -115,12 +118,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid query parameters",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "No users found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -3044,6 +3041,10 @@ const docTemplate = `{
                 "bio": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -3068,6 +3069,9 @@ const docTemplate = `{
                 "refresh": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
+                },
+                "stories_count": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
@@ -3215,6 +3219,10 @@ const docTemplate = `{
                 "bio": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -3235,6 +3243,9 @@ const docTemplate = `{
                 },
                 "last_name": {
                     "type": "string"
+                },
+                "stories_count": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
@@ -3257,14 +3268,34 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UserProfilesResponseSchema": {
+        "schemas.UserProfilesResponseDataSchema": {
             "type": "object",
             "properties": {
-                "data": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "users": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/schemas.UserProfile"
                     }
+                }
+            }
+        },
+        "schemas.UserProfilesResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.UserProfilesResponseDataSchema"
                 },
                 "message": {
                     "type": "string",

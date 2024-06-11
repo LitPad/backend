@@ -16,20 +16,14 @@ import (
 // @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books [get]
+// @Security BearerAuth
 func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 	db := ep.DB
-
 	titleQuery := c.Query("title", "")
-
-	books := []models.Book{}
-	query := db
-	if len(titleQuery) > 0 {
-		query = query.Where("title ILIKE ?", "%"+titleQuery+"%")
-	}
-	query.Find(&books)
+	books, _ := bookManager.GetLatest(db, "", "", titleQuery)
 
 	// Paginate and return books
-	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 400)
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}

@@ -15,7 +15,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, usernameOpts ...string) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, title string, usernameOpts ...string) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -36,6 +36,10 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, us
 			return books, &errData
 		}
 		query = query.Where("books.id IN (?)", db.Table("book_tags").Select("book_id").Where("tag_id = ?", tag.ID))
+	}
+
+	if title != "" {
+		query = query.Where("title ILIKE ?", "%"+title+"%")
 	}
 
 	if len(usernameOpts) > 0 {

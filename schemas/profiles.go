@@ -22,21 +22,23 @@ func (dto FollowerData) FromModel(user models.User) FollowerData {
 	dto.Username = user.Username
 	dto.Avatar = &user.Avatar
 	dto.AccountType = user.AccountType
-	dto.FollowersCount = len(user.Followers)
-	dto.StoriesCount = len(user.Books)
+	dto.FollowersCount = user.FollowersCount()
+	dto.StoriesCount = user.BooksCount()
 	return dto
 }
 
 type UserProfile struct {
-	FirstName   string          `json:"first_name"`
-	LastName    string          `json:"last_name"`
-	Username    string          `json:"username"`
-	Email       string          `json:"email"`
-	Avatar      *string         `json:"avatar"`
-	Bio         *string         `json:"bio"`
-	AccountType choices.AccType `json:"account_type"`
-	Followers   []FollowerData  `json:"followers"`
-	Followings  []FollowerData  `json:"followings"`
+	FirstName    string          `json:"first_name"`
+	LastName     string          `json:"last_name"`
+	Username     string          `json:"username"`
+	Email        string          `json:"email"`
+	Avatar       *string         `json:"avatar"`
+	Bio          *string         `json:"bio"`
+	AccountType  choices.AccType `json:"account_type"`
+	StoriesCount int             `json:"stories_count"`
+	Followers    []FollowerData  `json:"followers"`
+	Followings   []FollowerData  `json:"followings"`
+	CreatedAt    time.Time       `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
 func (u UserProfile) Init(user models.User) UserProfile {
@@ -53,15 +55,17 @@ func (u UserProfile) Init(user models.User) UserProfile {
 	}
 
 	u = UserProfile{
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		Username:    user.Username,
-		Email:       user.Email,
-		Avatar:      &user.Avatar,
-		Bio:         user.Bio,
-		AccountType: user.AccountType,
-		Followers:   followers,
-		Followings:  followings,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		Username:     user.Username,
+		Email:        user.Email,
+		Avatar:       &user.Avatar,
+		Bio:          user.Bio,
+		AccountType:  user.AccountType,
+		Followers:    followers,
+		Followings:   followings,
+		StoriesCount: user.BooksCount(),
+		CreatedAt:    user.CreatedAt,
 	}
 	return u
 }

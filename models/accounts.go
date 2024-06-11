@@ -43,6 +43,14 @@ func (user User) BooksCount() int {
 	return len(user.Books)
 }
 
+func (user User) FollowersCount() int {
+	return len(user.Followers)
+}
+
+func (user User) FollowingsCount() int {
+	return len(user.Followings)
+}
+
 func (user User) FullName() string {
 	return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 }
