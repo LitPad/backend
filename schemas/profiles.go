@@ -80,6 +80,11 @@ type UpdateUserProfileSchema struct {
 	Username *string `json:"username,omitempty" validate:"min=3,max=1000" example:"john-doe"`
 }
 
+type UpdateUserRoleSchema struct {
+	AccountType string `json:"acc_type" validate:"min=6,max=7" example:"WRITER"` 
+	Username *string `json:"username,omitempty" validate:"min=3,max=1000" example:"john-doe"` 
+}
+
 type UpdatePasswordSchema struct {
 	NewPassword string `json:"new_password" validate:"required,min=8,max=50" example:"oldpassword"`
 	OldPassword string `json:"old_password" validate:"required,min=8,max=50" example:"newstrongpassword"`
