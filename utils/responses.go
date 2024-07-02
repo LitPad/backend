@@ -35,6 +35,7 @@ var ERR_PASSWORD_MISMATCH = "password_does_not_match"
 var ERR_PASSWORD_SAME = "same_password"
 var ERR_INSUFFICIENT_COINS = "insufficient_coins"
 var ERR_ALREADY_BOUGHT = "already_bought"
+var ERR_ALREADY_REVIEWED = "already_reviewed"
 
 
 func RequestErr(code string, message string, opts ...map[string]string) ErrorResponse {

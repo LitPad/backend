@@ -158,7 +158,7 @@ type Review struct {
 
 	Rating  choices.RatingChoice
 	Likes   []User `gorm:"many2many:review_likes;<-:false"`
-	Text    string
+	Text    string	`gorm:"type:varchar(10000)"`
 	Replies []Reply `gorm:"<-:false"`
 }
 
@@ -179,7 +179,7 @@ type Reply struct {
 	Review   Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
 
 	Likes []User `gorm:"many2many:review_reply_likes;<-:false"`
-	Text  string
+	Text    string	`gorm:"type:varchar(10000)"`
 }
 
 func (r Reply) LikesCount() int {

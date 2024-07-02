@@ -19,6 +19,8 @@ var (
 	boughtBookManager = managers.BoughtBookManager{}
 	tagManager        = managers.TagManager{}
 	genreManager      = managers.GenreManager{}
+	reviewManager     = managers.ReviewManager{}
+	replyManager      = managers.ReplyManager{}
 )
 
 // @Summary View Available Book Tags
@@ -445,7 +447,7 @@ func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
 
 	// Create and send notification in socket
 	notification := notificationManager.Create(
-		db, user, book.Author, choices.NT_BOOK_PURCHASE, 
+		db, user, book.Author, choices.NT_BOOK_PURCHASE,
 		fmt.Sprintf("%s bought one of your books.", user.FullName()),
 		book, nil, nil, nil,
 	)
@@ -483,4 +485,244 @@ func (ep Endpoint) GetBoughtBooks(c *fiber.Ctx) error {
 		}.Init(books),
 	}
 	return c.Status(200).JSON(response)
+}
+
+// @Summary Review A Book
+// @Description `This endpoint allows a user to review a book.`
+// @Description `The author cannot review his own book.`
+// @Description `Only the reader who has bought the book can review the book.`
+// @Description `A reader cannot add multiple reviews to a book.`
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Param review body schemas.ReviewBookSchema true "Review object"
+// @Success 201 {object} schemas.ReviewResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book-full/{slug} [post]
+// @Security BearerAuth
+func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	book, err := bookManager.GetBySlug(db, slug)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	// Check if current user has bought the book
+	boughtBook := boughtBookManager.GetByBuyerAndBook(db, user, *book)
+	if boughtBook == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Only the reader who has bought the book can review it"))
+	}
+	data := schemas.ReviewBookSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	review := reviewManager.GetByUserAndBook(db, user, *book)
+	if review != nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_ALREADY_REVIEWED, "This book has been reviewed by you already"))
+	}
+
+	createdReview := reviewManager.Create(db, user, *book, data)
+
+	response := schemas.ReviewResponseSchema{
+		ResponseSchema: ResponseMessage("Review created successfully"),
+		Data:           schemas.ReviewSchema{}.Init(createdReview),
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Edit Book Review
+// @Description `This endpoint allows a user to edit his/her book review.`
+// @Tags Books
+// @Param id path string true "Review id (uuid)"
+// @Param review body schemas.ReviewBookSchema true "Review object"
+// @Success 200 {object} schemas.ReviewResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book-full/review/{id} [put]
+// @Security BearerAuth
+func (ep Endpoint) EditBookReview(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	reviewID := c.Params("id")
+	parsedID := ParseUUID(reviewID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+	}
+
+	review := reviewManager.GetByUserAndID(db, user, *parsedID)
+	if review == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a review with that ID"))
+	}
+	data := schemas.ReviewBookSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	updatedReview := reviewManager.Update(db, *review, data)
+	response := schemas.ReviewResponseSchema{
+		ResponseSchema: ResponseMessage("Review updated successfully"),
+		Data:           schemas.ReviewSchema{}.Init(updatedReview),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Delete Book Review
+// @Description `This endpoint allows a user to delete his/her book review.`
+// @Tags Books
+// @Param id path string true "Review id (uuid)"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book-full/review/{id} [delete]
+// @Security BearerAuth
+func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	reviewID := c.Params("id")
+	parsedID := ParseUUID(reviewID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+	}
+
+	review := reviewManager.GetByUserAndID(db, user, *parsedID)
+	if review == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a review with that ID"))
+	}
+	db.Delete(&review)
+	return c.Status(200).JSON(ResponseMessage("Review deleted successfully"))
+}
+
+// @Summary Get Review Replies
+// @Description `This endpoint returns replies of a book review.`
+// @Tags Books
+// @Param id path string true "Review id (uuid)"
+// @Success 200 {object} schemas.RepliesResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book-full/review/{id}/replies [get]
+func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
+	db := ep.DB
+	reviewID := c.Params("id")
+	parsedID := ParseUUID(reviewID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+	}
+
+	review := reviewManager.GetByID(db, *parsedID)
+	if review == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No review with that ID"))
+	}
+
+	// Paginate and return replies
+	paginatedData, paginatedReplies, err := PaginateQueryset(review.Replies, c, 100)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	replies := paginatedReplies.([]models.Reply)
+	response := schemas.RepliesResponseSchema{
+		ResponseSchema: ResponseMessage("Replies fetched successfully"),
+		Data: schemas.RepliesResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(replies),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Reply A Review
+// @Description `This endpoint allows a user to reply a book review.`
+// @Tags Books
+// @Param id path string true "Review id (uuid)"
+// @Param review body schemas.ReplyReviewSchema true "Reply object"
+// @Success 201 {object} schemas.ReplyResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book-full/review/{id}/replies [post]
+// @Security BearerAuth
+func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	reviewID := c.Params("id")
+	parsedID := ParseUUID(reviewID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+	}
+
+	review := reviewManager.GetByID(db, *parsedID)
+	if review == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No review with that ID"))
+	}
+
+	data := schemas.ReplyReviewSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	reply := replyManager.Create(db, user, review, data)
+	response := schemas.ReplyResponseSchema{
+		ResponseSchema: ResponseMessage("Reply created successfully"),
+		Data:           schemas.ReplySchema{}.Init(reply),
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Edit A Reply
+// @Description `This endpoint allows a user to edit his/her reply`
+// @Tags Books
+// @Param id path string true "Reply id (uuid)"
+// @Param review body schemas.ReplyReviewSchema true "Reply object"
+// @Success 200 {object} schemas.ReplyResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book-full/review/replies/{id} [put]
+// @Security BearerAuth
+func (ep Endpoint) EditReply(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	reviewID := c.Params("id")
+	parsedID := ParseUUID(reviewID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+	}
+
+	reply := replyManager.GetByUserAndID(db, user, *parsedID)
+	if reply == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a reply with that ID"))
+	}
+
+	data := schemas.ReplyReviewSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	updatedReply := replyManager.Update(db, *reply, data)
+	response := schemas.ReplyResponseSchema{
+		ResponseSchema: ResponseMessage("Reply updated successfully"),
+		Data:           schemas.ReplySchema{}.Init(updatedReply),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Delete A Reply
+// @Description `This endpoint allows a user to delete his/her reply`
+// @Tags Books
+// @Param id path string true "Reply id (uuid)"
+// @Success 200 {object} schemas.ReplyResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book-full/review/replies/{id} [delete]
+// @Security BearerAuth
+func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	reviewID := c.Params("id")
+	parsedID := ParseUUID(reviewID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+	}
+
+	reply := replyManager.GetByUserAndID(db, user, *parsedID)
+	if reply == nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a reply with that ID"))
+	}
+	db.Delete(&reply)
+	return c.Status(200).JSON(ResponseMessage("Reply deleted successfully"))
 }
