@@ -28,6 +28,7 @@ func init() {
 
 	// Register Custom Validators
 	customValidator.RegisterValidation("payment_type_validator", PaymentTypeValidator)
+	customValidator.RegisterValidation("rating_choice_validator", RatingChoiceValidator)
 	customValidator.RegisterValidation("age_discretion_validator", AgeDiscretionValidator)
 	customValidator.RegisterValidation("chapter_status_validator", ChapterStatusValidator)
 
@@ -67,6 +68,7 @@ func registerTranslations(param string) {
 	registerTranslation("required_if", "This field is required.", translator)
 	registerTranslation("required_without", "This field is required.", translator)
 	registerTranslation("payment_type_validator", "Invalid payment type", translator)
+	registerTranslation("rating_choice_validator", "Invalid rating choice", translator)
 	registerTranslation("age_discretion_validator", "Invalid age discretion. Choices are 4, 12, 16, 18", translator)
 	registerTranslation("chapter_status_validator", "Invalid chapter status. Choices are DRAFT, PUBLISHED, TRASH", translator)
 

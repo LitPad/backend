@@ -130,7 +130,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 }
 
 type ReviewBookSchema struct {
-	Rating       choices.RatingChoice `json:"rating" validate:"required"`
+	Rating       choices.RatingChoice `json:"rating" validate:"required,rating_choice_validator"`
 	Text         string               `json:"text" validate:"required,max=10000"`
 }
 

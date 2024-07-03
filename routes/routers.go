@@ -58,6 +58,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	bookRouter.Put("/book-full/review/:id", endpoint.AuthMiddleware, endpoint.EditBookReview)
 	bookRouter.Delete("/book-full/review/:id", endpoint.AuthMiddleware, endpoint.DeleteBookReview)
 	bookRouter.Get("/book-full/review/:id/replies", endpoint.GetReviewReplies)
+	bookRouter.Post("/book-full/review/:id/replies", endpoint.AuthMiddleware, endpoint.ReplyReview)
 	bookRouter.Put("/book-full/review/replies/:id", endpoint.AuthMiddleware, endpoint.EditReply)
 	bookRouter.Delete("/book-full/review/replies/:id", endpoint.AuthMiddleware, endpoint.DeleteReply)
 

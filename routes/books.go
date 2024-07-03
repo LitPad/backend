@@ -597,6 +597,7 @@ func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
 // @Description `This endpoint returns replies of a book review.`
 // @Tags Books
 // @Param id path string true "Review id (uuid)"
+// @Param page query int false "Current Page" default(1)
 // @Success 200 {object} schemas.RepliesResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
@@ -705,7 +706,7 @@ func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 // @Description `This endpoint allows a user to delete his/her reply`
 // @Tags Books
 // @Param id path string true "Reply id (uuid)"
-// @Success 200 {object} schemas.ReplyResponseSchema
+// @Success 200 {object} schemas.ResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
 // @Router /books/book-full/review/replies/{id} [delete]

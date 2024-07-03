@@ -238,10 +238,8 @@ func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Review {
 }
 
 func (r ReviewManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Review {
-	review := models.Review{
-		UserID: user.ID,
-	}
-	db.Where("id = ?", id).Joins("Book").Joins("User").Take(&review, review)
+	review := models.Review{}
+	db.Where("user_id = ?", user.ID).Joins("Book").Joins("User").Preload("Replies").Preload("Likes").Take(&review, id)
 	if review.ID == uuid.Nil {
 		return nil
 	}
@@ -286,10 +284,8 @@ type ReplyManager struct {
 }
 
 func (r ReplyManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Reply {
-	reply := models.Reply{
-		UserID: user.ID,
-	}
-	db.Where("id = ?", id).Take(&reply, reply)
+	reply := models.Reply{}
+	db.Where("user_id = ?", user.ID).Joins("User").Preload("Likes").Take(&reply, id)
 	if reply.ID == uuid.Nil {
 		return nil
 	}
