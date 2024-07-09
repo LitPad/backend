@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/LitPad/backend/models/choices"
@@ -54,6 +55,10 @@ type Book struct {
 	Reviews   []Review `gorm:"<-:false"`
 }
 
+func (b Book) CoverImageUrl() string {
+	return fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.BookCoverImagesBucket, b.CoverImage)
+}
+
 func (b Book) ViewsCount() int {
 	views := b.Views
 	if len(views) > 0 {
@@ -94,8 +99,10 @@ func (b *Book) GenerateUniqueSlug(tx *gorm.DB) string {
 	return uniqueSlug
 }
 
-func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
-	b.Slug = b.GenerateUniqueSlug(tx)
+func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
+	slug := b.GenerateUniqueSlug(tx)
+	b.Slug = slug
+	b.CoverImage = slug
 	return
 }
 

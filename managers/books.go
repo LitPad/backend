@@ -104,7 +104,7 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpdateSchema, genre models.Genre, coverImage *string, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpdateSchema, genre models.Genre, Tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
@@ -112,9 +112,6 @@ func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpda
 	book.Genre = genre
 	book.Tags = Tags
 	book.Price = data.Price
-	if coverImage != nil {
-		book.CoverImage = *coverImage
-	}
 	db.Omit("Tags.*").Save(&book)
 	return book
 }

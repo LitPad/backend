@@ -106,7 +106,7 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 		b.PartialViewChapter = &chapter
 	}
 
-	b.CoverImage = book.CoverImage
+	b.CoverImage = book.CoverImageUrl()
 	b.Views = book.ViewsCount()
 	b.CreatedAt = book.CreatedAt
 	b.UpdatedAt = book.UpdatedAt

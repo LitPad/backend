@@ -235,12 +235,14 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 	}
 
 	// Check and validate image
-	fileUrl, err := ValidateAndUploadImage(c, "cover_image", "books", true)
+	file, err := ValidateImage(c, "cover_image", true)
 	if err != nil {
 		return c.Status(422).JSON(err)
 	}
 
-	book := bookManager.Create(db, *author, data, genre, *fileUrl, tags)
+	book := bookManager.Create(db, *author, data, genre, "", tags)
+	// Upload File
+	UploadFile(file, book.CoverImage, cfg.BookCoverImagesBucket)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
 		Data:           schemas.BookSchema{}.Init(book),
@@ -293,12 +295,16 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 	}
 
 	// Check and validate image
-	fileUrl, err := ValidateAndUploadImage(c, "cover_image", "books", false)
+	file, err := ValidateImage(c, "cover_image", false)
 	if err != nil {
 		return c.Status(422).JSON(err)
 	}
 
-	updatedBook := bookManager.Update(db, *book, data, genre, fileUrl, tags)
+	updatedBook := bookManager.Update(db, *book, data, genre, tags)
+	// Upload File
+	if file != nil {
+		UploadFile(file, updatedBook.CoverImage, cfg.BookCoverImagesBucket)
+	}
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book updated successfully"),
 		Data:           schemas.BookSchema{}.Init(updatedBook),
