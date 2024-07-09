@@ -29,6 +29,7 @@ type Config struct {
 	MailSenderHost               string `mapstructure:"MAIL_SENDER_HOST"`
 	MailSenderPort               int    `mapstructure:"MAIL_SENDER_PORT"`
 	CORSAllowedOrigins           string `mapstructure:"CORS_ALLOWED_ORIGINS"`
+	CORSAllowCredentials         bool   `mapstructure:"CORS_ALLOW_CREDENTIALS"`
 	GoogleClientID               string `mapstructure:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret           string `mapstructure:"GOOGLE_CLIENT_SECRET"`
 	FacebookAppID                string `mapstructure:"FACEBOOK_APP_ID"`
