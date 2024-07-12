@@ -46,6 +46,7 @@ type Config struct {
 	S3EndpointUrl                string `mapstructure:"S3_ENDPOINT_URL"`
 	BookCoverImagesBucket        string `mapstructure:"BOOK_COVER_IMAGES_BUCKET"`
 	UserImagesBucket             string `mapstructure:"USER_IMAGES_BUCKET"`
+	PGAdminPassword              string `mapstructure:"PGADMIN_PASSWORD"`
 }
 
 func GetConfig() (config Config) {
