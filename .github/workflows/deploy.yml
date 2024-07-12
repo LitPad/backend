@@ -68,7 +68,7 @@ jobs:
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz --exclude='.git' -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
         echo "Files copied to VPS"
 
     - name: Set correct permissions on /backend
