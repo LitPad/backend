@@ -13,23 +13,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Install sshpass
+      run: sudo apt-get update && sudo apt-get install -y sshpass
+
     - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+        chmod 600 private_key
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh-add private_key
 
     - name: Copy files to VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
-        rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
 
     - name: Create .env file on VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
         ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        sshpass -p "${SSH_PASSPHRASE}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
           echo "${ENV_FILE_CONTENT}" > .env
         EOF
@@ -37,9 +42,10 @@ jobs:
     - name: SSH and run Docker Compose
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
+        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        ssh -o StrictHostKeyChecking=no docker@${{ secrets.VPS_IP }} << 'EOF'
+        sshpass -p "${SSH_PASSPHRASE}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
           docker-compose down
-          docker-compose up --build -d --remove-orphans
+          docker-compose up -d --build
         EOF
