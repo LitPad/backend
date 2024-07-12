@@ -23,8 +23,14 @@ jobs:
         eval "$(ssh-agent -s)"
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
         chmod 600 private_key
-        ssh-add private_key <<< "${{ secrets.SSH_PASSPHRASE }}"
+        /usr/bin/expect <<EOD
+        spawn ssh-add private_key
+        expect "Enter passphrase"
+        send "${{ secrets.SSH_PASSPHRASE }}\r"
+        expect eof
+        EOD
         echo "SSH key added"
+      shell: bash
 
     - name: Verify SSH Connection
       env:
@@ -32,6 +38,7 @@ jobs:
         SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
         sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
+      shell: bash
 
     - name: Copy files to VPS
       env:
@@ -39,6 +46,7 @@ jobs:
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
         echo "Files copied to VPS"
+      shell: bash
 
     - name: Create .env file on VPS
       env:
@@ -51,6 +59,7 @@ jobs:
           echo "${ENV_FILE_CONTENT}" > .env
           echo ".env file created"
         EOF
+      shell: bash
 
     - name: SSH and run Docker Compose
       env:
@@ -63,3 +72,4 @@ jobs:
           docker-compose up -d --build --remove-orphans
           echo "Docker Compose executed"
         EOF
+      shell: bash
