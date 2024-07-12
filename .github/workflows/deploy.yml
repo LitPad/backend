@@ -13,11 +13,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Install sshpass
+    - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y sshpass
-        echo "sshpass installed"
+        sudo apt-get install -y sshpass expect
 
     - name: Start SSH Agent and Add SSH Key
       run: |
@@ -32,7 +31,7 @@ jobs:
         VPS_IP: ${{ secrets.VPS_IP }}
         SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        sshpass -p "${SSH_PASSPHRASE}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
+        sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
 
     - name: Copy files to VPS
       env:
@@ -47,7 +46,7 @@ jobs:
         ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
         SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        sshpass -p "${SSH_PASSPHRASE}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
           echo "${ENV_FILE_CONTENT}" > .env
           echo ".env file created"
@@ -58,7 +57,7 @@ jobs:
         VPS_IP: ${{ secrets.VPS_IP }}
         SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        sshpass -p "${SSH_PASSPHRASE}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
           docker-compose down
           docker-compose up -d --build --remove-orphans
