@@ -74,3 +74,4 @@ jobs:
           docker-compose up -d --build --remove-orphans
           echo "Docker Compose executed"
         EOF
+        
