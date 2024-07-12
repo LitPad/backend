@@ -73,6 +73,14 @@ jobs:
           echo ".env file created"
         EOF
 
+    - name: Set correct permissions on /backend
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          sudo chown -R docker:docker /backend
+        EOF
+
     - name: SSH and run Docker Compose
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
