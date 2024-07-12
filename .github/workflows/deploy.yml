@@ -46,6 +46,15 @@ jobs:
           sudo apt-get install -y rsync
         EOF
 
+    - name: Create /backend directory on VPS
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          sudo mkdir -p /backend
+          sudo chown docker:docker /backend
+        EOF
+
     - name: Copy files to VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
@@ -74,4 +83,3 @@ jobs:
           docker-compose up -d --build --remove-orphans
           echo "Docker Compose executed"
         EOF
-        
