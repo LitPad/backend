@@ -24,7 +24,7 @@ jobs:
         eval "$(ssh-agent -s)"
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
         chmod 600 private_key
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh-add private_key
+        ssh-add private_key <<< "${{ secrets.SSH_PASSPHRASE }}"
         echo "SSH key added"
 
     - name: Verify SSH Connection
