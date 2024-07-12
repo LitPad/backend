@@ -37,6 +37,15 @@ jobs:
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
 
+    - name: Install rsync on VPS
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          sudo apt-get update
+          sudo apt-get install -y rsync
+        EOF
+
     - name: Copy files to VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
