@@ -53,13 +53,22 @@ jobs:
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           sudo mkdir -p /backend
           sudo chown docker:docker /backend
+          sudo chmod 775 /backend
+        EOF
+
+    - name: Check /backend directory permissions
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          ls -ld /backend
         EOF
 
     - name: Copy files to VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./* docker@${VPS_IP}:/backend
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
         echo "Files copied to VPS"
 
     - name: Set correct permissions on /backend
@@ -68,6 +77,15 @@ jobs:
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           sudo chown -R docker:docker /backend
+          sudo chmod -R 775 /backend
+        EOF
+
+    - name: Check permissions on copied files
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          ls -la /backend
         EOF
 
     - name: Create .env file on VPS
