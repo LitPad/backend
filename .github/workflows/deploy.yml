@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,27 +21,21 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y sshpass expect
 
-    - name: Start SSH Agent and Add SSH Key
+    - name: Setup SSH passphrase
+      env:
+        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       run: |
-        eval "$(ssh-agent -s)"
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
-        chmod 600 private_key
-        /usr/bin/expect <<EOD
-        spawn ssh-add private_key
-        expect "Enter passphrase"
-        send "${{ secrets.SSH_PASSPHRASE }}\r"
-        expect eof
-        EOD
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        echo 'echo $SSH_PASSPHRASE' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
         echo "SSH key added"
-      shell: bash
 
     - name: Verify SSH Connection
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
-        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
-      shell: bash
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
 
     - name: Copy files to VPS
       env:
@@ -46,30 +43,25 @@ jobs:
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
         echo "Files copied to VPS"
-      shell: bash
 
     - name: Create .env file on VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
         ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
-        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
           echo "${ENV_FILE_CONTENT}" > .env
           echo ".env file created"
         EOF
-      shell: bash
 
     - name: SSH and run Docker Compose
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
-        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
       run: |
-        sshpass -p "${SSH_PASSPHRASE}" ssh -vvv -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
           docker-compose down
           docker-compose up -d --build --remove-orphans
           echo "Docker Compose executed"
         EOF
-      shell: bash
