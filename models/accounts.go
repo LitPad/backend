@@ -78,17 +78,17 @@ type Token struct {
 }
 
 func (token *Token) BeforeSave(tx *gorm.DB) (err error) {
-	token.TokenString = token.GenerateRandomToken(tx, "")
+	token.TokenString = token.GenerateRandomToken(tx)
 	return
 }
 
-func (token Token) GenerateRandomToken(db *gorm.DB, tokenString string) string {
+func (token Token) GenerateRandomToken(db *gorm.DB) string {
 	// Create new
-	tokenStr := fmt.Sprintf("%s%s", utils.GetRandomString(100), tokenString)
+	tokenStr := utils.GetRandomString(100)
 	tokenData := Token{TokenString: tokenStr}
+	db.Take(&tokenData, tokenData)
 	if tokenData.ID != uuid.Nil {
-		tokenStr = fmt.Sprintf("%s%s", tokenStr, utils.GetRandomString(6))
-		return token.GenerateRandomToken(db, tokenStr)
+		return token.GenerateRandomToken(db)
 	}
 	return tokenStr
 }

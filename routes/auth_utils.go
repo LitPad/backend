@@ -170,10 +170,8 @@ func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorRes
 	})
 
 	if err != nil {
-		if err != nil {
-			errData := utils.RequestErr(utils.ERR_INVALID_TOKEN, "Token is invalid or expired")
-			return nil, &errData
-		}
+		errData := utils.RequestErr(utils.ERR_INVALID_TOKEN, "Token is invalid or expired")
+		return nil, &errData
 	}
 	// Bind JSON into struct
 	data := FacebookPayload{}

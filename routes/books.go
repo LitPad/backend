@@ -534,7 +534,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 
 	// Create and Send Notification in socket
 	text := fmt.Sprintf("%s reviewed your book", user.FullName())
-	notification := notificationManager.Create(db, user, boughtBook.Book.Author, choices.NT_REVIEW, text, &boughtBook.Book, &review.ID, nil, nil)
+	notification := notificationManager.Create(db, user, boughtBook.Book.Author, choices.NT_REVIEW, text, &boughtBook.Book, &createdReview.ID, nil, nil)
 	SendNotificationInSocket(c, notification)
 
 	response := schemas.ReviewResponseSchema{

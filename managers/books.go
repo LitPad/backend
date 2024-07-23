@@ -227,7 +227,7 @@ type ReviewManager struct {
 
 func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Review {
 	review := r.Model
-	db.Where("id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
+	db.Where("reviews.id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
 	if review.ID == uuid.Nil {
 		return nil
 	}
