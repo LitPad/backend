@@ -77,6 +77,7 @@ type PartialBookSchema struct {
 	CoverImage         string                `json:"cover_image"`
 	Price              int                   `json:"price"`
 	Views              int                   `json:"views"`
+	Votes              int                   `json:"votes"`
 	CreatedAt          time.Time             `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt          time.Time             `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
@@ -99,6 +100,7 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	b.Genre = b.Genre.Init(book.Genre)
 	b.WordCount = book.WordCount()
 	b.ChaptersCount = book.ChaptersCount()
+	b.Votes = book.VotesCount()
 
 	chapters := book.Chapters
 	if len(chapters) > 0 {

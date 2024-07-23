@@ -32,6 +32,7 @@ func Models() []interface{} {
 		&models.SentGift{},
 		&models.Review{},
 		&models.Reply{},
+		&models.Vote{},
 
 		// wallet
 		&models.Coin{},

@@ -21,6 +21,7 @@ var (
 	genreManager      = managers.GenreManager{}
 	reviewManager     = managers.ReviewManager{}
 	replyManager      = managers.ReplyManager{}
+	voteManager      = managers.VoteManager{}
 )
 
 // @Summary View Available Book Tags
@@ -531,6 +532,11 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 
 	createdReview := reviewManager.Create(db, user, *book, data)
 
+	// Create and Send Notification in socket
+	text := fmt.Sprintf("%s reviewed your book", user.FullName())
+	notification := notificationManager.Create(db, user, boughtBook.Book.Author, choices.NT_REVIEW, text, &boughtBook.Book, &review.ID, nil, nil)
+	SendNotificationInSocket(c, notification)
+
 	response := schemas.ReviewResponseSchema{
 		ResponseSchema: ResponseMessage("Review created successfully"),
 		Data:           schemas.ReviewSchema{}.Init(createdReview),
@@ -665,6 +671,14 @@ func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 	reply := replyManager.Create(db, user, review, data)
+
+	// Create and Send Notification in socket
+	if user.ID != review.User.ID {
+		text := fmt.Sprintf("%s replied your review", user.FullName())
+		notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, &review.Book, &review.ID, &reply.ID, nil)
+		SendNotificationInSocket(c, notification)
+	}
+
 	response := schemas.ReplyResponseSchema{
 		ResponseSchema: ResponseMessage("Reply created successfully"),
 		Data:           schemas.ReplySchema{}.Init(reply),
@@ -732,4 +746,67 @@ func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 	}
 	db.Delete(&reply)
 	return c.Status(200).JSON(ResponseMessage("Reply deleted successfully"))
+}
+
+// @Summary Vote A Book
+// @Description This endpoint allows a user to vote a book
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/vote [get]
+// @Security BearerAuth
+func (ep Endpoint) VoteBook(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	book, err := bookManager.GetBySlug(db, slug)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	// Check if user has enough lanterns to vote
+	if user.Lanterns < 1 {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_LANTERNS, "You have insufficient lanterns to vote"))
+	} 
+	createdVote := voteManager.Create(db, user, book)
+	// Create and Send Notification in socket
+	if user.ID != createdVote.UserID {
+		text := fmt.Sprintf("%s voted your book", user.FullName())
+		notification := notificationManager.Create(db, user, book.Author, choices.NT_VOTE, text, book, nil, nil, nil)
+		SendNotificationInSocket(c, notification)
+	}
+	user.Lanterns -= 1
+	db.Save(&user)
+	return c.Status(200).JSON(ResponseMessage("Book voted successfully"))
+}
+
+// @Summary Convert Coins To Lanterns
+// @Description This endpoint allows a user to convert coins to lanterns
+// @Tags Books
+// @Param amount path int true "Amount to convert"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/lanterns-generation/{amount} [get]
+// @Security BearerAuth
+func (ep Endpoint) ConvertCoinsToLanterns(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	amount, err := c.ParamsInt("amount")
+	if err != nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid amount parameter"))
+	}
+	if amount < 1 {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Amount must not be less than 1"))
+	}
+	if amount > user.Coins {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins for that conversion"))
+	}
+
+	user.Lanterns += amount
+	user.Coins -= amount
+	db.Save(&user)
+	return c.Status(200).JSON(ResponseMessage("Lanterns added successfully"))
 }

@@ -1448,6 +1448,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/books/book/{slug}/vote": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to vote a book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Vote A Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books/bought": {
             "get": {
                 "security": [
@@ -1501,6 +1544,49 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/lanterns-generation/{amount}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to convert coins to lanterns",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Convert Coins To Lanterns",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Amount to convert",
+                        "name": "amount",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -2338,6 +2424,9 @@ const docTemplate = `{
                 "views": {
                     "type": "integer"
                 },
+                "votes": {
+                    "type": "integer"
+                },
                 "word_count": {
                     "type": "integer"
                 }
@@ -2413,6 +2502,9 @@ const docTemplate = `{
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
                 "views": {
+                    "type": "integer"
+                },
+                "votes": {
                     "type": "integer"
                 },
                 "word_count": {
@@ -2916,6 +3008,9 @@ const docTemplate = `{
                 "views": {
                     "type": "integer"
                 },
+                "votes": {
+                    "type": "integer"
+                },
                 "word_count": {
                     "type": "integer"
                 }
@@ -2969,6 +3064,9 @@ const docTemplate = `{
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
                 "views": {
+                    "type": "integer"
+                },
+                "votes": {
                     "type": "integer"
                 },
                 "word_count": {

@@ -18,7 +18,7 @@ func FollowerFollowingBooksPreloaderScope(db *gorm.DB) *gorm.DB {
 }
 
 func AuthorGenreTagBookScope(db *gorm.DB) *gorm.DB {
-	return db.Joins("Author").Joins("Genre").Preload("Tags").Preload("Chapters")
+	return db.Joins("Author").Joins("Genre").Preload("Tags").Preload("Chapters").Preload("Votes")
 }
 
 func AuthorGenreTagReviewsBookScope(db *gorm.DB) *gorm.DB {
@@ -26,7 +26,7 @@ func AuthorGenreTagReviewsBookScope(db *gorm.DB) *gorm.DB {
 }
 
 func BoughtAuthorGenreTagBookScope(db *gorm.DB) *gorm.DB {
-	return db.Preload("Book").Preload("Book.Author").Preload("Book.Genre").Preload("Book.Tags").Preload("Book.Chapters")
+	return db.Preload("Book").Preload("Book.Author").Preload("Book.Genre").Preload("Book.Tags").Preload("Book.Chapters").Preload("Book.Votes")
 }
 
 func BoughtAuthorGenreTagReviewsBookScope(db *gorm.DB) *gorm.DB {

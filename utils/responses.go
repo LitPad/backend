@@ -36,6 +36,8 @@ var ERR_PASSWORD_SAME = "same_password"
 var ERR_INSUFFICIENT_COINS = "insufficient_coins"
 var ERR_ALREADY_BOUGHT = "already_bought"
 var ERR_ALREADY_REVIEWED = "already_reviewed"
+var ERR_ALREADY_VOTED = "already_voted"
+var ERR_INSUFFICIENT_LANTERNS = "insufficient_lanterns"
 
 
 func RequestErr(code string, message string, opts ...map[string]string) ErrorResponse {

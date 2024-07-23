@@ -192,7 +192,7 @@ func (b BoughtBookManager) GetByBuyerAndBook(db *gorm.DB, buyer *models.User, bo
 		BuyerID: buyer.ID,
 		BookID:  book.ID,
 	}
-	db.Take(&boughtBook, boughtBook)
+	db.Joins("Book").Joins("Book.Author").Take(&boughtBook, boughtBook)
 	if boughtBook.ID == uuid.Nil {
 		return nil
 	}
@@ -227,7 +227,7 @@ type ReviewManager struct {
 
 func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Review {
 	review := r.Model
-	db.Where("id = ?", id).Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
+	db.Where("id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
 	if review.ID == uuid.Nil {
 		return nil
 	}
@@ -246,7 +246,7 @@ func (r ReviewManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UU
 func (r ReviewManager) GetByUserAndBook(db *gorm.DB, user *models.User, book models.Book) *models.Review {
 	review := models.Review{
 		UserID: user.ID,
-		BookID:  book.ID,
+		BookID: book.ID,
 	}
 	db.Take(&review, review)
 	if review.ID == uuid.Nil {
@@ -258,11 +258,11 @@ func (r ReviewManager) GetByUserAndBook(db *gorm.DB, user *models.User, book mod
 func (r ReviewManager) Create(db *gorm.DB, user *models.User, book models.Book, data schemas.ReviewBookSchema) models.Review {
 	review := models.Review{
 		UserID: user.ID,
-		User: *user,
-		BookID:  book.ID,
-		Book:    book,
+		User:   *user,
+		BookID: book.ID,
+		Book:   book,
 		Rating: data.Rating,
-		Text: data.Text,
+		Text:   data.Text,
 	}
 	db.Create(&review)
 	return review
@@ -291,10 +291,10 @@ func (r ReplyManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUI
 
 func (r ReplyManager) Create(db *gorm.DB, user *models.User, review *models.Review, data schemas.ReplyReviewSchema) models.Reply {
 	reply := models.Reply{
-		UserID: user.ID,
-		User: *user,
-		ReviewID:  review.ID,
-		Text: data.Text,
+		UserID:   user.ID,
+		User:     *user,
+		ReviewID: review.ID,
+		Text:     data.Text,
 	}
 	db.Create(&reply)
 	return reply
@@ -304,4 +304,24 @@ func (r ReplyManager) Update(db *gorm.DB, reply models.Reply, data schemas.Reply
 	reply.Text = data.Text
 	db.Save(&reply)
 	return reply
+}
+
+type VoteManager struct {
+	Model     models.Vote
+	ModelList []models.Vote
+}
+
+func (v VoteManager) GetByUserAndBook(db *gorm.DB, user *models.User, book *models.Book) *models.Vote {
+	vote := models.Vote{UserID: user.ID, BookID: book.ID}
+	db.Joins("User").Joins("Book").Take(&vote, vote)
+	if vote.ID == uuid.Nil {
+		return nil
+	}
+	return &vote
+}
+
+func (v VoteManager) Create(db *gorm.DB, user *models.User, book *models.Book) models.Vote {
+	vote := models.Vote{UserID: user.ID, User: *user, Book: *book, BookID: book.ID}
+	db.Create(&vote)
+	return vote
 }
