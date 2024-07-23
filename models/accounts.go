@@ -104,9 +104,9 @@ func (obj Token) CheckExpiration() bool {
 type Notification struct {
 	BaseModel
 	SenderID   uuid.UUID
-	Sender     User `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE"`
+	Sender     User `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE;<-:false"`
 	ReceiverID uuid.UUID
-	Receiver   User `gorm:"foreignKey:ReceiverID;constraint:OnDelete:CASCADE"`
+	Receiver   User `gorm:"foreignKey:ReceiverID;constraint:OnDelete:CASCADE;<-:false"`
 	Ntype      choices.NotificationTypeChoice
 	Text       string
 

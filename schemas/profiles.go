@@ -87,9 +87,9 @@ type UpdatePasswordSchema struct {
 
 // NOTIFICATIONS
 type NotificationBookSchema struct {
-	Title      string
-	Slug       string
-	CoverImage string
+	Title      string `json:"title"`
+	Slug       string `json:"slug"`
+	CoverImage string `json:"cover_image"`
 }
 
 type NotificationSchema struct {

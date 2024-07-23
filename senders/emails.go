@@ -16,7 +16,7 @@ import (
 
 var cfg = config.GetConfig()
 
-func sortEmail(user *models.User, emailType string, tokenString *string, url *string) map[string]interface{} {
+func sortEmail(emailType string, tokenString *string, url *string) map[string]interface{} {
 	templateFile := "templates/welcome.html"
 	subject := "Account verified"
 	data := make(map[string]interface{})
@@ -61,7 +61,7 @@ func SendEmail(user *models.User, emailType string, tokenString *string, urlOpts
 	if len(urlOpts) > 0 {
 		url = &urlOpts[0]
 	}
-	emailData := sortEmail(user, emailType, tokenString, url)
+	emailData := sortEmail(emailType, tokenString, url)
 	templateFile := emailData["template_file"]
 	subject := emailData["subject"]
 

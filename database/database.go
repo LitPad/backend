@@ -38,6 +38,9 @@ func Models() []interface{} {
 		&models.Coin{},
 		&models.Transaction{},
 		&models.BoughtBook{},
+
+		// waitlist
+		&models.Waitlist{},
 	}
 }
 
