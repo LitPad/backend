@@ -102,3 +102,32 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(response)
 }
+
+func (ep Endpoint) AdminGetWaitlist(c *fiber.Ctx)error{
+	db := ep.DB
+	
+	var waitlist []models.Waitlist
+
+	// Preload the Genre details for each waitlist entry
+
+	if err := db.Preload("Genre").Find(&waitlist).Error; err != nil {
+		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to retrieve waitlist"))
+	}
+
+	paginatedData, paginatedWaitlist, err := PaginateQueryset(waitlist,c, 100)
+
+	if err != nil{
+		return c.Status(400).JSON(err)
+	}
+
+	waitlist = paginatedWaitlist.([]models.Waitlist)
+
+	response := schemas.WaitlistListResponseSchema{
+		ResponseSchema: ResponseMessage("Waitlist fetched successfully"),
+		Data: schemas.WaitlistResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(waitlist),
+	}
+
+	return c.Status(200).JSON(response)
+}

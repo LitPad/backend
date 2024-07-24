@@ -10,6 +10,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// @Summary Add to Waitlist
+// @Description Adds a user to the waitlist.
+// @Tags Waitlist
+// @Accept json
+// @Produce json
+// @Param data body schemas.AddToWaitlist true "Waitlist data"
+// @Success 200 {object} schemas.WaitlistResponseSchema "Successfully added to waitlist"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 404 {object} utils.ErrorResponse "Invalid Genre ID"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /waitlist [post]
+// @Security BearerAuth
 func (ep Endpoint) AddToWaitlist(c *fiber.Ctx) error {
 	db := ep.DB
 
