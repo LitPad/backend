@@ -2,9 +2,7 @@ package routes
 
 import (
 	"fmt"
-	"mime/multipart"
 	"strings"
-	"net/http"
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
@@ -14,8 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/checkout/session"
-	"github.com/cloudinary/cloudinary-go/v2"
-	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"gorm.io/gorm"
 )
 
@@ -111,75 +107,6 @@ func CheckTagStrings(db *gorm.DB, submittedList []string) ([]models.Tag, *string
 	tagsToReturn := []models.Tag{}
 	db.Where("slug IN ?", submittedList).Find(&tagsToReturn)
 	return tagsToReturn, nil
-}
-
-func ValidateAndUploadImage(c *fiber.Ctx, name string, folder string, required bool) (*string, *utils.ErrorResponse) {
-	file, err := c.FormFile(name)
-
-	data := map[string]string{
-		name: "Invalid image type",
-	}
-	errData := utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data)
-
-	if required && err != nil {
-		data[name] = "Image is required"
-		errData = utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data)
-		return nil, &errData
-	}
-
-	// Open the file
-	if file != nil {
-		fileHandle, err := file.Open()
-		if err != nil {
-			return nil, &errData
-		}
-		
-		defer fileHandle.Close()
-
-		// Read the first 512 bytes for content type detection
-		buffer := make([]byte, 512)
-		_, err = fileHandle.Read(buffer)
-		if err != nil {
-			return nil, &errData
-		}
-
-		// Detect the content type
-		contentType := http.DetectContentType(buffer)
-		switch contentType {
-			case "image/jpeg", "image/png", "image/gif":
-				// Upload file
-				fileUrl := uploadToCloudinary(c, file, folder)
-				return &fileUrl, nil
-		}
-		return nil, &errData
-	}
-	return nil, nil
-}
-
-// uploadToCloudinary uploads the file to Cloudinary and returns the URL of the uploaded file
-func uploadToCloudinary(c *fiber.Ctx, file *multipart.FileHeader, folder string) string {
-	directory := fmt.Sprintf("litpad/%s", folder)
-	// Set up Cloudinary
-	cld, err := cloudinary.NewFromParams(cfg.CloudinaryCloudName, cfg.CloudinaryApiKey, cfg.CloudinaryApiSecret)
-	if err != nil {
-		return ""
-	}
-
-	// Open the file for reading
-	fileHandle, err := file.Open()
-	if err != nil {
-		return ""
-	}
-	defer fileHandle.Close()
-
-	// Upload the file to Cloudinary
-	uploadParams := uploader.UploadParams{Folder: directory}
-	uploadResult, err := cld.Upload.Upload(c.Context(), fileHandle, uploadParams)
-	if err != nil {
-		return ""
-	}
-
-	return uploadResult.SecureURL
 }
 
 func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {

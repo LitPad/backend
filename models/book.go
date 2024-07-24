@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/LitPad/backend/models/choices"
@@ -52,6 +53,11 @@ type Book struct {
 	Completed bool     `gorm:"default:false"`
 	Views     string   `gorm:"type:varchar(10000000)"`
 	Reviews   []Review `gorm:"<-:false"`
+	Votes     []Vote   `gorm:"<-:false"`
+}
+
+func (b Book) CoverImageUrl() string {
+	return fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.BookCoverImagesBucket, b.CoverImage)
 }
 
 func (b Book) ViewsCount() int {
@@ -69,6 +75,10 @@ func (b Book) WordCount() int {
 		wordCount += chapter.WordCount()
 	}
 	return wordCount
+}
+
+func (b Book) VotesCount() int {
+	return len(b.Votes)
 }
 
 func (b Book) ChaptersCount() int {
@@ -94,8 +104,10 @@ func (b *Book) GenerateUniqueSlug(tx *gorm.DB) string {
 	return uniqueSlug
 }
 
-func (b *Book) BeforeSave(tx *gorm.DB) (err error) {
-	b.Slug = b.GenerateUniqueSlug(tx)
+func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
+	slug := b.GenerateUniqueSlug(tx)
+	b.Slug = slug
+	b.CoverImage = slug
 	return
 }
 
@@ -157,8 +169,8 @@ type Review struct {
 	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 
 	Rating  choices.RatingChoice
-	Likes   []User `gorm:"many2many:review_likes;<-:false"`
-	Text    string
+	Likes   []User  `gorm:"many2many:review_likes;<-:false"`
+	Text    string  `gorm:"type:varchar(10000)"`
 	Replies []Reply `gorm:"<-:false"`
 }
 
@@ -179,9 +191,18 @@ type Reply struct {
 	Review   Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
 
 	Likes []User `gorm:"many2many:review_reply_likes;<-:false"`
-	Text  string
+	Text  string `gorm:"type:varchar(10000)"`
 }
 
 func (r Reply) LikesCount() int {
 	return len(r.Likes)
+}
+
+type Vote struct {
+	BaseModel
+	UserID uuid.UUID
+	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+
+	BookID uuid.UUID 
+	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 }

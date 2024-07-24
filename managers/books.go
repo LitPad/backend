@@ -104,7 +104,7 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpdateSchema, genre models.Genre, coverImage *string, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpdateSchema, genre models.Genre, Tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
@@ -112,9 +112,6 @@ func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpda
 	book.Genre = genre
 	book.Tags = Tags
 	book.Price = data.Price
-	if coverImage != nil {
-		book.CoverImage = *coverImage
-	}
 	db.Omit("Tags.*").Save(&book)
 	return book
 }
@@ -195,7 +192,7 @@ func (b BoughtBookManager) GetByBuyerAndBook(db *gorm.DB, buyer *models.User, bo
 		BuyerID: buyer.ID,
 		BookID:  book.ID,
 	}
-	db.Take(&boughtBook, boughtBook)
+	db.Joins("Book").Joins("Book.Author").Take(&boughtBook, boughtBook)
 	if boughtBook.ID == uuid.Nil {
 		return nil
 	}
@@ -221,4 +218,110 @@ func (b BoughtBookManager) Create(db *gorm.DB, buyer *models.User, book models.B
 	author.Coins = author.Coins + bookPrice
 	db.Save(&author)
 	return boughtBook
+}
+
+type ReviewManager struct {
+	Model     models.Review
+	ModelList []models.Review
+}
+
+func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Review {
+	review := r.Model
+	db.Where("reviews.id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
+	if review.ID == uuid.Nil {
+		return nil
+	}
+	return &review
+}
+
+func (r ReviewManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Review {
+	review := models.Review{}
+	db.Where("user_id = ?", user.ID).Joins("Book").Joins("User").Preload("Replies").Preload("Likes").Take(&review, id)
+	if review.ID == uuid.Nil {
+		return nil
+	}
+	return &review
+}
+
+func (r ReviewManager) GetByUserAndBook(db *gorm.DB, user *models.User, book models.Book) *models.Review {
+	review := models.Review{
+		UserID: user.ID,
+		BookID: book.ID,
+	}
+	db.Take(&review, review)
+	if review.ID == uuid.Nil {
+		return nil
+	}
+	return &review
+}
+
+func (r ReviewManager) Create(db *gorm.DB, user *models.User, book models.Book, data schemas.ReviewBookSchema) models.Review {
+	review := models.Review{
+		UserID: user.ID,
+		User:   *user,
+		BookID: book.ID,
+		Book:   book,
+		Rating: data.Rating,
+		Text:   data.Text,
+	}
+	db.Create(&review)
+	return review
+}
+
+func (r ReviewManager) Update(db *gorm.DB, review models.Review, data schemas.ReviewBookSchema) models.Review {
+	review.Text = data.Text
+	review.Rating = data.Rating
+	db.Save(&review)
+	return review
+}
+
+type ReplyManager struct {
+	Model     models.Reply
+	ModelList []models.Reply
+}
+
+func (r ReplyManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Reply {
+	reply := models.Reply{}
+	db.Where("user_id = ?", user.ID).Joins("User").Preload("Likes").Take(&reply, id)
+	if reply.ID == uuid.Nil {
+		return nil
+	}
+	return &reply
+}
+
+func (r ReplyManager) Create(db *gorm.DB, user *models.User, review *models.Review, data schemas.ReplyReviewSchema) models.Reply {
+	reply := models.Reply{
+		UserID:   user.ID,
+		User:     *user,
+		ReviewID: review.ID,
+		Text:     data.Text,
+	}
+	db.Create(&reply)
+	return reply
+}
+
+func (r ReplyManager) Update(db *gorm.DB, reply models.Reply, data schemas.ReplyReviewSchema) models.Reply {
+	reply.Text = data.Text
+	db.Save(&reply)
+	return reply
+}
+
+type VoteManager struct {
+	Model     models.Vote
+	ModelList []models.Vote
+}
+
+func (v VoteManager) GetByUserAndBook(db *gorm.DB, user *models.User, book *models.Book) *models.Vote {
+	vote := models.Vote{UserID: user.ID, BookID: book.ID}
+	db.Joins("User").Joins("Book").Take(&vote, vote)
+	if vote.ID == uuid.Nil {
+		return nil
+	}
+	return &vote
+}
+
+func (v VoteManager) Create(db *gorm.DB, user *models.User, book *models.Book) models.Vote {
+	vote := models.Vote{UserID: user.ID, User: *user, Book: *book, BookID: book.ID}
+	db.Create(&vote)
+	return vote
 }

@@ -77,6 +77,7 @@ type PartialBookSchema struct {
 	CoverImage         string                `json:"cover_image"`
 	Price              int                   `json:"price"`
 	Views              int                   `json:"views"`
+	Votes              int                   `json:"votes"`
 	CreatedAt          time.Time             `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt          time.Time             `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
@@ -99,6 +100,7 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	b.Genre = b.Genre.Init(book.Genre)
 	b.WordCount = book.WordCount()
 	b.ChaptersCount = book.ChaptersCount()
+	b.Votes = book.VotesCount()
 
 	chapters := book.Chapters
 	if len(chapters) > 0 {
@@ -106,7 +108,7 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 		b.PartialViewChapter = &chapter
 	}
 
-	b.CoverImage = book.CoverImage
+	b.CoverImage = book.CoverImageUrl()
 	b.Views = book.ViewsCount()
 	b.CreatedAt = book.CreatedAt
 	b.UpdatedAt = book.UpdatedAt
@@ -129,11 +131,15 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	return b
 }
 
+type ReviewBookSchema struct {
+	Rating       choices.RatingChoice `json:"rating" validate:"required,rating_choice_validator"`
+	Text         string               `json:"text" validate:"required,max=10000"`
+}
+
 type ReviewSchema struct {
+	ReviewBookSchema
 	ID           uuid.UUID            `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
 	User         UserDataSchema       `json:"user"`
-	Rating       choices.RatingChoice `json:"rating"`
-	Text         string               `json:"text"`
 	LikesCount   int                  `json:"likes_count"`
 	RepliesCount int                  `json:"replies_count"`
 	CreatedAt    time.Time            `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
@@ -155,6 +161,36 @@ func (r ReviewSchema) Init(review models.Review) ReviewSchema {
 type ReviewsResponseDataSchema struct {
 	PaginatedResponseDataSchema
 	Items []ReviewSchema `json:"items"`
+}
+
+type ReviewResponseSchema struct {
+	ResponseSchema
+	Data ReviewSchema `json:"data"`
+}
+
+type RepliesResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []ReplySchema `json:"replies"`
+}
+
+func (r RepliesResponseDataSchema) Init(replies []models.Reply) RepliesResponseDataSchema {
+	// Set Initial Data
+	replyItems := r.Items
+	for _, reply := range replies {
+		replyItems = append(replyItems, ReplySchema{}.Init(reply))
+	}
+	r.Items = replyItems
+	return r
+}
+
+type RepliesResponseSchema struct {
+	ResponseSchema
+	Data RepliesResponseDataSchema `json:"data"`
+}
+
+type ReplyResponseSchema struct {
+	ResponseSchema
+	Data ReplySchema `json:"data"`
 }
 
 type PartialBookDetailSchema struct {
@@ -316,10 +352,14 @@ type ChapterResponseSchema struct {
 	Data ChapterSchema `json:"data"`
 }
 
+type ReplyReviewSchema struct {
+	Text         string               `json:"text" validate:"required,max=10000"`
+}
+
 type ReplySchema struct {
+	ReplyReviewSchema
 	ID         uuid.UUID      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
 	User       UserDataSchema `json:"user"`
-	Text       string         `json:"text"`
 	LikesCount int            `json:"likes_count"`
 	CreatedAt  time.Time      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt  time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`

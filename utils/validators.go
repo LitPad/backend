@@ -15,6 +15,16 @@ func PaymentTypeValidator(fl validator.FieldLevel) bool {
 	return false // Error. Value doesn't match the required
 }
 
+// Validates if a rating choice value is the correct one
+func RatingChoiceValidator(fl validator.FieldLevel) bool {
+	ratingChoiceValue := fl.Field().Interface().(choices.RatingChoice)
+	switch ratingChoiceValue {
+	case choices.RC_1, choices.RC_2, choices.RC_3, choices.RC_4, choices.RC_5:
+		return true
+	}
+	return false // Error. Value doesn't match the required
+}
+
 // Validates if a chapter status value is the correct one
 func ChapterStatusValidator(fl validator.FieldLevel) bool {
 	chapterStatusValue := fl.Field().Interface().(choices.ChapterStatus)

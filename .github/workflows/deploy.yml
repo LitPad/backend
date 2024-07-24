@@ -1,0 +1,65 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sshpass expect rsync
+
+    - name: Setup SSH passphrase
+      env:
+        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        echo 'echo $SSH_PASSPHRASE' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
+        echo "SSH key added"
+
+    - name: Verify SSH Connection
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
+
+    - name: Install rsync on VPS
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          sudo apt-get update
+          sudo apt-get install -y rsync
+        EOF
+
+    - name: Copy files to VPS
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
+        echo "Files copied to VPS"
+
+    - name: SSH and run Docker Compose
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          cd /backend
+          docker-compose down
+          docker-compose up -d --build --remove-orphans
+          echo "Docker Compose executed"
+        EOF

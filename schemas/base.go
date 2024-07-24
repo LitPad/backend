@@ -24,12 +24,12 @@ type UserDataSchema struct {
 	// For short user data
 	FullName string `json:"full_name"`
 	Username string `json:"username"`
-	Avatar   string `json:"avatar"`
+	Avatar   *string `json:"avatar"`
 }
 
 func (u UserDataSchema) Init(user models.User) UserDataSchema {
 	u.FullName = user.FullName()
 	u.Username = user.Username
-	u.Avatar = user.Avatar
+	u.Avatar = user.AvatarUrl()
 	return u
 }

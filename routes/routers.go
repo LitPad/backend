@@ -47,13 +47,23 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	profilesRouter.Get("/notifications", endpoint.AuthMiddleware, endpoint.GetNotifications)
 	profilesRouter.Post("/notifications/read", endpoint.AuthMiddleware, endpoint.ReadNotification)
 
-	// Book Routes (14)
+	// Book Routes (20)
 	bookRouter := api.Group("/books")
 	bookRouter.Get("", endpoint.GetLatestBooks)
 	bookRouter.Post("", endpoint.AuthorMiddleware, endpoint.CreateBook)
 	bookRouter.Get("/bought", endpoint.AuthMiddleware, endpoint.GetBoughtBooks)
 	bookRouter.Get("/book/:slug", endpoint.GetSingleBookPartial)
 	bookRouter.Get("/book-full/:slug", endpoint.AuthMiddleware, endpoint.GetSingleBookFull)
+	bookRouter.Post("/book-full/:slug", endpoint.AuthMiddleware, endpoint.ReviewBook)
+	bookRouter.Put("/book-full/review/:id", endpoint.AuthMiddleware, endpoint.EditBookReview)
+	bookRouter.Delete("/book-full/review/:id", endpoint.AuthMiddleware, endpoint.DeleteBookReview)
+	bookRouter.Get("/book-full/review/:id/replies", endpoint.GetReviewReplies)
+	bookRouter.Post("/book-full/review/:id/replies", endpoint.AuthMiddleware, endpoint.ReplyReview)
+	bookRouter.Put("/book-full/review/replies/:id", endpoint.AuthMiddleware, endpoint.EditReply)
+	bookRouter.Delete("/book-full/review/replies/:id", endpoint.AuthMiddleware, endpoint.DeleteReply)
+	bookRouter.Get("/book/:slug/vote", endpoint.AuthMiddleware, endpoint.VoteBook)
+	bookRouter.Get("/lanterns-generation/:amount", endpoint.AuthMiddleware, endpoint.ConvertCoinsToLanterns)
+
 	bookRouter.Put("/book/:slug", endpoint.AuthorMiddleware, endpoint.UpdateBook)
 	bookRouter.Delete("/book/:slug", endpoint.AuthorMiddleware, endpoint.DeleteBook)
 	bookRouter.Get("/book/:slug/buy", endpoint.AuthMiddleware, endpoint.BuyBook)
@@ -63,6 +73,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	bookRouter.Get("/author/:username", endpoint.GetLatestAuthorBooks)
 	bookRouter.Get("/genres", endpoint.GetAllBookGenres)
 	bookRouter.Get("/tags", endpoint.GetAllBookTags)
+
 
 	// Gifts Routes (4)
 	giftsRouter := api.Group("/gifts")

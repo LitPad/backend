@@ -39,6 +39,15 @@ type User struct {
 	Books []Book `gorm:"foreignKey:AuthorID"`
 }
 
+func (u User) AvatarUrl() *string {
+	avatar := u.Avatar
+	if avatar != "" {
+		avatarUrl := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.UserImagesBucket, u.Avatar)
+		return &avatarUrl
+	}
+	return &avatar
+}
+
 func (user User) BooksCount() int {
 	return len(user.Books)
 }
@@ -57,6 +66,7 @@ func (user User) FullName() string {
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 	user.Password = utils.HashPassword(user.Password)
+	user.Avatar = user.Username
 	return
 }
 
@@ -68,17 +78,17 @@ type Token struct {
 }
 
 func (token *Token) BeforeSave(tx *gorm.DB) (err error) {
-	token.TokenString = token.GenerateRandomToken(tx, "")
+	token.TokenString = token.GenerateRandomToken(tx)
 	return
 }
 
-func (token Token) GenerateRandomToken(db *gorm.DB, tokenString string) string {
+func (token Token) GenerateRandomToken(db *gorm.DB) string {
 	// Create new
-	tokenStr := fmt.Sprintf("%s%s", utils.GetRandomString(100), tokenString)
+	tokenStr := utils.GetRandomString(100)
 	tokenData := Token{TokenString: tokenStr}
+	db.Take(&tokenData, tokenData)
 	if tokenData.ID != uuid.Nil {
-		tokenStr = fmt.Sprintf("%s%s", tokenStr, utils.GetRandomString(6))
-		return token.GenerateRandomToken(db, tokenStr)
+		return token.GenerateRandomToken(db)
 	}
 	return tokenStr
 }
@@ -94,9 +104,9 @@ func (obj Token) CheckExpiration() bool {
 type Notification struct {
 	BaseModel
 	SenderID   uuid.UUID
-	Sender     User `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE"`
+	Sender     User `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE;<-:false"`
 	ReceiverID uuid.UUID
-	Receiver   User `gorm:"foreignKey:ReceiverID;constraint:OnDelete:CASCADE"`
+	Receiver   User `gorm:"foreignKey:ReceiverID;constraint:OnDelete:CASCADE;<-:false"`
 	Ntype      choices.NotificationTypeChoice
 	Text       string
 

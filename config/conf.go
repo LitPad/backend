@@ -29,6 +29,7 @@ type Config struct {
 	MailSenderHost               string `mapstructure:"MAIL_SENDER_HOST"`
 	MailSenderPort               int    `mapstructure:"MAIL_SENDER_PORT"`
 	CORSAllowedOrigins           string `mapstructure:"CORS_ALLOWED_ORIGINS"`
+	CORSAllowCredentials         bool   `mapstructure:"CORS_ALLOW_CREDENTIALS"`
 	GoogleClientID               string `mapstructure:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret           string `mapstructure:"GOOGLE_CLIENT_SECRET"`
 	FacebookAppID                string `mapstructure:"FACEBOOK_APP_ID"`
@@ -39,10 +40,13 @@ type Config struct {
 	StripeSecretKey              string `mapstructure:"STRIPE_SECRET_KEY"`
 	StripeCheckoutSuccessUrlPath string `mapstructure:"STRIPE_CHECKOUT_SUCCESS_URL_PATH"`
 	StripeWebhookSecret          string `mapstructure:"STRIPE_WEBHOOK_SECRET"`
-	CloudinaryCloudName          string `mapstructure:"CLOUDINARY_CLOUD_NAME"`
-	CloudinaryApiKey             string `mapstructure:"CLOUDINARY_API_KEY"`
-	CloudinaryApiSecret          string `mapstructure:"CLOUDINARY_API_SECRET"`
 	SocketSecret                 string `mapstructure:"SOCKET_SECRET"`
+	S3AccessKey                  string `mapstructure:"S3_ACCESS_KEY"`
+	S3SecretKey                  string `mapstructure:"S3_SECRET_KEY"`
+	S3EndpointUrl                string `mapstructure:"S3_ENDPOINT_URL"`
+	BookCoverImagesBucket        string `mapstructure:"BOOK_COVER_IMAGES_BUCKET"`
+	UserImagesBucket             string `mapstructure:"USER_IMAGES_BUCKET"`
+	PGAdminPassword              string `mapstructure:"PGADMIN_PASSWORD"`
 }
 
 func GetConfig() (config Config) {
