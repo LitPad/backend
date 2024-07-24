@@ -96,6 +96,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Put("/users/user", endpoint.AdminMiddleware,endpoint.AdminUpdateUser)
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
 
+	api.Post("/waitlist", endpoint.AddToWaitlist)
+
 	// Register Sockets (1)
 	api.Get("/ws/notifications", websocket.New(endpoint.NotificationSocket))
 }
