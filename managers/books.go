@@ -93,25 +93,18 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 		GenreID: genre.ID, Genre: genre,
 		Tags:       Tags,
 		CoverImage: coverImage,
-		Price:      data.Price,
 	}
 	db.Omit("Tags.*").Create(&book)
-	if data.Chapter != nil {
-		chapter := models.Chapter{BookID: book.ID, Title: data.Chapter.Title, Text: data.Chapter.Text, ChapterStatus: choices.CS_PUBLISHED}
-		db.Create(&chapter)
-		book.Chapters = []models.Chapter{chapter}
-	}
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookUpdateSchema, genre models.Genre, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, Tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
 	book.GenreID = genre.ID
 	book.Genre = genre
 	book.Tags = Tags
-	book.Price = data.Price
 	db.Omit("Tags.*").Save(&book)
 	return book
 }

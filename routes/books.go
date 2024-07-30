@@ -200,8 +200,6 @@ func (ep Endpoint) GetSingleBookFull(c *fiber.Ctx) error {
 // @Tags Books
 // @Param book formData schemas.BookCreateSchema true "Book object"
 // @Param cover_image formData file true "Cover Image to upload"
-// @Param chapter.title formData string false "First chapter title"
-// @Param chapter.text formData string false "First chapter title"
 // @Success 201 {object} schemas.BookResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [post]
@@ -255,7 +253,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 // @Description This endpoint allows a writer to update a book
 // @Tags Books
 // @Param slug path string true "Book slug"
-// @Param book formData schemas.BookUpdateSchema true "Book object"
+// @Param book formData schemas.BookCreateSchema true "Book object"
 // @Param cover_image formData file false "Cover Image to upload"
 // @Success 200 {object} schemas.BookResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
@@ -269,7 +267,7 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 
-	data := schemas.BookUpdateSchema{}
+	data := schemas.BookCreateSchema{}
 	if errCode, errData := ValidateFormRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}

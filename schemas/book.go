@@ -244,18 +244,12 @@ type BookChapterCreateSchema struct {
 	Text  string `json:"text" validate:"required,max=100000"`
 }
 
-type BookUpdateSchema struct {
+type BookCreateSchema struct {
 	Title         string          `form:"title" validate:"required,max=200"`
 	Blurb         string          `form:"blurb" validate:"required,max=200"`
 	GenreSlug     string          `form:"genre_slug" validate:"required"`
 	TagSlugs      []string        `form:"tag_slugs" validate:"required"`
-	Price         int             `form:"price" validate:"required"`
 	AgeDiscretion choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
-}
-
-type BookCreateSchema struct {
-	BookUpdateSchema
-	Chapter *BookChapterCreateSchema `form:"chapter"`
 }
 
 type ChapterCreateSchema struct {
