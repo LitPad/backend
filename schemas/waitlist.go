@@ -10,7 +10,7 @@ import (
 type AddToWaitlist struct {
 	Name string `json:"name"`
 	Email string `json:"email"`
-	GenreID uuid.UUID `json:"genre_id"`
+	GenreSlug string `json:"genre_slug"`
 }
 
 type WaitlistResponse struct {
