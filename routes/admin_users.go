@@ -57,3 +57,77 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(response)
 }
+
+// @Summary Update User Role
+// @Description Updates the account type of a specified user.
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Param data body schemas.UpdateUserRoleSchema true "User role update data"
+// @Success 200 {object} schemas.UserProfileResponseSchema "Successfully updated user details"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 404 {object} utils.ErrorResponse "User not found"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/users/user [put]
+// @Security BearerAuth
+func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.UpdateUserRoleSchema{}
+
+	if errCode, errData := ValidateRequest(c, &data);
+
+	errData != nil{
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	account_type := choices.AccType(data.AccountType)
+
+	var user models.User
+
+	if data.Username != nil{
+		
+		result := db.Where("username = ?", data.Username).First(&user)
+		if result.Error != nil{
+			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NOT_FOUND, "User Not Found"))
+		}
+
+		user.AccountType = account_type
+	}
+
+	db.Save(&user)
+
+	response := schemas.UserProfileResponseSchema{
+		ResponseSchema: ResponseMessage("User details updated successfully!"),
+		Data: schemas.UserProfile{}.Init(user),
+	}
+	return c.Status(200).JSON(response)
+}
+
+func (ep Endpoint) AdminGetWaitlist(c *fiber.Ctx)error{
+	db := ep.DB
+	
+	var waitlist []models.Waitlist
+
+	// Preload the Genre details for each waitlist entry
+
+	if err := db.Preload("Genre").Find(&waitlist).Error; err != nil {
+		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to retrieve waitlist"))
+	}
+
+	paginatedData, paginatedWaitlist, err := PaginateQueryset(waitlist,c, 100)
+
+	if err != nil{
+		return c.Status(400).JSON(err)
+	}
+
+	waitlist = paginatedWaitlist.([]models.Waitlist)
+
+	response := schemas.WaitlistListResponseSchema{
+		ResponseSchema: ResponseMessage("Waitlist fetched successfully"),
+		Data: schemas.WaitlistResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(waitlist),
+	}
+
+	return c.Status(200).JSON(response)
+}

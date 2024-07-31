@@ -165,6 +165,19 @@ func (t GenreManager) GetAll(db *gorm.DB) []models.Genre {
 	return genres
 }
 
+func (t GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
+	
+	genre := models.Genre{Slug:slug}
+	db.Take(&genre)
+
+	if genre.ID == uuid.Nil{
+		return nil
+	}
+
+	return &genre
+}
+
+
 type BoughtBookManager struct {
 	Model     models.BoughtBook
 	ModelList []models.BoughtBook
