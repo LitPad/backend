@@ -130,6 +130,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/users/user": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the account type of a specified user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update User Role",
+                "parameters": [
+                    {
+                        "description": "User role update data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UpdateUserRoleSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated user details",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/facebook": {
             "post": {
                 "description": "` + "`" + `This endpoint generates new access and refresh tokens for authentication via facebook` + "`" + `\n` + "`" + `Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization` + "`" + `",
@@ -2077,6 +2134,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/waitlist": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a user to the waitlist.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Waitlist"
+                ],
+                "summary": "Add to Waitlist",
+                "parameters": [
+                    {
+                        "description": "Waitlist data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.AddToWaitlist"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully added to waitlist",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.WaitlistResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Invalid Genre ID",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/coins": {
             "get": {
                 "description": "This endpoint returns all available coins for sale",
@@ -2342,6 +2456,20 @@ const docTemplate = `{
                 "success": {
                     "type": "string",
                     "example": "pong"
+                }
+            }
+        },
+        "schemas.AddToWaitlist": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "genre_slug": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -3609,6 +3737,23 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.UpdateUserRoleSchema": {
+            "type": "object",
+            "properties": {
+                "acc_type": {
+                    "type": "string",
+                    "maxLength": 7,
+                    "minLength": 6,
+                    "example": "WRITER"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 3,
+                    "example": "john-doe"
+                }
+            }
+        },
         "schemas.UserDataSchema": {
             "type": "object",
             "properties": {
@@ -3733,6 +3878,19 @@ const docTemplate = `{
                 "token_string": {
                     "type": "string",
                     "example": "Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"
+                }
+            }
+        },
+        "schemas.WaitlistResponseSchema": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },

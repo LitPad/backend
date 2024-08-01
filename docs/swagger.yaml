@@ -127,6 +127,15 @@ definitions:
         example: pong
         type: string
     type: object
+  schemas.AddToWaitlist:
+    properties:
+      email:
+        type: string
+      genre_slug:
+        type: string
+      name:
+        type: string
+    type: object
   schemas.BookDetailResponseSchema:
     properties:
       data:
@@ -997,6 +1006,19 @@ definitions:
         minLength: 3
         type: string
     type: object
+  schemas.UpdateUserRoleSchema:
+    properties:
+      acc_type:
+        example: WRITER
+        maxLength: 7
+        minLength: 6
+        type: string
+      username:
+        example: john-doe
+        maxLength: 1000
+        minLength: 3
+        type: string
+    type: object
   schemas.UserDataSchema:
     properties:
       avatar:
@@ -1082,6 +1104,15 @@ definitions:
         type: string
     required:
     - token_string
+    type: object
+  schemas.WaitlistResponseSchema:
+    properties:
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
     type: object
   utils.ErrorResponse:
     properties:
@@ -1183,6 +1214,42 @@ paths:
       security:
       - BearerAuth: []
       summary: List Users with Pagination
+      tags:
+      - Admin
+  /admin/users/user:
+    put:
+      consumes:
+      - application/json
+      description: Updates the account type of a specified user.
+      parameters:
+      - description: User role update data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.UpdateUserRoleSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated user details
+          schema:
+            $ref: '#/definitions/schemas.UserProfileResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update User Role
       tags:
       - Admin
   /auth/facebook:
@@ -2461,6 +2528,42 @@ paths:
       summary: Update User Password
       tags:
       - Profiles
+  /waitlist:
+    post:
+      consumes:
+      - application/json
+      description: Adds a user to the waitlist.
+      parameters:
+      - description: Waitlist data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.AddToWaitlist'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully added to waitlist
+          schema:
+            $ref: '#/definitions/schemas.WaitlistResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Invalid Genre ID
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add to Waitlist
+      tags:
+      - Waitlist
   /wallet/coins:
     get:
       description: This endpoint returns all available coins for sale
