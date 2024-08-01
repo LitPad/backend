@@ -77,3 +77,11 @@ const (
 	CT_NON_EXCLUSIVE  ContractTypeChoice = "NON-EXCLUSIVE"
 	CT_ONLY_EXCLUSIVE ContractTypeChoice = "ONLY-EXCLUSIVE"
 )
+
+type ContractIDTypeChoice string
+
+const (
+	CID_DRIVERS_LICENSE ContractIDTypeChoice = "DRIVERS-LICENSE"
+	CID_GOVERNMENT_ID   ContractIDTypeChoice = "GOVERNMENT-ID"
+	CID_PASSPORT         ContractIDTypeChoice = "PASSPORT"
+)

@@ -251,6 +251,83 @@ func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	return g
 }
 
+type ContractSchema struct {
+	FullName             string                       `json:"full_name"`
+	Email                string                       `json:"email"`
+	PenName              string                       `json:"pen_name"`
+	Age                  uint                         `json:"age"`
+	Country              string                       `json:"country"`
+	Address              string                       `json:"address"`
+	City                 string                       `json:"city"`
+	State                string                       `json:"state"`
+	PostalCode           uint                         `json:"postal_code"`
+	TelephoneNumber      string                       `json:"telephone_number"`
+	IDType               choices.ContractIDTypeChoice `json:"id_type"`
+	IDFrontImage         string                       `json:"id_front_image"`
+	IDBackImage          string                       `json:"id_back_image"`
+	BookAvailabilityLink *string                      `json:"book_availability_link"`
+	PlannedLength        uint                         `json:"planned_length"`
+	AverageChapter       uint                         `json:"average_chapter"`
+	UpdateRate           uint                         `json:"update_rate"`
+	Synopsis             string                       `json:"synopsis"`
+	Outline              string                       `json:"outline"`
+	IntendedContract     choices.ContractTypeChoice   `json:"intended_contract"`
+	FullPurchaseMode     bool                         `json:"full_purchase_mode"`
+	Approved             bool                         `json:"approved"`
+	FullPrice            *int                         `json:"full_price"`
+	ChapterPrice         int                          `json:"chapter_price"`
+}
+
+func (c ContractSchema) Init(book models.Book) ContractSchema {
+	c.FullName = book.FullName
+	c.Email = book.Email
+	c.PenName = book.PenName
+	c.Age = book.Age
+	c.Country = book.Country
+	c.Address = book.Address
+	c.City = book.City
+	c.State = book.State
+	c.PostalCode = book.PostalCode
+	c.TelephoneNumber = book.TelephoneNumber
+	c.IDType = book.IDType
+	c.BookAvailabilityLink = book.BookAvailabilityLink
+	c.PlannedLength = book.PlannedLength
+	c.AverageChapter = book.AverageChapter
+	c.UpdateRate = book.UpdateRate
+	c.Synopsis = book.Synopsis
+	c.Outline = book.Outline
+	c.IntendedContract = book.IntendedContract
+	c.FullPurchaseMode = book.FullPurchaseMode
+	c.Approved = book.ContractApproved
+	c.FullPrice = book.FullPrice
+	c.ChapterPrice = book.ChapterPrice
+	c.IDFrontImage = *book.IDFrontImageUrl()
+	c.IDBackImage = *book.IDBackImageUrl()
+	return c
+}
+
+type ContractCreateSchema struct {
+	FullName             string                       `form:"full_name" validate:"required,max=1000"`
+	Email                string                       `form:"email" validate:"required,email"`
+	PenName              string                       `form:"pen_name" validate:"required,max=1000"`
+	Age                  uint                         `form:"age" validate:"required"`
+	Country              string                       `form:"country" validate:"required,max=1000"`
+	Address              string                       `form:"address" validate:"required,max=1000"`
+	City                 string                       `form:"city" validate:"required,max=1000"`
+	State                string                       `form:"state" validate:"required,max=1000"`
+	PostalCode           uint                         `form:"postal_code" validate:"required"`
+	TelephoneNumber      string                       `form:"telephone_number" validate:"required,max=20"`
+	IDType               choices.ContractIDTypeChoice `form:"id_type" validate:"required,contract_id_type_validator"`
+	BookAvailabilityLink *string                      `form:"book_availability_link"`
+	PlannedLength        uint                         `form:"planned_length" validate:"required"`
+	AverageChapter       uint                         `form:"average_chapter" validate:"required"`
+	UpdateRate           uint                         `form:"update_rate" validate:"required"`
+	Synopsis             string                       `form:"synopsis" validate:"required"`
+	Outline              string                       `form:"outline" validate:"required"`
+	IntendedContract     choices.ContractTypeChoice   `form:"intended_contract" validate:"required,contract_type_validator"`
+	FullPurchaseMode     bool                         `form:"full_purchase_mode" validate:"required"`
+}
+
 // Book Responses
 type BooksResponseDataSchema struct {
 	PaginatedResponseDataSchema
@@ -275,6 +352,11 @@ type BooksResponseSchema struct {
 type BookResponseSchema struct {
 	ResponseSchema
 	Data BookSchema `json:"data"`
+}
+
+type ContractResponseSchema struct {
+	ResponseSchema
+	Data ContractSchema `json:"data"`
 }
 
 type ChaptersResponseDataSchema struct {

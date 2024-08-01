@@ -32,6 +32,26 @@ definitions:
     - CS_DRAFT
     - CS_PUBLISHED
     - CS_TRASH
+  choices.ContractIDTypeChoice:
+    enum:
+    - DRIVERS-LICENSE
+    - GOVERNMENT-ID
+    - PASSPORT
+    type: string
+    x-enum-varnames:
+    - CID_DRIVERS_LICENSE
+    - CID_GOVERNMENT_ID
+    - CID_PASSPORT
+  choices.ContractTypeChoice:
+    enum:
+    - EXCLUSIVE
+    - NON-EXCLUSIVE
+    - ONLY-EXCLUSIVE
+    type: string
+    x-enum-varnames:
+    - CT_EXCLUSIVE
+    - CT_NON_EXCLUSIVE
+    - CT_ONLY_EXCLUSIVE
   choices.NotificationTypeChoice:
     enum:
     - LIKE
@@ -384,6 +404,68 @@ definitions:
       status:
         example: success
         type: string
+    type: object
+  schemas.ContractResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.ContractSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.ContractSchema:
+    properties:
+      address:
+        type: string
+      age:
+        type: integer
+      approved:
+        type: boolean
+      average_chapter:
+        type: integer
+      book_availability_link:
+        type: string
+      chapter_price:
+        type: integer
+      city:
+        type: string
+      country:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      full_price:
+        type: integer
+      full_purchase_mode:
+        type: boolean
+      id_back_image:
+        type: string
+      id_front_image:
+        type: string
+      id_type:
+        $ref: '#/definitions/choices.ContractIDTypeChoice'
+      intended_contract:
+        $ref: '#/definitions/choices.ContractTypeChoice'
+      outline:
+        type: string
+      pen_name:
+        type: string
+      planned_length:
+        type: integer
+      postal_code:
+        type: integer
+      state:
+        type: string
+      synopsis:
+        type: string
+      telephone_number:
+        type: string
+      update_rate:
+        type: integer
     type: object
   schemas.EmailRequestSchema:
     properties:
@@ -1905,6 +1987,140 @@ paths:
       security:
       - BearerAuth: []
       summary: View Book Chapters
+      tags:
+      - Books
+  /books/book/{slug}/set-contract:
+    post:
+      description: '`This endpoint allows a user to create/update a contract for his/her
+        book`'
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - in: formData
+        maxLength: 1000
+        name: address
+        required: true
+        type: string
+      - in: formData
+        name: age
+        required: true
+        type: integer
+      - in: formData
+        name: average_chapter
+        required: true
+        type: integer
+      - in: formData
+        name: book_availability_link
+        type: string
+      - in: formData
+        maxLength: 1000
+        name: city
+        required: true
+        type: string
+      - in: formData
+        maxLength: 1000
+        name: country
+        required: true
+        type: string
+      - in: formData
+        name: email
+        required: true
+        type: string
+      - in: formData
+        maxLength: 1000
+        name: full_name
+        required: true
+        type: string
+      - in: formData
+        name: full_purchase_mode
+        required: true
+        type: boolean
+      - enum:
+        - DRIVERS-LICENSE
+        - GOVERNMENT-ID
+        - PASSPORT
+        in: formData
+        name: id_type
+        required: true
+        type: string
+        x-enum-varnames:
+        - CID_DRIVERS_LICENSE
+        - CID_GOVERNMENT_ID
+        - CID_PASSPORT
+      - enum:
+        - EXCLUSIVE
+        - NON-EXCLUSIVE
+        - ONLY-EXCLUSIVE
+        in: formData
+        name: intended_contract
+        required: true
+        type: string
+        x-enum-varnames:
+        - CT_EXCLUSIVE
+        - CT_NON_EXCLUSIVE
+        - CT_ONLY_EXCLUSIVE
+      - in: formData
+        name: outline
+        required: true
+        type: string
+      - in: formData
+        maxLength: 1000
+        name: pen_name
+        required: true
+        type: string
+      - in: formData
+        name: planned_length
+        required: true
+        type: integer
+      - in: formData
+        name: postal_code
+        required: true
+        type: integer
+      - in: formData
+        maxLength: 1000
+        name: state
+        required: true
+        type: string
+      - in: formData
+        name: synopsis
+        required: true
+        type: string
+      - in: formData
+        maxLength: 20
+        name: telephone_number
+        required: true
+        type: string
+      - in: formData
+        name: update_rate
+        required: true
+        type: integer
+      - description: Front Image of your id
+        in: formData
+        name: id_front_image
+        type: file
+      - description: Back Image of your id
+        in: formData
+        name: id_back_image
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ContractResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set Contract
       tags:
       - Books
   /books/book/{slug}/vote:

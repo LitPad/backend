@@ -67,6 +67,16 @@ func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.E
 	return &book, nil
 }
 
+func (b BookManager) GetContractedBookBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
+	book := models.Book{Slug: slug, ContractApproved: true}
+	db.Scopes(scopes.AuthorGenreTagBookScope).Take(&book, book)
+	if book.ID == uuid.Nil {
+		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No contract approved book with that slug")
+		return nil, &errD
+	}
+	return &book, nil
+}
+
 func (b BookManager) GetBySlugWithReviews(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagReviewsBookScope).Take(&book, book)
@@ -106,6 +116,33 @@ func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCrea
 	book.GenreID = genre.ID
 	book.Genre = genre
 	book.Tags = Tags
+	db.Omit("Tags.*").Save(&book)
+	return book
+}
+
+func (b BookManager) SetContract(db *gorm.DB, book models.Book, data schemas.ContractCreateSchema) models.Book {
+	book.FullName = data.FullName
+	book.Email = data.Email
+	book.PenName = data.PenName
+	book.Age = data.Age
+	book.Country = data.Country
+	book.Address = data.Address
+	book.City = data.City
+	book.State = data.State
+	book.PostalCode = data.PostalCode
+	book.TelephoneNumber = data.TelephoneNumber
+	book.IDType = data.IDType
+	book.BookAvailabilityLink = data.BookAvailabilityLink
+	book.PlannedLength = data.PlannedLength
+	book.AverageChapter = data.AverageChapter
+	book.UpdateRate = data.UpdateRate
+	book.Synopsis = data.Synopsis
+	book.Outline = data.Outline
+	book.IntendedContract = data.IntendedContract
+	book.FullPurchaseMode = data.FullPurchaseMode
+	username := book.Author.Username
+	book.IDFrontImage = username
+	book.IDBackImage = username
 	db.Omit("Tags.*").Save(&book)
 	return book
 }

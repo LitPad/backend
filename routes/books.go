@@ -437,12 +437,12 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 func (ep Endpoint) BuyABook(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
-	book, err := bookManager.GetBySlug(db, c.Params("slug"))
+	book, err := bookManager.GetContractedBookBySlug(db, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
 
-	if book.FullPrice == nil {
+	if !book.FullPurchaseMode {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy the entire book at once. Buy a chapter instead"))
 	}
 
@@ -489,7 +489,7 @@ func (ep Endpoint) BuyABook(c *fiber.Ctx) error {
 func (ep Endpoint) BuyAChapter(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
-	book, err := bookManager.GetBySlug(db, c.Params("slug"))
+	book, err := bookManager.GetContractedBookBySlug(db, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -867,4 +867,63 @@ func (ep Endpoint) ConvertCoinsToLanterns(c *fiber.Ctx) error {
 	user.Coins -= amount
 	db.Save(&user)
 	return c.Status(200).JSON(ResponseMessage("Lanterns added successfully"))
+}
+
+// @Summary Set Contract 
+// @Description `This endpoint allows a user to create/update a contract for his/her book`
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Param contract formData schemas.ContractCreateSchema true "Contract object"
+// @Param id_front_image formData file false "Front Image of your id"
+// @Param id_back_image formData file false "Back Image of your id"
+// @Success 200 {object} schemas.ContractResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/set-contract [post]
+// @Security BearerAuth
+func (ep Endpoint) SetContract(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	book, err := bookManager.GetByAuthorAndSlug(db, user, slug)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	if book.ContractApproved {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_CONTRACT_ALREADY_APPROVED, "This book already has an approved contract"))
+	}
+	data := schemas.ContractCreateSchema{}
+	if errCode, errData := ValidateFormRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	// Check and validate image
+	imageRequired := false
+	if book.FullName == "" {
+		imageRequired = true
+	}
+	id_front_image_file, id_front_image_file_err := ValidateImage(c, "id_front_image", imageRequired)
+	if id_front_image_file_err != nil {
+		return c.Status(422).JSON(id_front_image_file_err)
+	}
+
+	id_back_image_file, id_back_image_file_err := ValidateImage(c, "id_back_image", imageRequired)
+	if id_back_image_file_err != nil {
+		return c.Status(422).JSON(id_back_image_file_err)
+	}
+
+	updatedBook := bookManager.SetContract(db, *book, data)
+
+	// Upload File
+	if id_front_image_file != nil {
+		UploadFile(id_front_image_file, updatedBook.IDFrontImage, cfg.IDFrontImagesBucket)
+	}
+	if id_back_image_file != nil {
+		UploadFile(id_back_image_file, updatedBook.IDBackImage, cfg.IDBackImagesBucket)
+	}
+	response := schemas.ContractResponseSchema{
+		ResponseSchema: ResponseMessage("Contract set successfully"),
+		Data:           schemas.ContractSchema{}.Init(updatedBook),
+	}
+	return c.Status(200).JSON(response)
 }

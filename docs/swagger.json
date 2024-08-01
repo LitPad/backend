@@ -1511,6 +1511,201 @@
                 }
             }
         },
+        "/books/book/{slug}/set-contract": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "`This endpoint allows a user to create/update a contract for his/her book`",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Set Contract",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 1000,
+                        "type": "string",
+                        "name": "address",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "age",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "average_chapter",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "book_availability_link",
+                        "in": "formData"
+                    },
+                    {
+                        "maxLength": 1000,
+                        "type": "string",
+                        "name": "city",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 1000,
+                        "type": "string",
+                        "name": "country",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 1000,
+                        "type": "string",
+                        "name": "full_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "name": "full_purchase_mode",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "DRIVERS-LICENSE",
+                            "GOVERNMENT-ID",
+                            "PASSPORT"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "CID_DRIVERS_LICENSE",
+                            "CID_GOVERNMENT_ID",
+                            "CID_PASSPORT"
+                        ],
+                        "name": "id_type",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "EXCLUSIVE",
+                            "NON-EXCLUSIVE",
+                            "ONLY-EXCLUSIVE"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "CT_EXCLUSIVE",
+                            "CT_NON_EXCLUSIVE",
+                            "CT_ONLY_EXCLUSIVE"
+                        ],
+                        "name": "intended_contract",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "outline",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 1000,
+                        "type": "string",
+                        "name": "pen_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "planned_length",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "postal_code",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 1000,
+                        "type": "string",
+                        "name": "state",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "synopsis",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 20,
+                        "type": "string",
+                        "name": "telephone_number",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "name": "update_rate",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Front Image of your id",
+                        "name": "id_front_image",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Back Image of your id",
+                        "name": "id_back_image",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ContractResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books/book/{slug}/vote": {
             "get": {
                 "security": [
@@ -2328,6 +2523,32 @@
                 "CS_TRASH"
             ]
         },
+        "choices.ContractIDTypeChoice": {
+            "type": "string",
+            "enum": [
+                "DRIVERS-LICENSE",
+                "GOVERNMENT-ID",
+                "PASSPORT"
+            ],
+            "x-enum-varnames": [
+                "CID_DRIVERS_LICENSE",
+                "CID_GOVERNMENT_ID",
+                "CID_PASSPORT"
+            ]
+        },
+        "choices.ContractTypeChoice": {
+            "type": "string",
+            "enum": [
+                "EXCLUSIVE",
+                "NON-EXCLUSIVE",
+                "ONLY-EXCLUSIVE"
+            ],
+            "x-enum-varnames": [
+                "CT_EXCLUSIVE",
+                "CT_NON_EXCLUSIVE",
+                "CT_ONLY_EXCLUSIVE"
+            ]
+        },
         "choices.NotificationTypeChoice": {
             "type": "string",
             "enum": [
@@ -2829,6 +3050,99 @@
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.ContractResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.ContractSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.ContractSchema": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer"
+                },
+                "approved": {
+                    "type": "boolean"
+                },
+                "average_chapter": {
+                    "type": "integer"
+                },
+                "book_availability_link": {
+                    "type": "string"
+                },
+                "chapter_price": {
+                    "type": "integer"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "full_price": {
+                    "type": "integer"
+                },
+                "full_purchase_mode": {
+                    "type": "boolean"
+                },
+                "id_back_image": {
+                    "type": "string"
+                },
+                "id_front_image": {
+                    "type": "string"
+                },
+                "id_type": {
+                    "$ref": "#/definitions/choices.ContractIDTypeChoice"
+                },
+                "intended_contract": {
+                    "$ref": "#/definitions/choices.ContractTypeChoice"
+                },
+                "outline": {
+                    "type": "string"
+                },
+                "pen_name": {
+                    "type": "string"
+                },
+                "planned_length": {
+                    "type": "integer"
+                },
+                "postal_code": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "synopsis": {
+                    "type": "string"
+                },
+                "telephone_number": {
+                    "type": "string"
+                },
+                "update_rate": {
+                    "type": "integer"
                 }
             }
         },

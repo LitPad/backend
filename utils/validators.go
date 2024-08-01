@@ -25,6 +25,26 @@ func RatingChoiceValidator(fl validator.FieldLevel) bool {
 	return false // Error. Value doesn't match the required
 }
 
+// Validates if a contract type choice value is the correct one
+func ContractTypeChoiceValidator(fl validator.FieldLevel) bool {
+	contractTypeChoiceValue := fl.Field().Interface().(choices.ContractTypeChoice)
+	switch contractTypeChoiceValue {
+	case choices.CT_EXCLUSIVE, choices.CT_NON_EXCLUSIVE, choices.CT_ONLY_EXCLUSIVE:
+		return true
+	}
+	return false // Error. Value doesn't match the required
+}
+
+// Validates if a contract idtype choice value is the correct one
+func ContractIDTypeChoiceValidator(fl validator.FieldLevel) bool {
+	contractIDTypeChoiceValue := fl.Field().Interface().(choices.ContractIDTypeChoice)
+	switch contractIDTypeChoiceValue {
+	case choices.CID_GOVERNMENT_ID, choices.CID_DRIVERS_LICENSE, choices.CID_PASSPORT:
+		return true
+	}
+	return false // Error. Value doesn't match the required
+}
+
 // Validates if a chapter status value is the correct one
 func ChapterStatusValidator(fl validator.FieldLevel) bool {
 	chapterStatusValue := fl.Field().Interface().(choices.ChapterStatus)

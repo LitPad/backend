@@ -38,6 +38,7 @@ var ERR_INSUFFICIENT_COINS = "insufficient_coins"
 var ERR_ALREADY_BOUGHT = "already_bought"
 var ERR_ALREADY_REVIEWED = "already_reviewed"
 var ERR_ALREADY_VOTED = "already_voted"
+var ERR_CONTRACT_ALREADY_APPROVED = "contract_already_approved"
 var ERR_INSUFFICIENT_LANTERNS = "insufficient_lanterns"
 
 

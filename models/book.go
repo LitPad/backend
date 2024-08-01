@@ -59,15 +59,15 @@ type Book struct {
 	Email                string
 	PenName              string `gorm:"type: varchar(1000)"`
 	Age                  uint
-	Country              string `gorm:"type: varchar(1000)"`
-	Address              string `gorm:"type: varchar(1000)"`
-	City                 string `gorm:"type: varchar(1000)"`
-	State                string `gorm:"type: varchar(1000)"`
-	PostalCode           uint   `gorm:"type: varchar(1000)"`
-	TelephoneNumber      string `gorm:"type: varchar(20)"`
-	IDType               string `gorm:"type: varchar(20)"`
-	Image1               string
-	Image2               string
+	Country              string                       `gorm:"type: varchar(1000)"`
+	Address              string                       `gorm:"type: varchar(1000)"`
+	City                 string                       `gorm:"type: varchar(1000)"`
+	State                string                       `gorm:"type: varchar(1000)"`
+	PostalCode           uint                         
+	TelephoneNumber      string                       `gorm:"type: varchar(20)"`
+	IDType               choices.ContractIDTypeChoice `gorm:"type: varchar(100)"`
+	IDFrontImage         string
+	IDBackImage          string
 	BookAvailabilityLink *string
 	PlannedLength        uint
 	AverageChapter       uint
@@ -76,11 +76,31 @@ type Book struct {
 	Outline              string
 	IntendedContract     choices.ContractTypeChoice
 	FullPrice            *int
-	ChapterPrice      int
+	ChapterPrice         int
+	FullPurchaseMode     bool `gorm:"default:false"`
+	ContractApproved     bool `gorm:"default:false"`
 }
 
 func (b Book) CoverImageUrl() string {
 	return fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.BookCoverImagesBucket, b.CoverImage)
+}
+
+func (b Book) IDFrontImageUrl() *string {
+	imageText := b.IDFrontImage
+	if imageText != "" {
+		image := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.IDFrontImagesBucket, imageText)
+		return &image
+	}
+	return nil
+}
+
+func (b Book) IDBackImageUrl() *string {
+	imageText := b.IDBackImage
+	if imageText != "" {
+		image := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.IDBackImagesBucket, imageText)
+		return &image
+	}
+	return nil
 }
 
 func (b Book) ViewsCount() int {
@@ -180,7 +200,7 @@ type BoughtChapter struct {
 	Buyer   User      `gorm:"foreignKey:BuyerID;constraint:OnDelete:CASCADE;<-:false"`
 
 	ChapterID uuid.UUID `gorm:"index:,unique,composite:buyer_id_chapter_id_bought_chapter"`
-	Chapter   Chapter      `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
+	Chapter   Chapter   `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
 }
 
 type Review struct {
