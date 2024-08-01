@@ -15,15 +15,24 @@ var (
 	translator      ut.Translator
 )
 
-func (e *ErrorResponse) Error() string {
-	return e.Message
+func RegisterTagName() {
+	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" || name == "" {
+			name = strings.SplitN(fld.Tag.Get("form"), ",", 2)[0]
+		}
+		if name == "-" || name == "" {
+			return fld.Name
+		}
+		return name
+	})
 }
 
 // Initialize the custom validator and translator
 func init() {
 	customValidator = validator.New()
-	en := en.New()
-	uni := ut.New(en, en)
+	enLocale := en.New()
+	uni := ut.New(enLocale, enLocale)
 	translator, _ = uni.GetTranslator("en")
 
 	// Register Custom Validators
@@ -32,29 +41,12 @@ func init() {
 	customValidator.RegisterValidation("age_discretion_validator", AgeDiscretionValidator)
 	customValidator.RegisterValidation("chapter_status_validator", ChapterStatusValidator)
 
-
-	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-		if name == "-" {
-			return ""
-		}
-		return name
-	})
-
-	customValidator.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("form"), ",", 2)[0]
-		if name == "-" {
-			return ""
-		}
-		return name
-	})
-
+	RegisterTagName()
 }
 
 // Register translations
 func registerTranslations(param string) {
-	// Register custom error messages for each validation tag
-	registerTranslation := func(tag string, translation string, translator ut.Translator) {
+	registerTranslation := func(tag, translation string, translator ut.Translator) {
 		customValidator.RegisterTranslation(tag, translator, func(ut ut.Translator) error {
 			return ut.Add(tag, translation, true)
 		}, func(ut ut.Translator, fe validator.FieldError) string {
@@ -81,14 +73,20 @@ func registerTranslations(param string) {
 	registerTranslation("eq", eqErrMsg, translator)
 }
 
+func (e *ErrorResponse) Error() string {
+	return e.Message
+}
+
 // CustomValidator is a custom validator that uses "github.com/go-playground/validator/v10"
 type CustomValidator struct{}
 
 // Validate performs the validation of the given struct
 func (cv *CustomValidator) Validate(i interface{}) *ErrorResponse {
 	if err := customValidator.Struct(i); err != nil {
-		err := err.(validator.ValidationErrors)
-		return cv.translateValidationErrors(err)
+		if errs, ok := err.(validator.ValidationErrors); ok {
+			return cv.translateValidationErrors(errs)
+		}
+		return &ErrorResponse{Message: "Validation error"}
 	}
 	return nil
 }
@@ -101,7 +99,6 @@ func (cv *CustomValidator) translateValidationErrors(errs validator.ValidationEr
 		registerTranslations(errParam)
 		errMsg := err.Translate(translator)
 		errField := err.Field()
-
 		errData[errField] = errMsg
 	}
 	errResp := RequestErr(ERR_INVALID_ENTRY, "Invalid Entry", errData)

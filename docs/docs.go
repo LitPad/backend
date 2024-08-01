@@ -2461,6 +2461,11 @@ const docTemplate = `{
         },
         "schemas.AddToWaitlist": {
             "type": "object",
+            "required": [
+                "email",
+                "genre_slug",
+                "name"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -2469,7 +2474,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 3
                 }
             }
         },

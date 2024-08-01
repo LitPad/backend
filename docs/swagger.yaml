@@ -134,7 +134,13 @@ definitions:
       genre_slug:
         type: string
       name:
+        maxLength: 1000
+        minLength: 3
         type: string
+    required:
+    - email
+    - genre_slug
+    - name
     type: object
   schemas.BookDetailResponseSchema:
     properties:

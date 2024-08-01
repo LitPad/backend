@@ -13,8 +13,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var validator = utils.Validator()
-
 func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 	var errData *utils.ErrorResponse
 	code := 200
@@ -82,6 +80,7 @@ func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 }
 
 func ValidateRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse) {
+	validator := utils.Validator()
 	if errCode, errData := DecodeJSONBody(c, &data); errData != nil {
 		return &errCode, errData
 	}
@@ -93,6 +92,7 @@ func ValidateRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse
 }
 
 func ValidateFormRequest(c *fiber.Ctx, data interface{}) (*int, *utils.ErrorResponse) {
+	validator := utils.Validator()
 	errC := 400
 	if !strings.Contains(c.Get("Content-Type"), "multipart/form-data") {
 		errD := utils.RequestErr(utils.ERR_INVALID_REQUEST, "Content-Type header is not multipart/form-data")
