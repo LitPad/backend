@@ -325,7 +325,7 @@ type ContractCreateSchema struct {
 	Synopsis             string                       `form:"synopsis" validate:"required"`
 	Outline              string                       `form:"outline" validate:"required"`
 	IntendedContract     choices.ContractTypeChoice   `form:"intended_contract" validate:"required,contract_type_validator"`
-	FullPurchaseMode     bool                         `form:"full_purchase_mode" validate:"required"`
+	FullPurchaseMode     bool                         `form:"full_purchase_mode"`
 }
 
 // Book Responses

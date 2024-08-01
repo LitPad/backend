@@ -2048,7 +2048,6 @@ paths:
         type: string
       - in: formData
         name: full_purchase_mode
-        required: true
         type: boolean
       - enum:
         - DRIVERS-LICENSE

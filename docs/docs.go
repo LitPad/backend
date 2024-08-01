@@ -1592,8 +1592,7 @@ const docTemplate = `{
                     {
                         "type": "boolean",
                         "name": "full_purchase_mode",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "enum": [
