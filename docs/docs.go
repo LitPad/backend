@@ -2543,6 +2543,21 @@ const docTemplate = `{
                 "CID_PASSPORT"
             ]
         },
+        "choices.ContractStatusChoice": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "APPROVED",
+                "DECLINED",
+                "UPDATED"
+            ],
+            "x-enum-varnames": [
+                "CTS_PENDING",
+                "CTS_APPROVED",
+                "CTS_DECLINED",
+                "CTS_UPDATED"
+            ]
+        },
         "choices.ContractTypeChoice": {
             "type": "string",
             "enum": [
@@ -3085,9 +3100,6 @@ const docTemplate = `{
                 "age": {
                     "type": "integer"
                 },
-                "approved": {
-                    "type": "boolean"
-                },
                 "average_chapter": {
                     "type": "integer"
                 },
@@ -3099,6 +3111,9 @@ const docTemplate = `{
                 },
                 "city": {
                     "type": "string"
+                },
+                "contract_status": {
+                    "$ref": "#/definitions/choices.ContractStatusChoice"
                 },
                 "country": {
                     "type": "string"

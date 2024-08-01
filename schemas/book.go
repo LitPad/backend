@@ -273,7 +273,7 @@ type ContractSchema struct {
 	Outline              string                       `json:"outline"`
 	IntendedContract     choices.ContractTypeChoice   `json:"intended_contract"`
 	FullPurchaseMode     bool                         `json:"full_purchase_mode"`
-	Approved             bool                         `json:"approved"`
+	ContractStatus       choices.ContractStatusChoice `json:"contract_status"`
 	FullPrice            *int                         `json:"full_price"`
 	ChapterPrice         int                          `json:"chapter_price"`
 }
@@ -298,7 +298,7 @@ func (c ContractSchema) Init(book models.Book) ContractSchema {
 	c.Outline = book.Outline
 	c.IntendedContract = book.IntendedContract
 	c.FullPurchaseMode = book.FullPurchaseMode
-	c.Approved = book.ContractApproved
+	c.ContractStatus = book.ContractStatus
 	c.FullPrice = book.FullPrice
 	c.ChapterPrice = book.ChapterPrice
 	c.IDFrontImage = *book.IDFrontImageUrl()

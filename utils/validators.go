@@ -45,6 +45,16 @@ func ContractIDTypeChoiceValidator(fl validator.FieldLevel) bool {
 	return false // Error. Value doesn't match the required
 }
 
+// Validates if a contract status choice value is the correct one
+func ContractStatusChoiceValidator(fl validator.FieldLevel) bool {
+	contractStatusChoiceValue := fl.Field().Interface().(choices.ContractStatusChoice)
+	switch contractStatusChoiceValue {
+	case choices.CTS_PENDING, choices.CTS_APPROVED, choices.CTS_DECLINED, choices.CTS_UPDATED:
+		return true
+	}
+	return false // Error. Value doesn't match the required
+}
+
 // Validates if a chapter status value is the correct one
 func ChapterStatusValidator(fl validator.FieldLevel) bool {
 	chapterStatusValue := fl.Field().Interface().(choices.ChapterStatus)

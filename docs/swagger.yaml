@@ -42,6 +42,18 @@ definitions:
     - CID_DRIVERS_LICENSE
     - CID_GOVERNMENT_ID
     - CID_PASSPORT
+  choices.ContractStatusChoice:
+    enum:
+    - PENDING
+    - APPROVED
+    - DECLINED
+    - UPDATED
+    type: string
+    x-enum-varnames:
+    - CTS_PENDING
+    - CTS_APPROVED
+    - CTS_DECLINED
+    - CTS_UPDATED
   choices.ContractTypeChoice:
     enum:
     - EXCLUSIVE
@@ -422,8 +434,6 @@ definitions:
         type: string
       age:
         type: integer
-      approved:
-        type: boolean
       average_chapter:
         type: integer
       book_availability_link:
@@ -432,6 +442,8 @@ definitions:
         type: integer
       city:
         type: string
+      contract_status:
+        $ref: '#/definitions/choices.ContractStatusChoice'
       country:
         type: string
       email:

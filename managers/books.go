@@ -68,7 +68,7 @@ func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.E
 }
 
 func (b BookManager) GetContractedBookBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
-	book := models.Book{Slug: slug, ContractApproved: true}
+	book := models.Book{Slug: slug, ContractStatus: choices.CTS_APPROVED}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Take(&book, book)
 	if book.ID == uuid.Nil {
 		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No contract approved book with that slug")
@@ -143,6 +143,9 @@ func (b BookManager) SetContract(db *gorm.DB, book models.Book, data schemas.Con
 	username := book.Author.Username
 	book.IDFrontImage = username
 	book.IDBackImage = username
+	if book.ContractStatus == choices.CTS_DECLINED {
+		book.ContractStatus = choices.CTS_UPDATED
+	}
 	db.Omit("Tags.*").Save(&book)
 	return book
 }

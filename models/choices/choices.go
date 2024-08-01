@@ -83,5 +83,14 @@ type ContractIDTypeChoice string
 const (
 	CID_DRIVERS_LICENSE ContractIDTypeChoice = "DRIVERS-LICENSE"
 	CID_GOVERNMENT_ID   ContractIDTypeChoice = "GOVERNMENT-ID"
-	CID_PASSPORT         ContractIDTypeChoice = "PASSPORT"
+	CID_PASSPORT        ContractIDTypeChoice = "PASSPORT"
+)
+
+type ContractStatusChoice string
+
+const (
+	CTS_PENDING  ContractStatusChoice = "PENDING"
+	CTS_APPROVED ContractStatusChoice = "APPROVED"
+	CTS_DECLINED ContractStatusChoice = "DECLINED"
+	CTS_UPDATED  ContractStatusChoice = "UPDATED"
 )

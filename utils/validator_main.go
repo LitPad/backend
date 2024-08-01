@@ -42,6 +42,7 @@ func init() {
 	customValidator.RegisterValidation("chapter_status_validator", ChapterStatusValidator)
 	customValidator.RegisterValidation("contract_type_validator", ContractTypeChoiceValidator)
 	customValidator.RegisterValidation("contract_id_type_validator", ContractIDTypeChoiceValidator)
+	customValidator.RegisterValidation("contract_status_validator", ContractStatusChoiceValidator)
 
 	RegisterTagName()
 }
@@ -67,6 +68,7 @@ func registerTranslations(param string) {
 	registerTranslation("chapter_status_validator", "Invalid chapter status. Choices are DRAFT, PUBLISHED, TRASH", translator)
 	registerTranslation("contract_type_validator", "Invalid contract type. Choices are EXCLUSIVE, NON-EXCLUSIVE, ONLY-EXCLUSIVE", translator)
 	registerTranslation("contract_id_type_validator", "Invalid ID type. Choices are DRIVERS-LICENSE, GOVERNMENT-ID, PASSPORT", translator)
+	registerTranslation("contract_status_validator", "Invalid status type. Choices are PENDING, APPROVED, DECLINED, UPDATED", translator)
 
 	minErrMsg := fmt.Sprintf("%s characters min", param)
 	registerTranslation("min", minErrMsg, translator)

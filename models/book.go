@@ -59,11 +59,11 @@ type Book struct {
 	Email                string
 	PenName              string `gorm:"type: varchar(1000)"`
 	Age                  uint
-	Country              string                       `gorm:"type: varchar(1000)"`
-	Address              string                       `gorm:"type: varchar(1000)"`
-	City                 string                       `gorm:"type: varchar(1000)"`
-	State                string                       `gorm:"type: varchar(1000)"`
-	PostalCode           uint                         
+	Country              string `gorm:"type: varchar(1000)"`
+	Address              string `gorm:"type: varchar(1000)"`
+	City                 string `gorm:"type: varchar(1000)"`
+	State                string `gorm:"type: varchar(1000)"`
+	PostalCode           uint
 	TelephoneNumber      string                       `gorm:"type: varchar(20)"`
 	IDType               choices.ContractIDTypeChoice `gorm:"type: varchar(100)"`
 	IDFrontImage         string
@@ -77,8 +77,8 @@ type Book struct {
 	IntendedContract     choices.ContractTypeChoice
 	FullPrice            *int
 	ChapterPrice         int
-	FullPurchaseMode     bool `gorm:"default:false"`
-	ContractApproved     bool `gorm:"default:false"`
+	FullPurchaseMode     bool                         `gorm:"default:false"`
+	ContractStatus       choices.ContractStatusChoice `gorm:"default:PENDING"`
 }
 
 func (b Book) CoverImageUrl() string {

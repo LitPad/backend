@@ -889,7 +889,7 @@ func (ep Endpoint) SetContract(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	if book.ContractApproved {
+	if book.ContractStatus == choices.CTS_APPROVED {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_CONTRACT_ALREADY_APPROVED, "This book already has an approved contract"))
 	}
 	data := schemas.ContractCreateSchema{}
