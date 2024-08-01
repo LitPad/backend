@@ -13,15 +13,15 @@ import (
 )
 
 var (
-	userManager       = managers.UserManager{}
-	bookManager       = managers.BookManager{}
-	chapterManager    = managers.ChapterManager{}
-	boughtBookManager = managers.BoughtBookManager{}
-	tagManager        = managers.TagManager{}
-	genreManager      = managers.GenreManager{}
-	reviewManager     = managers.ReviewManager{}
-	replyManager      = managers.ReplyManager{}
-	voteManager      = managers.VoteManager{}
+	userManager          = managers.UserManager{}
+	bookManager          = managers.BookManager{}
+	chapterManager       = managers.ChapterManager{}
+	boughtChapterManager = managers.BoughtChapterManager{}
+	tagManager           = managers.TagManager{}
+	genreManager         = managers.GenreManager{}
+	reviewManager        = managers.ReviewManager{}
+	replyManager         = managers.ReplyManager{}
+	voteManager          = managers.VoteManager{}
 )
 
 // @Summary View Available Book Tags
@@ -62,7 +62,7 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 // @Param page query int false "Current Page" default(1)
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
-// @Success 200 {object} schemas.PartialBooksResponseSchema
+// @Success 200 {object} schemas.BooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [get]
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
@@ -80,9 +80,9 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 	books = paginatedBooks.([]models.Book)
-	response := schemas.PartialBooksResponseSchema{
+	response := schemas.BooksResponseSchema{
 		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: schemas.PartialBooksResponseDataSchema{
+		Data: schemas.BooksResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(books),
 	}
@@ -96,7 +96,7 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 // @Param username path string true "Filter by Author Username"
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
-// @Success 200 {object} schemas.PartialBooksResponseSchema
+// @Success 200 {object} schemas.BooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books/author/{username} [get]
 func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
@@ -115,69 +115,76 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 	books = paginatedBooks.([]models.Book)
-	response := schemas.PartialBooksResponseSchema{
+	response := schemas.BooksResponseSchema{
 		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: schemas.PartialBooksResponseDataSchema{
+		Data: schemas.BooksResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(books),
 	}
 	return c.Status(200).JSON(response)
 }
 
-// @Summary View Single Book (partial chapters)
-// @Description This endpoint views a single book
+// @Summary View Book Chapters
+// @Description `This endpoint views chapters of a book`
+// @Description `A Guest user will view just the first chapter`
+// @Description `An Authenticated user will view all the chapters he has bought`
+// @Description `The owner will view all chapters of the book`
 // @Tags Books
-// @Param page query int false "Current Page (for reviews pagination)" default(1)
-// @Param slug path string true "Book slug"
-// @Success 200 {object} schemas.PartialBookDetailResponseSchema
+// @Param slug path string true "Get Chapter by Book Slug"
+// @Param page query int false "Current Page" default(1)
+// @Success 200 {object} schemas.ChaptersResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book/{slug} [get]
-func (ep Endpoint) GetSingleBookPartial(c *fiber.Ctx) error {
+// @Router /books/book/{slug}/chapters [get]
+// @Security BearerAuth
+func (ep Endpoint) GetBookChapters(c *fiber.Ctx) error {
 	db := ep.DB
-	book, err := bookManager.GetBySlugWithReviews(db, c.Params("slug"))
+	slug := c.Params("slug")
+	book, err := bookManager.GetBySlug(db, slug)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
 
-	// Paginate book reviews
-	paginatedData, paginatedReviews, err := PaginateQueryset(book.Reviews, c, 30)
+	user := RequestUser(c)
+	var chapters []models.Chapter
+	// If user is authenticated, then will fetch all available chapters, else just the first chapter
+	if user.ID == uuid.Nil {
+		chapters = book.Chapters[:1]
+	} else {
+		if user.ID == book.AuthorID {
+			chapters = book.Chapters
+		} else {
+			// Return bought chapters
+			chapters = boughtChapterManager.GetBoughtChapters(db, user, book)
+		}
+	}
+	// Paginate and return chapters
+	paginatedData, paginatedChapters, err := PaginateQueryset(chapters, c, 50)
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
-
-	book = ViewBook(c, db, *book)
-
-	reviews := paginatedReviews.([]models.Review)
-	response := schemas.PartialBookDetailResponseSchema{
-		ResponseSchema: ResponseMessage("Book details fetched successfully"),
-		Data:           schemas.PartialBookDetailSchema{}.Init(*book, *paginatedData, reviews),
+	chapters = paginatedChapters.([]models.Chapter)
+	response := schemas.ChaptersResponseSchema{
+		ResponseSchema: ResponseMessage("Chapters fetched successfully"),
+		Data: schemas.ChaptersResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(chapters),
 	}
 	return c.Status(200).JSON(response)
 }
 
-// @Summary View Single Book (All chapters - For The Author and User who has bought it)
-// @Description This endpoint views a single book with all chapters
+// @Summary View Single Book
+// @Description This endpoint views a single book
 // @Tags Books
 // @Param page query int false "Current Page (for reviews pagination)" default(1)
 // @Param slug path string true "Book slug"
 // @Success 200 {object} schemas.BookDetailResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book-full/{slug} [get]
-// @Security BearerAuth
-func (ep Endpoint) GetSingleBookFull(c *fiber.Ctx) error {
+// @Router /books/book/{slug} [get]
+func (ep Endpoint) GetSingleBook(c *fiber.Ctx) error {
 	db := ep.DB
-	user := RequestUser(c)
 	book, err := bookManager.GetBySlugWithReviews(db, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
-	}
-
-	if user.ID != book.AuthorID {
-		// Check if current user has bought the book
-		boughtBook := boughtBookManager.GetByBuyerAndBook(db, user, *book)
-		if boughtBook == nil {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Only the author or user who has bought the book can see it in full"))
-		}
 	}
 
 	// Paginate book reviews
@@ -185,6 +192,7 @@ func (ep Endpoint) GetSingleBookFull(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
+
 	book = ViewBook(c, db, *book)
 
 	reviews := paginatedReviews.([]models.Review)
@@ -418,15 +426,15 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfuly"))
 }
 
-// @Summary Buy A Book
-// @Description This endpoint allows a user to buy a book
+// @Summary Buy An Entire Book
+// @Description This endpoint allows a user to buy an entire book
 // @Tags Books
 // @Param slug path string true "Book slug"
 // @Success 201 {object} schemas.BookResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books/book/{slug}/buy [get]
 // @Security BearerAuth
-func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
+func (ep Endpoint) BuyABook(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	book, err := bookManager.GetBySlug(db, c.Params("slug"))
@@ -434,21 +442,25 @@ func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 
+	if book.FullPrice == nil {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy the entire book at once. Buy a chapter instead"))
+	}
+
 	if user.ID == book.AuthorID {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy your own book"))
 	}
 
-	bookAlreadyBought := boughtBookManager.GetByBuyerAndBook(db, user, *book)
-	if bookAlreadyBought != nil {
+	bookAlreadyBought := boughtChapterManager.CheckAllChaptersBought(db, user, book)
+	if bookAlreadyBought {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_ALREADY_BOUGHT, "You have bought this book already"))
 	}
 
-	if book.Price > user.Coins {
+	if *book.FullPrice > user.Coins {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins"))
 	}
 
 	// Create bought book
-	boughtBook := boughtBookManager.Create(db, user, *book)
+	boughtBook := boughtChapterManager.BuyWholeBook(db, user, *book)
 
 	// Create and send notification in socket
 	notification := notificationManager.Create(
@@ -460,13 +472,61 @@ func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
 
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book bought successfully"),
-		Data:           schemas.BookSchema{}.Init(boughtBook.Book),
+		Data:           schemas.BookSchema{}.Init(boughtBook),
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Buy A Chapter Of A Book
+// @Description `This endpoint allows a user to buy the next chapter of a book.`
+// @Description `It happens in sequence. 1, 2, 3, 4 etc. That means if a user has bought chapter 2 before. This endpoint will buy chapter 3`
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Success 201 {object} schemas.BookResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/buy-chapter [get]
+// @Security BearerAuth
+func (ep Endpoint) BuyAChapter(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	book, err := bookManager.GetBySlug(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	if user.ID == book.AuthorID {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy chapter of your own book"))
+	}
+
+	bookAlreadyBought := boughtChapterManager.CheckAllChaptersBought(db, user, book)
+	if bookAlreadyBought {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_ALREADY_BOUGHT, "You have bought all the chapters of this book already"))
+	}
+
+	if book.ChapterPrice > user.Coins {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins"))
+	}
+
+	// Create bought chapter
+	boughtChapter := boughtChapterManager.BuyAChapter(db, user, book)
+
+	// Create and send notification in socket
+	notification := notificationManager.Create(
+		db, user, book.Author, choices.NT_BOOK_PURCHASE,
+		fmt.Sprintf("%s bought one of your books.", user.FullName()),
+		book, nil, nil, nil,
+	)
+	SendNotificationInSocket(c, notification)
+
+	response := schemas.ChapterResponseSchema{
+		ResponseSchema: ResponseMessage("Chapter bought successfully"),
+		Data:           schemas.ChapterSchema{}.Init(boughtChapter.Chapter),
 	}
 	return c.Status(201).JSON(response)
 }
 
 // @Summary View Bought Books
-// @Description This endpoint views all books bought by a user
+// @Description This endpoint returns all books in which a user has bought at least a chapter
 // @Tags Books
 // @Param page query int false "Current Page" default(1)
 // @Success 200 {object} schemas.BooksResponseSchema
@@ -476,7 +536,7 @@ func (ep Endpoint) BuyBook(c *fiber.Ctx) error {
 func (ep Endpoint) GetBoughtBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
-	books := boughtBookManager.GetLatest(db, user)
+	books := boughtChapterManager.GetBoughtBooks(db, user)
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
 	if err != nil {
@@ -503,7 +563,7 @@ func (ep Endpoint) GetBoughtBooks(c *fiber.Ctx) error {
 // @Success 201 {object} schemas.ReviewResponseSchema
 // @Failure 404 {object} utils.ErrorResponse
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book-full/{slug} [post]
+// @Router /books/book/{slug} [post]
 // @Security BearerAuth
 func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 	db := ep.DB
@@ -514,10 +574,10 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 
-	// Check if current user has bought the book
-	boughtBook := boughtBookManager.GetByBuyerAndBook(db, user, *book)
-	if boughtBook == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Only the reader who has bought the book can review it"))
+	// Check if current user has bought at least a chapter of the book
+	chapterBought := boughtChapterManager.CheckIfAtLeastAChapterWasBought(db, user, *book)
+	if !chapterBought {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Only the reader who has bought at least a chapter of the book can review it"))
 	}
 	data := schemas.ReviewBookSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
@@ -532,7 +592,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 
 	// Create and Send Notification in socket
 	text := fmt.Sprintf("%s reviewed your book", user.FullName())
-	notification := notificationManager.Create(db, user, boughtBook.Book.Author, choices.NT_REVIEW, text, &boughtBook.Book, &createdReview.ID, nil, nil)
+	notification := notificationManager.Create(db, user, book.Author, choices.NT_REVIEW, text, book, &createdReview.ID, nil, nil)
 	SendNotificationInSocket(c, notification)
 
 	response := schemas.ReviewResponseSchema{
@@ -550,7 +610,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.ReviewResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book-full/review/{id} [put]
+// @Router /books/book/review/{id} [put]
 // @Security BearerAuth
 func (ep Endpoint) EditBookReview(c *fiber.Ctx) error {
 	db := ep.DB
@@ -584,7 +644,7 @@ func (ep Endpoint) EditBookReview(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.ResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book-full/review/{id} [delete]
+// @Router /books/book/review/{id} [delete]
 // @Security BearerAuth
 func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
 	db := ep.DB
@@ -611,7 +671,7 @@ func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.RepliesResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book-full/review/{id}/replies [get]
+// @Router /books/book/review/{id}/replies [get]
 func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
 	db := ep.DB
 	reviewID := c.Params("id")
@@ -648,7 +708,7 @@ func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
 // @Success 201 {object} schemas.ReplyResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book-full/review/{id}/replies [post]
+// @Router /books/book/review/{id}/replies [post]
 // @Security BearerAuth
 func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
 	db := ep.DB
@@ -692,7 +752,7 @@ func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.ReplyResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book-full/review/replies/{id} [put]
+// @Router /books/book/review/replies/{id} [put]
 // @Security BearerAuth
 func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 	db := ep.DB
@@ -727,7 +787,7 @@ func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.ResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book-full/review/replies/{id} [delete]
+// @Router /books/book/review/replies/{id} [delete]
 // @Security BearerAuth
 func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 	db := ep.DB
@@ -767,7 +827,7 @@ func (ep Endpoint) VoteBook(c *fiber.Ctx) error {
 	// Check if user has enough lanterns to vote
 	if user.Lanterns < 1 {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_LANTERNS, "You have insufficient lanterns to vote"))
-	} 
+	}
 	createdVote := voteManager.Create(db, user, book)
 	// Create and Send Notification in socket
 	if user.ID != createdVote.UserID {

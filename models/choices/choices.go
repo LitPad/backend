@@ -69,3 +69,11 @@ const (
 	NS_CREATED NotificationStatus = "CREATED"
 	NS_DELETED NotificationStatus = "DELETED"
 )
+
+type ContractTypeChoice string
+
+const (
+	CT_EXCLUSIVE      ContractTypeChoice = "EXCLUSIVE"
+	CT_NON_EXCLUSIVE  ContractTypeChoice = "NON-EXCLUSIVE"
+	CT_ONLY_EXCLUSIVE ContractTypeChoice = "ONLY-EXCLUSIVE"
+)

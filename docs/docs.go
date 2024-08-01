@@ -576,7 +576,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.PartialBooksResponseSchema"
+                            "$ref": "#/definitions/schemas.BooksResponseSchema"
                         }
                     },
                     "400": {
@@ -631,12 +631,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "name": "price",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "array",
                         "items": {
                             "type": "string"
@@ -659,18 +653,6 @@ const docTemplate = `{
                         "name": "cover_image",
                         "in": "formData",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "First chapter title",
-                        "name": "chapter.title",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "First chapter title",
-                        "name": "chapter.text",
-                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -728,7 +710,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.PartialBooksResponseSchema"
+                            "$ref": "#/definitions/schemas.BooksResponseSchema"
                         }
                     },
                     "400": {
@@ -740,7 +722,88 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book-full/review/replies/{id}": {
+        "/books/book/chapter/{slug}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a writer to update a chapter in his/her book` + "`" + `\n` + "`" + `Chapter status: DRAFT, PUBLISHED, TRASH` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Update A Chapter of a Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chapter slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Chapter object",
+                        "name": "chapter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ChapterCreateSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ChapterResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a writer to delete a chapter from a book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Delete A Chapter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chapter slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/review/replies/{id}": {
             "put": {
                 "security": [
                     {
@@ -833,7 +896,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book-full/review/{id}": {
+        "/books/book/review/{id}": {
             "put": {
                 "security": [
                     {
@@ -926,7 +989,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book-full/review/{id}/replies": {
+        "/books/book/review/{id}/replies": {
             "get": {
                 "description": "` + "`" + `This endpoint returns replies of a book review.` + "`" + `",
                 "tags": [
@@ -1021,18 +1084,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book-full/{slug}": {
+        "/books/book/{slug}": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "This endpoint views a single book with all chapters",
+                "description": "This endpoint views a single book",
                 "tags": [
                     "Books"
                 ],
-                "summary": "View Single Book (All chapters - For The Author and User who has bought it)",
+                "summary": "View Single Book",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1054,176 +1112,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.BookDetailResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "` + "`" + `This endpoint allows a user to review a book.` + "`" + `\n` + "`" + `The author cannot review his own book.` + "`" + `\n` + "`" + `Only the reader who has bought the book can review the book.` + "`" + `\n` + "`" + `A reader cannot add multiple reviews to a book.` + "`" + `",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Review A Book",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Book slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Review object",
-                        "name": "review",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ReviewBookSchema"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ReviewResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/books/book/chapter/{slug}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "` + "`" + `This endpoint allows a writer to update a chapter in his/her book` + "`" + `\n` + "`" + `Chapter status: DRAFT, PUBLISHED, TRASH` + "`" + `",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Update A Chapter of a Book",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Chapter slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Chapter object",
-                        "name": "chapter",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ChapterCreateSchema"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ChapterResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "This endpoint allows a writer to delete a chapter from a book",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Delete A Chapter",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Chapter slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/books/book/{slug}": {
-            "get": {
-                "description": "This endpoint views a single book",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "View Single Book (partial chapters)",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Current Page (for reviews pagination)",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Book slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.PartialBookDetailResponseSchema"
                         }
                     },
                     "400": {
@@ -1285,12 +1173,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "name": "price",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "array",
                         "items": {
                             "type": "string"
@@ -1323,6 +1205,56 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to review a book.` + "`" + `\n` + "`" + `The author cannot review his own book.` + "`" + `\n` + "`" + `Only the reader who has bought the book can review the book.` + "`" + `\n` + "`" + `A reader cannot add multiple reviews to a book.` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Review A Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Review object",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ReviewBookSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ReviewResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -1418,11 +1350,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "This endpoint allows a user to buy a book",
+                "description": "This endpoint allows a user to buy an entire book",
                 "tags": [
                     "Books"
                 ],
-                "summary": "Buy A Book",
+                "summary": "Buy An Entire Book",
                 "parameters": [
                     {
                         "type": "string",
@@ -1437,6 +1369,87 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/schemas.BookResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/{slug}/buy-chapter": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to buy the next chapter of a book.` + "`" + `\n` + "`" + `It happens in sequence. 1, 2, 3, 4 etc. That means if a user has bought chapter 2 before. This endpoint will buy chapter 3` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Buy A Chapter Of A Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/{slug}/chapters": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint views chapters of a book` + "`" + `\n` + "`" + `A Guest user will view just the first chapter` + "`" + `\n` + "`" + `An Authenticated user will view all the chapters he has bought` + "`" + `\n` + "`" + `The owner will view all chapters of the book` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Book Chapters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Get Chapter by Book Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ChaptersResponseSchema"
                         }
                     },
                     "400": {
@@ -1498,7 +1511,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "This endpoint views all books bought by a user",
+                "description": "This endpoint returns all books in which a user has bought at least a chapter",
                 "tags": [
                     "Books"
                 ],
@@ -2332,23 +2345,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.BookChapterCreateSchema": {
-            "type": "object",
-            "required": [
-                "text",
-                "title"
-            ],
-            "properties": {
-                "text": {
-                    "type": "string",
-                    "maxLength": 100000
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 200
-                }
-            }
-        },
         "schemas.BookDetailResponseSchema": {
             "type": "object",
             "properties": {
@@ -2377,11 +2373,8 @@ const docTemplate = `{
                 "blurb": {
                     "type": "string"
                 },
-                "chapters": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.ChapterSchema"
-                    }
+                "chapter_price": {
+                    "type": "integer"
                 },
                 "chapters_count": {
                     "type": "integer"
@@ -2393,14 +2386,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
+                "full_price": {
+                    "type": "integer"
+                },
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterSchema"
-                },
-                "price": {
-                    "type": "integer"
                 },
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
@@ -2460,11 +2453,8 @@ const docTemplate = `{
                 "blurb": {
                     "type": "string"
                 },
-                "chapters": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.ChapterSchema"
-                    }
+                "chapter_price": {
+                    "type": "integer"
                 },
                 "chapters_count": {
                     "type": "integer"
@@ -2476,14 +2466,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
+                "full_price": {
+                    "type": "integer"
+                },
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterSchema"
-                },
-                "price": {
-                    "type": "integer"
                 },
                 "slug": {
                     "type": "string"
@@ -2636,6 +2626,45 @@ const docTemplate = `{
                 },
                 "word_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "schemas.ChaptersResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "chapters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ChapterSchema"
+                    }
+                },
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                }
+            }
+        },
+        "schemas.ChaptersResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.ChaptersResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -2838,7 +2867,7 @@ const docTemplate = `{
         "schemas.NotificationBookSchema": {
             "type": "object",
             "properties": {
-                "coverImage": {
+                "cover_image": {
                     "type": "string"
                 },
                 "slug": {
@@ -2928,180 +2957,6 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/schemas.NotificationsResponseDataSchema"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "Data fetched/created/updated/deleted"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "schemas.PartialBookDetailResponseSchema": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/schemas.PartialBookDetailSchema"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "Data fetched/created/updated/deleted"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "success"
-                }
-            }
-        },
-        "schemas.PartialBookDetailSchema": {
-            "type": "object",
-            "properties": {
-                "age_discretion": {
-                    "$ref": "#/definitions/choices.AgeType"
-                },
-                "author": {
-                    "$ref": "#/definitions/schemas.UserDataSchema"
-                },
-                "blurb": {
-                    "type": "string"
-                },
-                "chapters_count": {
-                    "type": "integer"
-                },
-                "cover_image": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "genre": {
-                    "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
-                },
-                "partial_view_chapter": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "reviews": {
-                    "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.TagSchema"
-                    }
-                },
-                "title": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "views": {
-                    "type": "integer"
-                },
-                "votes": {
-                    "type": "integer"
-                },
-                "word_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "schemas.PartialBookSchema": {
-            "type": "object",
-            "properties": {
-                "age_discretion": {
-                    "$ref": "#/definitions/choices.AgeType"
-                },
-                "author": {
-                    "$ref": "#/definitions/schemas.UserDataSchema"
-                },
-                "blurb": {
-                    "type": "string"
-                },
-                "chapters_count": {
-                    "type": "integer"
-                },
-                "cover_image": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "genre": {
-                    "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
-                },
-                "partial_view_chapter": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
-                },
-                "price": {
-                    "type": "integer"
-                },
-                "slug": {
-                    "type": "string"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.TagSchema"
-                    }
-                },
-                "title": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "views": {
-                    "type": "integer"
-                },
-                "votes": {
-                    "type": "integer"
-                },
-                "word_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "schemas.PartialBooksResponseDataSchema": {
-            "type": "object",
-            "properties": {
-                "books": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.PartialBookSchema"
-                    }
-                },
-                "current_page": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "last_page": {
-                    "type": "integer",
-                    "example": 100
-                },
-                "per_page": {
-                    "type": "integer",
-                    "example": 100
-                }
-            }
-        },
-        "schemas.PartialBooksResponseSchema": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/schemas.PartialBooksResponseDataSchema"
                 },
                 "message": {
                     "type": "string",

@@ -49,11 +49,34 @@ type Book struct {
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`
 
-	Price     int      `gorm:"default:0"` // Book price in coins
 	Completed bool     `gorm:"default:false"`
 	Views     string   `gorm:"type:varchar(10000000)"`
 	Reviews   []Review `gorm:"<-:false"`
 	Votes     []Vote   `gorm:"<-:false"`
+
+	// BOOK CONTRACT
+	FullName             string `gorm:"type: varchar(1000)"`
+	Email                string
+	PenName              string `gorm:"type: varchar(1000)"`
+	Age                  uint
+	Country              string `gorm:"type: varchar(1000)"`
+	Address              string `gorm:"type: varchar(1000)"`
+	City                 string `gorm:"type: varchar(1000)"`
+	State                string `gorm:"type: varchar(1000)"`
+	PostalCode           uint   `gorm:"type: varchar(1000)"`
+	TelephoneNumber      string `gorm:"type: varchar(20)"`
+	IDType               string `gorm:"type: varchar(20)"`
+	Image1               string
+	Image2               string
+	BookAvailabilityLink *string
+	PlannedLength        uint
+	AverageChapter       uint
+	UpdateRate           uint
+	Synopsis             string
+	Outline              string
+	IntendedContract     choices.ContractTypeChoice
+	FullPrice            *int
+	ChapterPrice      int
 }
 
 func (b Book) CoverImageUrl() string {
@@ -151,13 +174,13 @@ func (c Chapter) WordCount() int {
 	return wordCount
 }
 
-type BoughtBook struct {
+type BoughtChapter struct {
 	BaseModel
-	BuyerID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id_bought_book"`
+	BuyerID uuid.UUID `gorm:"index:,unique,composite:buyer_id_chapter_id_bought_chapter"`
 	Buyer   User      `gorm:"foreignKey:BuyerID;constraint:OnDelete:CASCADE;<-:false"`
 
-	BookID uuid.UUID `gorm:"index:,unique,composite:buyer_id_book_id_bought_book"`
-	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+	ChapterID uuid.UUID `gorm:"index:,unique,composite:buyer_id_chapter_id_bought_chapter"`
+	Chapter   Chapter      `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
 }
 
 type Review struct {
@@ -201,8 +224,8 @@ func (r Reply) LikesCount() int {
 type Vote struct {
 	BaseModel
 	UserID uuid.UUID
-	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
 
-	BookID uuid.UUID 
-	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+	BookID uuid.UUID
+	Book   Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 }

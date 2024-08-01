@@ -38,6 +38,20 @@ func (ep Endpoint) AuthMiddleware(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+func (ep Endpoint) AuthOrGuestMiddleware(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+	db := ep.DB
+	c.Locals("user", &models.User{})
+	if len(token) > 1 {
+		user, err := GetUser(token, db)
+		if err != nil {
+			return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
+		}
+		c.Locals("user", user)
+	}
+	return c.Next()
+}
+
 func (ep Endpoint) AuthorMiddleware(c *fiber.Ctx) error {
 	token := c.Get("Authorization")
 	db := ep.DB

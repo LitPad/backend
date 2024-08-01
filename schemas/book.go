@@ -63,7 +63,7 @@ func (c ChapterSchema) Init(chapter models.Chapter) ChapterSchema {
 	return c
 }
 
-type PartialBookSchema struct {
+type BookSchema struct {
 	Author             UserDataSchema        `json:"author"`
 	Title              string                `json:"title"`
 	Slug               string                `json:"slug"`
@@ -75,17 +75,19 @@ type PartialBookSchema struct {
 	PartialViewChapter *ChapterSchema        `json:"partial_view_chapter"`
 	WordCount          int                   `json:"word_count"`
 	CoverImage         string                `json:"cover_image"`
-	Price              int                   `json:"price"`
+	FullPrice          *int                  `json:"full_price"`
+	ChapterPrice       int                   `json:"chapter_price"`
 	Views              int                   `json:"views"`
 	Votes              int                   `json:"votes"`
 	CreatedAt          time.Time             `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt          time.Time             `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
-func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
+func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Author = b.Author.Init(book.Author)
 	b.Blurb = book.Blurb
-	b.Price = book.Price
+	b.FullPrice = book.FullPrice
+	b.ChapterPrice = book.ChapterPrice
 	b.AgeDiscretion = book.AgeDiscretion
 
 	tags := book.Tags
@@ -115,35 +117,19 @@ func (b PartialBookSchema) Init(book models.Book) PartialBookSchema {
 	return b
 }
 
-type BookSchema struct {
-	PartialBookSchema
-	Chapters []ChapterSchema `json:"chapters"`
-}
-
-func (b BookSchema) Init(book models.Book) BookSchema {
-	b.PartialBookSchema = b.PartialBookSchema.Init(book)
-	chaptersToAdd := b.Chapters
-	chapters := book.Chapters
-	for _, chapter := range chapters {
-		chaptersToAdd = append(chaptersToAdd, ChapterSchema{}.Init(chapter))
-	}
-	b.Chapters = chaptersToAdd
-	return b
-}
-
 type ReviewBookSchema struct {
-	Rating       choices.RatingChoice `json:"rating" validate:"required,rating_choice_validator"`
-	Text         string               `json:"text" validate:"required,max=10000"`
+	Rating choices.RatingChoice `json:"rating" validate:"required,rating_choice_validator"`
+	Text   string               `json:"text" validate:"required,max=10000"`
 }
 
 type ReviewSchema struct {
 	ReviewBookSchema
-	ID           uuid.UUID            `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
-	User         UserDataSchema       `json:"user"`
-	LikesCount   int                  `json:"likes_count"`
-	RepliesCount int                  `json:"replies_count"`
-	CreatedAt    time.Time            `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
-	UpdatedAt    time.Time            `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	ID           uuid.UUID      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
+	User         UserDataSchema `json:"user"`
+	LikesCount   int            `json:"likes_count"`
+	RepliesCount int            `json:"replies_count"`
+	CreatedAt    time.Time      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	UpdatedAt    time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
 func (r ReviewSchema) Init(review models.Review) ReviewSchema {
@@ -191,29 +177,6 @@ type RepliesResponseSchema struct {
 type ReplyResponseSchema struct {
 	ResponseSchema
 	Data ReplySchema `json:"data"`
-}
-
-type PartialBookDetailSchema struct {
-	PartialBookSchema
-	Reviews ReviewsResponseDataSchema `json:"reviews"`
-}
-
-func (b PartialBookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Review) PartialBookDetailSchema {
-	b.PartialBookSchema = b.PartialBookSchema.Init(book)
-	reviewsToAdd := b.Reviews.Items
-	for _, review := range reviews {
-		reviewsToAdd = append(reviewsToAdd, ReviewSchema{}.Init(review))
-	}
-	b.Reviews = ReviewsResponseDataSchema{
-		PaginatedResponseDataSchema: reviewsPaginatedData,
-		Items:                       reviewsToAdd,
-	}
-	return b
-}
-
-type PartialBookDetailResponseSchema struct {
-	ResponseSchema
-	Data PartialBookDetailSchema `json:"data"`
 }
 
 type BookDetailSchema struct {
@@ -288,34 +251,7 @@ func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	return g
 }
 
-// Partial Book Responses
-
-type PartialBooksResponseDataSchema struct {
-	PaginatedResponseDataSchema
-	Items []PartialBookSchema `json:"books"`
-}
-
-func (b PartialBooksResponseDataSchema) Init(books []models.Book) PartialBooksResponseDataSchema {
-	// Set Initial Data
-	bookItems := b.Items
-	for _, book := range books {
-		bookItems = append(bookItems, PartialBookSchema{}.Init(book))
-	}
-	b.Items = bookItems
-	return b
-}
-
-type PartialBooksResponseSchema struct {
-	ResponseSchema
-	Data PartialBooksResponseDataSchema `json:"data"`
-}
-
-type PartialBookResponseSchema struct {
-	ResponseSchema
-	Data PartialBookSchema `json:"data"`
-}
-
-// Full Book Responses
+// Book Responses
 type BooksResponseDataSchema struct {
 	PaginatedResponseDataSchema
 	Items []BookSchema `json:"books"`
@@ -341,13 +277,33 @@ type BookResponseSchema struct {
 	Data BookSchema `json:"data"`
 }
 
+type ChaptersResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []ChapterSchema `json:"chapters"`
+}
+
+func (c ChaptersResponseDataSchema) Init(chapters []models.Chapter) ChaptersResponseDataSchema {
+	// Set Initial Data
+	chapterItems := c.Items
+	for _, chapter := range chapters {
+		chapterItems = append(chapterItems, ChapterSchema{}.Init(chapter))
+	}
+	c.Items = chapterItems
+	return c
+}
+
+type ChaptersResponseSchema struct {
+	ResponseSchema
+	Data ChaptersResponseDataSchema `json:"data"`
+}
+
 type ChapterResponseSchema struct {
 	ResponseSchema
 	Data ChapterSchema `json:"data"`
 }
 
 type ReplyReviewSchema struct {
-	Text         string               `json:"text" validate:"required,max=10000"`
+	Text string `json:"text" validate:"required,max=10000"`
 }
 
 type ReplySchema struct {

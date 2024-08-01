@@ -8,6 +8,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type BookManager struct {
@@ -165,52 +166,153 @@ func (t GenreManager) GetAll(db *gorm.DB) []models.Genre {
 	return genres
 }
 
-type BoughtBookManager struct {
-	Model     models.BoughtBook
-	ModelList []models.BoughtBook
+type BoughtChapterManager struct {
+	Model     models.BoughtChapter
+	ModelList []models.BoughtChapter
 }
 
-func (b BoughtBookManager) GetLatest(db *gorm.DB, buyer *models.User) []models.Book {
-	boughtBooks := b.ModelList
-	books := []models.Book{}
-	db.Where(models.BoughtBook{BuyerID: buyer.ID}).Scopes(scopes.BoughtAuthorGenreTagBookScope).Order("created_at DESC").Find(&boughtBooks)
-	for i := range boughtBooks {
-		books = append(books, boughtBooks[i].Book)
+func (b BoughtChapterManager) GetBoughtChapters(db *gorm.DB, buyer *models.User, book *models.Book) []models.Chapter {
+	boughtChapters := b.ModelList
+	chapters := []models.Chapter{}
+	db.Joins("JOIN chapters ON chapters.id = bought_chapters.chapter_id").Where("bought_chapters.buyer_id = ? AND chapters.book_id = ?", buyer.ID, book.ID).Scopes(scopes.BoughtChapterScope).Find(&boughtChapters)
+	for i := range boughtChapters {
+		chapters = append(chapters, boughtChapters[i].Chapter)
 	}
+	if len(chapters) == 0 {
+		// If the user hasn't bought any, he should see the first chapter for free
+		chapters = book.Chapters[:1]
+	}
+	return chapters
+}
+
+func (b BoughtChapterManager) GetBoughtBooks(db *gorm.DB, buyer *models.User) []models.Book {
+	// Return books in which the user has bought at least a chapter
+	books := []models.Book{}
+	subQuery := db.Model(&BoughtChapterManager{}).Select("chapter_id").Where("user_id = ?", buyer.ID)
+
+	// Main query to find all books that have at least one chapter in the subquery
+	db.Model(&models.Book{}).
+		Joins("JOIN chapters ON chapters.book_id = books.id").
+		Where("chapters.id IN (?)", subQuery).
+		Distinct("books.*"). // To ensure unique books
+		Scopes(scopes.AuthorGenreTagReviewsBookScope).
+		Find(&books)
 	return books
 }
 
-func (b BoughtBookManager) GetByBuyerAndBook(db *gorm.DB, buyer *models.User, book models.Book) *models.BoughtBook {
-	boughtBook := models.BoughtBook{
-		BuyerID: buyer.ID,
-		BookID:  book.ID,
+func (b BoughtChapterManager) CheckAllChaptersBought(db *gorm.DB, buyer *models.User, book *models.Book) bool {
+	var chapterIDs []uuid.UUID
+	for _, chapter := range book.Chapters {
+		chapterIDs = append(chapterIDs, chapter.ID)
 	}
-	db.Joins("Book").Joins("Book.Author").Take(&boughtBook, boughtBook)
-	if boughtBook.ID == uuid.Nil {
-		return nil
-	}
-	return &boughtBook
+
+	var count int64
+	db.Model(&models.BoughtChapter{}).
+		Where("buyer_id = ? AND chapter_id IN ?", buyer.ID, chapterIDs).
+		Group("buyer_id").
+		Having("COUNT(DISTINCT chapter_id) = ?", len(chapterIDs)).
+		Count(&count)
+
+	return count > 0
 }
 
-func (b BoughtBookManager) Create(db *gorm.DB, buyer *models.User, book models.Book) models.BoughtBook {
-	boughtBook := models.BoughtBook{
-		BuyerID: buyer.ID,
-		BookID:  book.ID,
-		Book:    book,
+func (b BoughtChapterManager) CheckIfAtLeastAChapterWasBought(db *gorm.DB, buyer *models.User, book models.Book) bool {
+	var chapterIDs []uuid.UUID
+	for _, chapter := range book.Chapters {
+		chapterIDs = append(chapterIDs, chapter.ID)
 	}
-	db.Create(&boughtBook)
 
-	bookPrice := book.Price
+	var boughtChaptersCount int64
+	db.Model(&models.BoughtChapter{}).Where("chapter_id IN ?", chapterIDs).Count(&boughtChaptersCount)
+	return boughtChaptersCount > 0
+}
+
+func (b BoughtChapterManager) GetByBuyerAndChapter(db *gorm.DB, buyer *models.User, chapter models.Chapter) *models.BoughtChapter {
+	boughtChapter := models.BoughtChapter{
+		BuyerID:   buyer.ID,
+		ChapterID: chapter.ID,
+	}
+	db.Joins("Chapter").Take(&boughtChapter, boughtChapter)
+	if boughtChapter.ID == uuid.Nil {
+		return nil
+	}
+	return &boughtChapter
+}
+
+func (b BoughtChapterManager) BuyAChapter(db *gorm.DB, buyer *models.User, book *models.Book) models.BoughtChapter {
+	// Get the chapter that the user doesn't have yet
+	nextChapter := models.Chapter{}
+	subQuery := db.Model(&models.BoughtChapter{}).Select("chapter_id").Where("buyer_id = ?", buyer.ID)
+
+	db.Model(&models.Chapter{}).
+		Where("book_id = ? AND id NOT IN (?)", book.ID, subQuery).
+		Order("created_at ASC"). // Assuming chapters are ordered by created_at descending order
+		First(&nextChapter)
+
+	secondChapter := models.Chapter{}
+	bookChapters := book.Chapters
+	if len(bookChapters) > 1 {
+		firstChapter := bookChapters[0]
+		if firstChapter.ID == nextChapter.ID {
+			// Get second chapter
+			secondChapter = bookChapters[1]
+		}
+	}
+
+	boughtChapters := []models.BoughtChapter{{
+		BuyerID:   buyer.ID,
+		ChapterID: nextChapter.ID,
+		Chapter:   nextChapter,
+	}}
+	if secondChapter.ID != uuid.Nil {
+		// Add second chapter too
+		secondBoughtChapter := models.BoughtChapter{
+			BuyerID:   buyer.ID,
+			ChapterID: secondChapter.ID,
+			Chapter:   secondChapter,
+		}
+		boughtChapters = append(boughtChapters, secondBoughtChapter)
+	}
+	db.Create(&boughtChapters)
+	chapterPrice := book.ChapterPrice
 
 	// Move coins from buyer to author
-	buyer.Coins = buyer.Coins - bookPrice
+	buyer.Coins = buyer.Coins - chapterPrice
 	db.Save(&buyer)
 
 	// Increase user coins
 	author := book.Author
-	author.Coins = author.Coins + bookPrice
+	author.Coins = author.Coins + chapterPrice
 	db.Save(&author)
-	return boughtBook
+	return boughtChapters[len(boughtChapters)-1]
+}
+
+func (b BoughtChapterManager) BuyWholeBook(db *gorm.DB, buyer *models.User, book models.Book) models.Book {
+	chaptersToBuy := []models.BoughtChapter{}
+	for _, chapter := range book.Chapters {
+		chapterToBuy := models.BoughtChapter{
+			BuyerID:   buyer.ID,
+			ChapterID: chapter.ID,
+			Chapter:   chapter,
+		}
+		chaptersToBuy = append(chaptersToBuy, chapterToBuy)
+	}
+
+	db.Clauses(clause.OnConflict{
+		DoNothing: true,
+	}).Create(&chaptersToBuy)
+
+	bookPrice := book.FullPrice
+
+	// Move coins from buyer to author
+	buyer.Coins = buyer.Coins - *bookPrice
+	db.Save(&buyer)
+
+	// Increase user coins
+	author := book.Author
+	author.Coins = author.Coins + *bookPrice
+	db.Save(&author)
+	return book
 }
 
 type ReviewManager struct {
