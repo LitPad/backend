@@ -161,7 +161,7 @@ type RepliesResponseDataSchema struct {
 
 func (r RepliesResponseDataSchema) Init(replies []models.Reply) RepliesResponseDataSchema {
 	// Set Initial Data
-	replyItems := r.Items
+	replyItems := make([]ReplySchema, 0)
 	for _, reply := range replies {
 		replyItems = append(replyItems, ReplySchema{}.Init(reply))
 	}
@@ -336,7 +336,7 @@ type BooksResponseDataSchema struct {
 
 func (b BooksResponseDataSchema) Init(books []models.Book) BooksResponseDataSchema {
 	// Set Initial Data
-	bookItems := b.Items
+	bookItems := make([]BookSchema, 0)
 	for _, book := range books {
 		bookItems = append(bookItems, BookSchema{}.Init(book))
 	}
@@ -366,7 +366,7 @@ type ChaptersResponseDataSchema struct {
 
 func (c ChaptersResponseDataSchema) Init(chapters []models.Chapter) ChaptersResponseDataSchema {
 	// Set Initial Data
-	chapterItems := c.Items
+	chapterItems := make([]ChapterSchema, 0)
 	for _, chapter := range chapters {
 		chapterItems = append(chapterItems, ChapterSchema{}.Init(chapter))
 	}

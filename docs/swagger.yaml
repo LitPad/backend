@@ -479,6 +479,33 @@ definitions:
       update_rate:
         type: integer
     type: object
+  schemas.ContractsResponseDataSchema:
+    properties:
+      contracts:
+        items:
+          $ref: '#/definitions/schemas.ContractSchema'
+        type: array
+      current_page:
+        example: 1
+        type: integer
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+    type: object
+  schemas.ContractsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.ContractsResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.EmailRequestSchema:
     properties:
       email:
@@ -1274,6 +1301,47 @@ paths:
       security:
       - BearerAuth: []
       summary: List Books with Pagination
+      tags:
+      - Admin
+  /admin/contracts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of book contracts with support for pagination
+        and optional filtering based on contract status.
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      - description: Name of the author to filter by
+        in: query
+        name: name
+        type: string
+      - description: status of the contract to filter by
+        enum:
+        - PENDING
+        - APPROVED
+        - DECLINED
+        - UPDATED
+        in: query
+        name: contract_status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of book contracts
+          schema:
+            $ref: '#/definitions/schemas.ContractsResponseSchema'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Book Contracts with Pagination
       tags:
       - Admin
   /admin/users:

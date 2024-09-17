@@ -67,6 +67,19 @@ func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.E
 	return &book, nil
 }
 
+func (b BookManager) GetBookContracts(db *gorm.DB, name *string, contractStatus *choices.ContractStatusChoice) ([]models.Book) {
+	books := []models.Book{}
+	q := db.Not("full_name = ?", "")
+	if contractStatus != nil {
+		q.Where(models.Book{ContractStatus: *contractStatus})
+	}
+	if name != nil {
+		q.Where(models.Book{FullName: *name})
+	}
+	q.Find(&books)
+	return books
+}
+
 func (b BookManager) GetContractedBookBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug, ContractStatus: choices.CTS_APPROVED}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Take(&book, book)

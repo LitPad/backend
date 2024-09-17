@@ -9,7 +9,8 @@ type UserProfilesResponseDataSchema struct {
 
 func (u UserProfilesResponseDataSchema) Init(users []models.User) UserProfilesResponseDataSchema {
 	// Set Initial Data
-	userItems := u.Items
+	userItems := make([]UserProfile, 0)
+
 	for _, user := range users {
 		userItems = append(userItems, UserProfile{}.Init(user))
 	}

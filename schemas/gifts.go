@@ -57,7 +57,7 @@ type SentGiftsResponseDataSchema struct {
 
 func (s SentGiftsResponseDataSchema) Init(sentGifts []models.SentGift) SentGiftsResponseDataSchema {
 	// Set Initial Data
-	sentGiftItems := s.Items
+	sentGiftItems := make([]SentGiftSchema, 0)
 	for _, sentGift := range sentGifts {
 		sentGiftItems = append(sentGiftItems, SentGiftSchema{}.Init(sentGift))
 	}

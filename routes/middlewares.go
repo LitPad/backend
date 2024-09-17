@@ -82,7 +82,7 @@ func (ep Endpoint) AdminMiddleware(c *fiber.Ctx) error {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
 	}
 	if !user.IsStaff {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Admin only!"))
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_ADMINS_ONLY, "For Admin only!"))
 	}
 	c.Locals("user", user)
 	return c.Next()

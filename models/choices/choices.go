@@ -94,3 +94,16 @@ const (
 	CTS_DECLINED ContractStatusChoice = "DECLINED"
 	CTS_UPDATED  ContractStatusChoice = "UPDATED"
 )
+
+func (c ContractStatusChoice) IsValid() bool {
+	if c == "" {
+		return true
+	}
+
+	switch c {
+	case CTS_PENDING, CTS_APPROVED, CTS_DECLINED, CTS_UPDATED:
+		return true
+	}
+
+	return false
+}

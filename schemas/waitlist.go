@@ -36,7 +36,7 @@ func (w WaitlistResponse) Init(waitlist models.Waitlist) WaitlistResponse{
 }
 
 func (wr WaitlistResponseDataSchema) Init(waitlists []models.Waitlist) WaitlistResponseDataSchema {
-	list := wr.Items
+	list := make([]WaitlistResponse, 0)
 
 	for _, waitlist := range waitlists {
 		list = append(list, WaitlistResponse{}.Init(waitlist))

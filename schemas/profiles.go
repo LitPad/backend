@@ -141,7 +141,7 @@ type NotificationsResponseDataSchema struct {
 
 func (n NotificationsResponseDataSchema) Init(notifications []models.Notification) NotificationsResponseDataSchema {
 	// Set Initial Data
-	notificationItems := n.Items
+	notificationItems := make([]NotificationSchema, 0)
 	for _, notification := range notifications {
 		notificationItems = append(notificationItems, NotificationSchema{}.Init(notification))
 	}

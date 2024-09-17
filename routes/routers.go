@@ -97,6 +97,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
 	adminRouter.Put("/users/user", endpoint.AdminMiddleware,endpoint.AdminUpdateUser)
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
+	adminRouter.Get("/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
 
 	api.Post("/waitlist", endpoint.AddToWaitlist)
 
