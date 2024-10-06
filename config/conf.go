@@ -25,9 +25,13 @@ type Config struct {
 	PostgresDB                   string `mapstructure:"POSTGRES_DB"`
 	TestPostgresDB               string `mapstructure:"TEST_POSTGRES_DB"`
 	MailSenderEmail              string `mapstructure:"MAIL_SENDER_EMAIL"`
+	MailFrom                     string `mapstructure:"MAIL_FROM"`
 	MailSenderPassword           string `mapstructure:"MAIL_SENDER_PASSWORD"`
 	MailSenderHost               string `mapstructure:"MAIL_SENDER_HOST"`
 	MailSenderPort               int    `mapstructure:"MAIL_SENDER_PORT"`
+	MailApiKey                   string    `mapstructure:"MAIL_API_KEY"`
+	BrevoListID                  string    `mapstructure:"BREVO_LIST_ID"`
+	BrevoContactsUrl             string    `mapstructure:"BREVO_CONTACTS_URL"`
 	CORSAllowedOrigins           string `mapstructure:"CORS_ALLOWED_ORIGINS"`
 	CORSAllowCredentials         bool   `mapstructure:"CORS_ALLOW_CREDENTIALS"`
 	GoogleClientID               string `mapstructure:"GOOGLE_CLIENT_ID"`

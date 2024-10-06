@@ -22,7 +22,7 @@ require (
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.21.0
 	google.golang.org/api v0.171.0
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+	gopkg.in/mail.v2 v2.3.1
 	gorm.io/driver/postgres v1.5.6
 	gorm.io/gorm v1.25.7
 )

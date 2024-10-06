@@ -11,7 +11,7 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
-	"gopkg.in/gomail.v2"
+	"gopkg.in/mail.v2"
 )
 
 var cfg = config.GetConfig()
@@ -100,17 +100,32 @@ func SendEmail(user *models.User, emailType string, tokenString *string, urlOpts
 	}
 
 	// Create a new message
-	m := gomail.NewMessage()
-	m.SetHeader("From", cfg.MailSenderEmail)
+	m := mail.NewMessage()
+	m.SetHeader("From", cfg.MailFrom)
 	m.SetHeader("To", user.Email)
 	m.SetHeader("Subject", subject.(string))
 	m.SetBody("text/html", bodyContent.String())
 
 	// Create a new SMTP client
-	d := gomail.NewDialer(cfg.MailSenderHost, cfg.MailSenderPort, cfg.MailSenderEmail, cfg.MailSenderPassword)
-
+	d := mail.NewDialer(cfg.MailSenderHost, cfg.MailSenderPort, cfg.MailSenderEmail, cfg.MailSenderPassword)
 	// Send the email
 	if err := d.DialAndSend(m); err != nil {
 		log.Fatal("Error sending email:", err)
 	}
 }
+
+// func AddEmailToBrevo(email string) {
+// 	url = "https://api.brevo.com/v3/contacts"
+//     headers = {
+//         "accept": "application/json",
+//         "content-type": "application/json",
+//         "api-key": BREVO_API_KEY
+//     }
+//     payload = {
+//         "email": email,
+//         "listIds": [BREVO_LIST_ID],
+//         "updateEnabled": True  # This will update the contact if it already exists
+//     }
+
+//     response = requests.post(url, json=payload, headers=headers)
+// }
