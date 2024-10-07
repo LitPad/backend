@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/LitPad/backend/internetcomputer"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -10,8 +11,18 @@ type Endpoint struct {
 	DB *gorm.DB
 }
 
-func SetupRoutes(app *fiber.App, db *gorm.DB) {
+type WalletService struct {
+	WS *internetcomputer.WalletService
+	DB *gorm.DB
+}
+
+func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService) {
 	endpoint := Endpoint{DB: db}
+
+	walletService := WalletService{
+		DB: db,
+		WS: ws,
+	}
 
 	// ROUTES (40)
 	api := app.Group("/api/v1")
@@ -89,6 +100,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
+
+	// Internet Computer
+	walletRouter.Get("balance", walletService.GetOnChainBalance)
 
 	// Admin Routes (2)
 	adminRouter := api.Group("/admin")

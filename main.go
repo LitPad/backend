@@ -7,6 +7,7 @@ import (
 	"github.com/LitPad/backend/database"
 	_ "github.com/LitPad/backend/docs"
 	"github.com/LitPad/backend/initials"
+	"github.com/LitPad/backend/internetcomputer"
 	"github.com/LitPad/backend/routes"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
@@ -33,6 +34,16 @@ func main() {
 	// Create initial data
 	initials.CreateInitialData(db, conf)
 
+	// Initialize ICP
+	privateKey := []byte(conf.ICPPrivateKey)
+	publicKey := []byte(conf.ICPPublicKey)
+
+	walletService, err := internetcomputer.NewWalletService(privateKey, publicKey)
+
+	if err != nil{
+		log.Fatal("Failed to initialize Internet computer wallet system: ", err)
+	}
+
 	app := fiber.New()
 
 	// CORS config
@@ -53,6 +64,6 @@ func main() {
 
 	app.Use(swagger.New(swaggerCfg))
 	// Register Routes & Sockets
-	routes.SetupRoutes(app, db)
+	routes.SetupRoutes(app, db, walletService)
 	log.Fatal(app.Listen(":" + conf.Port))
 }

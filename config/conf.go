@@ -52,6 +52,8 @@ type Config struct {
 	UserImagesBucket             string `mapstructure:"USER_IMAGES_BUCKET"`
 	IDFrontImagesBucket          string `mapstructure:"ID_FRONT_IMAGES_BUCKET"`
 	IDBackImagesBucket           string `mapstructure:"ID_BACK_IMAGES_BUCKET"`
+	ICPPrivateKey string `mapstructure:"ICP_PRIVATE_KEY"`
+	ICPPublicKey string `mapstructure:"ICP_PUBLIC_KEY"`
 
 	PGAdminPassword string `mapstructure:"PGADMIN_PASSWORD"`
 }
