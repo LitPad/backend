@@ -54,7 +54,7 @@ func (ep Endpoint) AddToWaitlist(c *fiber.Ctx) error {
 		db.Create(&waitlist)
 	}
 
-	go senders.AddEmailToBrevo(waitlist.Email)
+	go senders.AddEmailToBrevo(waitlist.Name, waitlist.Email)
 	response := schemas.WaitlistResponseSchema{
 		ResponseSchema: ResponseMessage("Added to waitlist successfully"),
 	}

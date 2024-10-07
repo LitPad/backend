@@ -120,14 +120,18 @@ type ContactPayload struct {
 	Email         string `json:"email"`
 	ListIds       []int  `json:"listIds"`
 	UpdateEnabled bool   `json:"updateEnabled"`
+	Attributes  map[string]string `json:"attributes"`
 }
 
-func AddEmailToBrevo(email string) {
+func AddEmailToBrevo(name string, email string) {
 	// Prepare the payload for Brevo API
 	payload := ContactPayload{
 		Email:       email,
 		ListIds:     []int{cfg.BrevoListID}, // Convert string ListID to int
 		UpdateEnabled: true,
+		Attributes: map[string]string{
+			"FIRSTNAME": name,
+		},
 	}
     // Convert payload to JSON
 	payloadBytes, err := json.Marshal(payload)
