@@ -29,9 +29,9 @@ type Config struct {
 	MailSenderPassword           string `mapstructure:"MAIL_SENDER_PASSWORD"`
 	MailSenderHost               string `mapstructure:"MAIL_SENDER_HOST"`
 	MailSenderPort               int    `mapstructure:"MAIL_SENDER_PORT"`
-	MailApiKey                   string    `mapstructure:"MAIL_API_KEY"`
-	BrevoListID                  string    `mapstructure:"BREVO_LIST_ID"`
-	BrevoContactsUrl             string    `mapstructure:"BREVO_CONTACTS_URL"`
+	MailApiKey                   string `mapstructure:"MAIL_API_KEY"`
+	BrevoListID                  int    `mapstructure:"BREVO_LIST_ID"`
+	BrevoContactsUrl             string `mapstructure:"BREVO_CONTACTS_URL"`
 	CORSAllowedOrigins           string `mapstructure:"CORS_ALLOWED_ORIGINS"`
 	CORSAllowCredentials         bool   `mapstructure:"CORS_ALLOW_CREDENTIALS"`
 	GoogleClientID               string `mapstructure:"GOOGLE_CLIENT_ID"`

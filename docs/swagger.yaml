@@ -162,10 +162,13 @@ definitions:
   schemas.AddToWaitlist:
     properties:
       email:
+        example: johndoe@example.com
         type: string
       genre_slug:
+        example: werewolf
         type: string
       name:
+        example: John Doe
         maxLength: 1000
         minLength: 3
         type: string

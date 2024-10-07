@@ -2,9 +2,11 @@ package senders
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -29,14 +31,14 @@ func sortEmail(emailType string, tokenString *string, url *string) map[string]in
 		subject = "Activate your account"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.EmailVerificationPath, *tokenString) 
+		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.EmailVerificationPath, *tokenString)
 
 	} else if emailType == "reset" {
 		templateFile = "templates/password-reset.html"
 		subject = "Reset your password"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.PasswordResetPath, *tokenString) 
+		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.PasswordResetPath, *tokenString)
 
 	} else if emailType == "reset-success" {
 		templateFile = "templates/password-reset-success.html"
@@ -57,7 +59,7 @@ func SendEmail(user *models.User, emailType string, tokenString *string, urlOpts
 		return
 	}
 	cfg := config.GetConfig()
-	var url *string 
+	var url *string
 	if len(urlOpts) > 0 {
 		url = &urlOpts[0]
 	}
@@ -114,18 +116,40 @@ func SendEmail(user *models.User, emailType string, tokenString *string, urlOpts
 	}
 }
 
-// func AddEmailToBrevo(email string) {
-// 	url = "https://api.brevo.com/v3/contacts"
-//     headers = {
-//         "accept": "application/json",
-//         "content-type": "application/json",
-//         "api-key": BREVO_API_KEY
-//     }
-//     payload = {
-//         "email": email,
-//         "listIds": [BREVO_LIST_ID],
-//         "updateEnabled": True  # This will update the contact if it already exists
-//     }
+type ContactPayload struct {
+	Email         string `json:"email"`
+	ListIds       []int  `json:"listIds"`
+	UpdateEnabled bool   `json:"updateEnabled"`
+}
 
-//     response = requests.post(url, json=payload, headers=headers)
-// }
+func AddEmailToBrevo(email string) {
+	// Prepare the payload for Brevo API
+	payload := ContactPayload{
+		Email:       email,
+		ListIds:     []int{cfg.BrevoListID}, // Convert string ListID to int
+		UpdateEnabled: true,
+	}
+    // Convert payload to JSON
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Println(err)
+	}
+
+	// Create a new request to Brevo API
+	req, err := http.NewRequest("POST", cfg.BrevoContactsUrl, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		log.Println(err)
+	}
+
+    // Set request headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("api-key", cfg.MailApiKey)
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+	}
+	defer resp.Body.Close()
+}

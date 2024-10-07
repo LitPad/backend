@@ -2764,15 +2764,18 @@ const docTemplate = `{
             ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "johndoe@example.com"
                 },
                 "genre_slug": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "werewolf"
                 },
                 "name": {
                     "type": "string",
                     "maxLength": 1000,
-                    "minLength": 3
+                    "minLength": 3,
+                    "example": "John Doe"
                 }
             }
         },
