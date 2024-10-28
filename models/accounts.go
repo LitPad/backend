@@ -35,6 +35,9 @@ type User struct {
 	LikeNotification  bool            `gorm:"default:false"`
 	ReplyNotification bool            `gorm:"default:false"`
 
+	SubscriptionPlanID *uuid.UUID        `gorm:"null"`
+	SubscriptionPlan   *SubscriptionPlan `gorm:"foreignKey:SubscriptionPlanID;constraint:OnDelete:SET NULL;null"`
+
 	// Back referenced
 	Books []Book `gorm:"foreignKey:AuthorID"`
 }

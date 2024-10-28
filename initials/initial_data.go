@@ -112,6 +112,20 @@ func createGifts(db *gorm.DB) {
 	}
 }
 
+func createSubscriptionPlans(db *gorm.DB) {
+	plans := []models.SubscriptionPlan{}
+	db.Find(&plans)
+	if len(plans) < 1 {
+		monthlyAmount, _ := decimal.NewFromString("12.99")
+		annualAmount, _ := decimal.NewFromString("131.88")
+		plans = []models.SubscriptionPlan{
+			models.SubscriptionPlan{Amount: monthlyAmount, Type: choices.ST_MONTHLY},
+			models.SubscriptionPlan{Amount: annualAmount, Type: choices.ST_ANNUAL},
+		}
+		db.Create(&plans)
+	}
+}
+
 func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	log.Println("Creating Initial Data....")
 	createSuperUser(db, cfg)
@@ -121,5 +135,6 @@ func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	tags := createTags(db)
 	createGenres(db, tags)
 	createGifts(db)
+	createSubscriptionPlans(db)
 	log.Println("Initial Data Created....")
 }

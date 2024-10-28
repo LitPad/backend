@@ -90,3 +90,34 @@ type TransactionsResponseSchema struct {
 	ResponseSchema
 	Data TransactionsResponseDataSchema `json:"data"`
 }
+
+type SubscriptionPlanSchema struct {
+	Amount decimal.Decimal                `json:"amount" validate:"required"`
+	Type   choices.SubscriptionTypeChoice `json:"type" validate:"required,subscription_type_validator"`
+}
+
+func (s SubscriptionPlanSchema) Init(subscriptionPlan models.SubscriptionPlan) SubscriptionPlanSchema {
+	s.Amount = subscriptionPlan.Amount
+	s.Type = subscriptionPlan.Type
+	return s
+}
+
+type SubscriptionPlansResponseSchema struct {
+	ResponseSchema
+	Data []SubscriptionPlanSchema `json:"data"`
+}
+
+func (s SubscriptionPlansResponseSchema) Init(subscriptionPlans []models.SubscriptionPlan) SubscriptionPlansResponseSchema {
+	// Set Initial Data
+	subscriptionPlanItems := []SubscriptionPlanSchema{}
+	for _, plan := range subscriptionPlans {
+		subscriptionPlanItems = append(subscriptionPlanItems, SubscriptionPlanSchema{}.Init(plan))
+	}
+	s.Data = subscriptionPlanItems
+	return s
+}
+
+type SubscriptionPlanResponseSchema struct {
+	ResponseSchema
+	Data SubscriptionPlanSchema `json:"data"`
+}

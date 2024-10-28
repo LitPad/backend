@@ -118,6 +118,14 @@ definitions:
     - RC_3
     - RC_4
     - RC_5
+  choices.SubscriptionTypeChoice:
+    enum:
+    - MONTHLY
+    - ANNUAL
+    type: string
+    x-enum-varnames:
+    - ST_MONTHLY
+    - ST_ANNUAL
   models.SiteDetail:
     properties:
       address:
@@ -993,6 +1001,40 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/models.Subscriber'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SubscriptionPlanResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.SubscriptionPlanSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SubscriptionPlanSchema:
+    properties:
+      amount:
+        type: number
+      type:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
+    required:
+    - amount
+    - type
+    type: object
+  schemas.SubscriptionPlansResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.SubscriptionPlanSchema'
+        type: array
       message:
         example: Data fetched/created/updated/deleted
         type: string
@@ -2904,6 +2946,56 @@ paths:
       security:
       - BearerAuth: []
       summary: Buy Coins
+      tags:
+      - Wallet
+  /wallet/plans:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of available subscription plans.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of plans
+          schema:
+            $ref: '#/definitions/schemas.SubscriptionPlansResponseSchema'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: List Available Subscription Plans
+      tags:
+      - Wallet
+    put:
+      description: This endpoint allows an admin to change the amount of a plan
+      parameters:
+      - description: Plan data
+        in: body
+        name: plan
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.SubscriptionPlanSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SubscriptionPlanResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update A Plan Amount
       tags:
       - Wallet
   /wallet/transactions:

@@ -14,9 +14,9 @@ type Coin struct {
 
 type Transaction struct {
 	BaseModel
-	Reference    string    `gorm:"type: varchar(1000);not null"` // payment id
-	UserID       uuid.UUID `json:"user_id"`
-	User         User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	Reference string    `gorm:"type: varchar(1000);not null"` // payment id
+	UserID    uuid.UUID `json:"user_id"`
+	User      User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 
 	CoinID   uuid.UUID `json:"coin_id"`
 	Coin     Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:CASCADE"`
@@ -24,9 +24,15 @@ type Transaction struct {
 
 	PaymentType   choices.PaymentType   `json:"payment_type"`
 	PaymentStatus choices.PaymentStatus `json:"payment_status" gorm:"default:PENDING"`
-	CheckoutURL		string
+	CheckoutURL   string
 }
 
 func (t Transaction) CoinsTotal() int {
 	return t.Coin.Amount * int(t.Quantity)
+}
+
+type SubscriptionPlan struct {
+	BaseModel
+	Amount decimal.Decimal                `gorm:"default:0"`
+	Type   choices.SubscriptionTypeChoice `gorm:"default:MONTHLY;unique"`
 }

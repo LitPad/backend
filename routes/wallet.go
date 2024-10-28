@@ -158,16 +158,61 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 
 func (ws WalletService) GetOnChainBalance(c *fiber.Ctx) error {
 	accountID := c.Query("accountID")
-	
-	if(len(accountID) == 0){
+
+	if len(accountID) == 0 {
 		return c.Status(400).JSON(fiber.Map{"err": errors.New("Provide a valid account id")})
 	}
 
 	balance, err := ws.WS.GetBalance(accountID)
-	
-	if err != nil{
+
+	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"err": errors.New("Failed to retrieve balance")})
 	}
 
 	return c.JSON(fiber.Map{"balance": balance})
+}
+
+// @Summary List Available Subscription Plans
+// @Description Retrieves a list of available subscription plans.
+// @Tags Wallet
+// @Accept json
+// @Produce json
+// @Success 200 {object} schemas.SubscriptionPlansResponseSchema "Successfully retrieved list of plans"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /wallet/plans [get]
+func (ep Endpoint) GetSubscriptionPlans(c *fiber.Ctx) error {
+	db := ep.DB
+	plans := []models.SubscriptionPlan{}
+	db.Find(&plans)
+	response := schemas.SubscriptionPlansResponseSchema{
+		ResponseSchema: ResponseMessage("Plans fetched successfully"),
+	}.Init(plans)
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Update A Plan Amount
+// @Description This endpoint allows an admin to change the amount of a plan
+// @Tags Wallet
+// @Param plan body schemas.SubscriptionPlanSchema true "Plan data"
+// @Success 200 {object} schemas.SubscriptionPlanResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /wallet/plans [put]
+// @Security BearerAuth
+func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.SubscriptionPlanSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	plan := models.SubscriptionPlan{Type: data.Type}
+	db.Take(&plan, plan)
+	plan.Amount = data.Amount
+	db.Save(&plan)
+	response := schemas.SubscriptionPlanResponseSchema{
+		ResponseSchema: ResponseMessage("Plan updated successfully"),
+		Data:           schemas.SubscriptionPlanSchema{}.Init(plan),
+	}
+	return c.Status(200).JSON(response)
 }

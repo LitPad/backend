@@ -100,6 +100,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
+	walletRouter.Get("/plans", endpoint.GetSubscriptionPlans)
+	walletRouter.Put("/plans", endpoint.AdminMiddleware, endpoint.UpdateSubscriptionPlan)
+
 
 	// Internet Computer
 	walletRouter.Get("balance", walletService.GetOnChainBalance)
@@ -118,3 +121,4 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	// Register Sockets (1)
 	api.Get("/ws/notifications", websocket.New(endpoint.NotificationSocket))
 }
+

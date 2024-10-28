@@ -2499,6 +2499,84 @@
                 }
             }
         },
+        "/wallet/plans": {
+            "get": {
+                "description": "Retrieves a list of available subscription plans.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "List Available Subscription Plans",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of plans",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlansResponseSchema"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows an admin to change the amount of a plan",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Update A Plan Amount",
+                "parameters": [
+                    {
+                        "description": "Plan data",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlanResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/transactions": {
             "get": {
                 "security": [
@@ -2688,6 +2766,17 @@
                 "RC_3",
                 "RC_4",
                 "RC_5"
+            ]
+        },
+        "choices.SubscriptionTypeChoice": {
+            "type": "string",
+            "enum": [
+                "MONTHLY",
+                "ANNUAL"
+            ],
+            "x-enum-varnames": [
+                "ST_MONTHLY",
+                "ST_ANNUAL"
             ]
         },
         "models.SiteDetail": {
@@ -3960,6 +4049,56 @@
             "properties": {
                 "data": {
                     "$ref": "#/definitions/models.Subscriber"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.SubscriptionPlanResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.SubscriptionPlanSchema": {
+            "type": "object",
+            "required": [
+                "amount",
+                "type"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "type": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
+        "schemas.SubscriptionPlansResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
+                    }
                 },
                 "message": {
                     "type": "string",
