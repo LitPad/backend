@@ -102,7 +102,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 
 	// Internet Computer
-	walletRouter.Get("balance", walletService.GetOnChainBalance)
+	walletRouter.Get("/balance", walletService.GetOnChainBalance)
 
 	// Admin Routes (2)
 	adminRouter := api.Group("/admin")
