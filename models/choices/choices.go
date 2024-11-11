@@ -29,6 +29,20 @@ func (p PaymentType) IsValid() bool {
 	return false
 }
 
+type PaymentPurpose string
+
+const (
+	PP_COINS   PaymentPurpose = "COINS"
+	PP_SUB PaymentPurpose = "SUBSCRIPTION"
+)
+func (p PaymentPurpose) IsValid() bool {
+	switch p {
+	case PP_COINS, PP_SUB:
+		return true
+	}
+	return false
+}
+
 type PaymentStatus string
 
 const (

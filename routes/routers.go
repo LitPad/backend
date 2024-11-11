@@ -94,7 +94,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	giftsRouter.Get("/sent", endpoint.AuthorMiddleware, endpoint.GetAllSentGifts)
 	giftsRouter.Get("/sent/:id/claim", endpoint.AuthorMiddleware, endpoint.ClaimGift)
 
-	// Wallet Routes (4)
+	// Wallet Routes (7)
 	walletRouter := api.Group("/wallet")
 	walletRouter.Get("/coins", endpoint.AvailableCoins)
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
@@ -102,17 +102,17 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 	walletRouter.Get("/plans", endpoint.GetSubscriptionPlans)
 	walletRouter.Put("/plans", endpoint.AdminMiddleware, endpoint.UpdateSubscriptionPlan)
-
+	walletRouter.Post("/subscription", endpoint.AuthMiddleware, endpoint.BuyCoins)
 
 	// Internet Computer
 	walletRouter.Get("balance", walletService.GetOnChainBalance)
 
-	// Admin Routes (2)
+	// Admin Routes (6)
 	adminRouter := api.Group("/admin")
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
 	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
-	adminRouter.Put("/users/user", endpoint.AdminMiddleware,endpoint.AdminUpdateUser)
+	adminRouter.Put("/users/user", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
 	adminRouter.Get("/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
 
@@ -121,4 +121,3 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	// Register Sockets (1)
 	api.Get("/ws/notifications", websocket.New(endpoint.NotificationSocket))
 }
-

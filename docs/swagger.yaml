@@ -82,6 +82,14 @@ definitions:
     - NT_GIFT
     - NT_REVIEW
     - NT_VOTE
+  choices.PaymentPurpose:
+    enum:
+    - COINS
+    - SUBSCRIPTION
+    type: string
+    x-enum-varnames:
+    - PP_COINS
+    - PP_SUB
   choices.PaymentStatus:
     enum:
     - PENDING
@@ -997,6 +1005,13 @@ definitions:
     required:
     - token
     type: object
+  schemas.Subscribe:
+    properties:
+      type:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
+    required:
+    - type
+    type: object
   schemas.SubscriberResponseSchema:
     properties:
       data:
@@ -1114,6 +1129,10 @@ definitions:
       coins_total:
         example: 30
         type: integer
+      payment_purpose:
+        allOf:
+        - $ref: '#/definitions/choices.PaymentPurpose'
+        example: SUBSCRIPTION
       payment_status:
         $ref: '#/definitions/choices.PaymentStatus'
       payment_type:
@@ -2996,6 +3015,30 @@ paths:
       security:
       - BearerAuth: []
       summary: Update A Plan Amount
+      tags:
+      - Wallet
+  /wallet/subscription:
+    post:
+      description: This endpoint allows a user to create a subscription for books
+      parameters:
+      - description: Payment object
+        in: body
+        name: coin
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.Subscribe'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.PaymentResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Subscribe
       tags:
       - Wallet
   /wallet/transactions:

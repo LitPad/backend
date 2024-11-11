@@ -2584,6 +2584,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/wallet/subscription": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to create a subscription for books",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Subscribe",
+                "parameters": [
+                    {
+                        "description": "Payment object",
+                        "name": "coin",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.Subscribe"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.PaymentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/transactions": {
             "get": {
                 "security": [
@@ -2728,6 +2767,17 @@ const docTemplate = `{
                 "NT_GIFT",
                 "NT_REVIEW",
                 "NT_VOTE"
+            ]
+        },
+        "choices.PaymentPurpose": {
+            "type": "string",
+            "enum": [
+                "COINS",
+                "SUBSCRIPTION"
+            ],
+            "x-enum-varnames": [
+                "PP_COINS",
+                "PP_SUB"
             ]
         },
         "choices.PaymentStatus": {
@@ -4051,6 +4101,17 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.Subscribe": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "type": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
         "schemas.SubscriberResponseSchema": {
             "type": "object",
             "properties": {
@@ -4221,6 +4282,14 @@ const docTemplate = `{
                 "coins_total": {
                     "type": "integer",
                     "example": 30
+                },
+                "payment_purpose": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.PaymentPurpose"
+                        }
+                    ],
+                    "example": "SUBSCRIPTION"
                 },
                 "payment_status": {
                     "$ref": "#/definitions/choices.PaymentStatus"

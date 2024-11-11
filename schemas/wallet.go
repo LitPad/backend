@@ -22,30 +22,43 @@ func (c CoinSchema) Init(coin models.Coin) CoinSchema {
 
 type BuyCoinSchema struct {
 	PaymentType choices.PaymentType `json:"payment_type" validate:"required,payment_type_validator" example:"STRIPE"`
-	Quantity    int64               `json:"quantity" validate:"required" example:"2"`
+	Quantity    int                 `json:"quantity" validate:"required" example:"2"`
 	CoinID      uuid.UUID           `json:"coin_id" validate:"required" example:"19e8bd22-fab1-4bb4-ba82-77c41bea6b99"`
 }
 
 type TransactionSchema struct {
-	Reference     string                `json:"reference"`
-	Coins         int                   `json:"coins" example:"10"`
-	CoinsTotal    int                   `json:"coins_total" example:"30"`
-	PaymentType   choices.PaymentType   `json:"payment_type" example:"STRIPE"`
-	Quantity      int64                 `json:"quantity" example:"10"`
-	Amount        decimal.Decimal       `json:"amount" example:"10.35"`
-	AmountTotal   decimal.Decimal       `json:"amount_total" example:"30.35"`
-	PaymentStatus choices.PaymentStatus `json:"payment_status"`
-	CheckoutURL   string                `json:"checkout_url"`
+	Reference      string                 `json:"reference"`
+	Coins          *int                   `json:"coins" example:"10"`
+	CoinsTotal     *int                   `json:"coins_total" example:"30"`
+	PaymentType    choices.PaymentType    `json:"payment_type" example:"STRIPE"`
+	PaymentPurpose choices.PaymentPurpose `json:"payment_purpose" example:"SUBSCRIPTION"`
+	Quantity       *int                   `json:"quantity" example:"10"`
+	Amount         decimal.Decimal        `json:"amount" example:"10.35"`
+	AmountTotal    decimal.Decimal        `json:"amount_total" example:"30.35"`
+	PaymentStatus  choices.PaymentStatus  `json:"payment_status"`
+	CheckoutURL    string                 `json:"checkout_url"`
 }
 
 func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchema {
 	t.Reference = transaction.Reference
-	t.Coins = transaction.Coin.Amount
-	t.CoinsTotal = transaction.Coin.Amount * int(transaction.Quantity)
+	if transaction.Coin != nil {
+		amount := transaction.Coin.Amount
+		t.Coins = &amount
+		coinsTotal := *transaction.Quantity * amount
+		t.CoinsTotal = &coinsTotal
+	}
 	t.PaymentType = transaction.PaymentType
-	t.Amount = transaction.Coin.Price
-	t.AmountTotal = transaction.Coin.Price.Mul(decimal.NewFromInt(transaction.Quantity))
 	t.PaymentStatus = transaction.PaymentStatus
+	t.PaymentPurpose = transaction.PaymentPurpose
+	if t.PaymentPurpose == choices.PP_COINS {
+		quantity := transaction.Quantity
+		t.Amount = transaction.Coin.Price
+		t.AmountTotal = transaction.Coin.Price.Mul(decimal.NewFromInt(int64(*quantity)))
+	} else if t.PaymentPurpose == choices.PP_SUB {
+		t.Amount = transaction.SubscriptionPlan.Amount
+		t.AmountTotal = t.Amount
+	}
+
 	t.Quantity = transaction.Quantity
 	t.CheckoutURL = transaction.CheckoutURL
 	return t
@@ -120,4 +133,8 @@ func (s SubscriptionPlansResponseSchema) Init(subscriptionPlans []models.Subscri
 type SubscriptionPlanResponseSchema struct {
 	ResponseSchema
 	Data SubscriptionPlanSchema `json:"data"`
+}
+
+type Subscribe struct {
+	Type choices.SubscriptionTypeChoice `json:"type" validate:"required,subscription_type_validator"`
 }

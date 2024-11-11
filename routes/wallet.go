@@ -60,7 +60,7 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 	var transaction models.Transaction
 	if data.PaymentType == choices.PTYPE_STRIPE {
 		// Create payment intent
-		trans, errD := CreateCheckoutSession(c, db, *user, coin, data.Quantity)
+		trans, errD := CreateCheckoutSession(c, db, *user, &coin, &data.Quantity, nil)
 		if errD != nil {
 			return c.Status(500).JSON(errD)
 		}
@@ -136,7 +136,8 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 		db.Joins("User").Joins("Coin").Take(&transaction, transaction)
 		if transaction.ID != uuid.Nil {
 			user := transaction.User
-			user.Coins = user.Coins + transaction.CoinsTotal()
+			coinsTotal := transaction.CoinsTotal()
+			user.Coins = user.Coins + *coinsTotal
 			transaction.PaymentStatus = choices.PSSUCCEEDED
 			db.Save(&user)
 			db.Save(&transaction)
@@ -213,6 +214,47 @@ func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
 	response := schemas.SubscriptionPlanResponseSchema{
 		ResponseSchema: ResponseMessage("Plan updated successfully"),
 		Data:           schemas.SubscriptionPlanSchema{}.Init(plan),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Subscribe
+// @Description This endpoint allows a user to create a subscription for books
+// @Tags Wallet
+// @Param coin body schemas.Subscribe true "Payment object"
+// @Success 200 {object} schemas.PaymentResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /wallet/subscription [post]
+// @Security BearerAuth
+func (ep Endpoint) BookSubscription(c *fiber.Ctx) error {
+	stripe.Key = cfg.StripeSecretKey
+	db := ep.DB
+	user := RequestUser(c)
+
+	data := schemas.Subscribe{}
+
+	// Validate request
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	plan := models.SubscriptionPlan{}
+	db.Where("type = ?", data.Type).Take(&plan)
+	if plan.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No subscription plan with that type"))
+	}
+
+	var transaction models.Transaction
+	// Create payment intent
+	trans, errD := CreateCheckoutSession(c, db, *user, nil, nil, &plan)
+	if errD != nil {
+		return c.Status(500).JSON(errD)
+	}
+	transaction = *trans
+
+	response := schemas.PaymentResponseSchema{
+		ResponseSchema: ResponseMessage("Payment Data Generated"),
+		Data:           schemas.TransactionSchema{}.Init(transaction),
 	}
 	return c.Status(200).JSON(response)
 }

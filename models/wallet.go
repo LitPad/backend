@@ -18,17 +18,31 @@ type Transaction struct {
 	UserID    uuid.UUID `json:"user_id"`
 	User      User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 
-	CoinID   uuid.UUID `json:"coin_id"`
-	Coin     Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:CASCADE"`
-	Quantity int64     `gorm:"default:1"`
+	// FOR COINS
+	CoinID   *uuid.UUID `json:"coin_id"`
+	Coin     *Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:SET NULL"`
+	Quantity *int  
+	// -----------------
 
-	PaymentType   choices.PaymentType   `json:"payment_type"`
-	PaymentStatus choices.PaymentStatus `json:"payment_status" gorm:"default:PENDING"`
-	CheckoutURL   string
+	// FOR SUBSCRIPTION
+	SubscriptionPlanID   *uuid.UUID `json:"subscription_plan_id"`
+	SubscriptionPlan     *SubscriptionPlan      `gorm:"foreignKey:SubscriptionPlanID;constraint:OnDelete:SET NULL"`
+	
+	// ---------------------
+
+	PaymentType    choices.PaymentType    `json:"payment_type"`
+	PaymentPurpose choices.PaymentPurpose `json:"payment_purpose"`
+	PaymentStatus  choices.PaymentStatus  `json:"payment_status" gorm:"default:PENDING"`
+	CheckoutURL    string
 }
 
-func (t Transaction) CoinsTotal() int {
-	return t.Coin.Amount * int(t.Quantity)
+func (t Transaction) CoinsTotal() *int {
+	if t.Coin != nil {
+		amount := t.Coin.Amount
+		coinsTotal := *t.Quantity * amount
+		return &coinsTotal
+	}
+	return nil
 }
 
 type SubscriptionPlan struct {
