@@ -40,6 +40,13 @@ type User struct {
 	Books []Book `gorm:"foreignKey:AuthorID"`
 }
 
+func (user User) SubscriptionExpired() bool {
+    if user.SubscriptionExpiry == nil {
+        return true 
+    }
+    return time.Now().After(*user.SubscriptionExpiry)
+}
+
 func (u User) AvatarUrl() *string {
 	avatar := u.Avatar
 	if avatar != "" {

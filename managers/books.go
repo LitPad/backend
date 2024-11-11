@@ -239,10 +239,15 @@ type BoughtChapterManager struct {
 func (b BoughtChapterManager) GetBoughtChapters(db *gorm.DB, buyer *models.User, book *models.Book) []models.Chapter {
 	boughtChapters := b.ModelList
 	chapters := []models.Chapter{}
-	db.Joins("JOIN chapters ON chapters.id = bought_chapters.chapter_id").Where("bought_chapters.buyer_id = ? AND chapters.book_id = ?", buyer.ID, book.ID).Scopes(scopes.BoughtChapterScope).Find(&boughtChapters)
-	for i := range boughtChapters {
-		chapters = append(chapters, boughtChapters[i].Chapter)
+	if !buyer.SubscriptionExpired() {
+		db.Where("book_id = ?", book.ID).Find(&chapters)
+	} else {
+		db.Joins("JOIN chapters ON chapters.id = bought_chapters.chapter_id").Where("bought_chapters.buyer_id = ? AND chapters.book_id = ?", buyer.ID, book.ID).Scopes(scopes.BoughtChapterScope).Find(&boughtChapters)
+		for i := range boughtChapters {
+			chapters = append(chapters, boughtChapters[i].Chapter)
+		}
 	}
+	
 	if len(chapters) == 0 {
 		// If the user hasn't bought any, he should see the first chapter for free
 		chapters = book.Chapters[:1]
