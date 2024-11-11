@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
@@ -133,11 +134,21 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 		}
 		// Payment was successful
 		transaction.Reference = checkoutSession.ID
-		db.Joins("User").Joins("Coin").Take(&transaction, transaction)
+		db.Joins("User").Joins("Coin").Joins("SubscriptionPlan").Take(&transaction, transaction)
 		if transaction.ID != uuid.Nil {
+			// For Coins
 			user := transaction.User
-			coinsTotal := transaction.CoinsTotal()
-			user.Coins = user.Coins + *coinsTotal
+			if transaction.Coin != nil {
+				coinsTotal := transaction.CoinsTotal()
+				user.Coins = user.Coins + *coinsTotal
+			} else {
+				// For subscription
+				subExpiry := time.Now().AddDate(0, 1, 0)
+				if transaction.SubscriptionPlan.Type == choices.ST_ANNUAL {
+					subExpiry = time.Now().AddDate(0, 12, 0)
+				}
+				user.SubscriptionExpiry = &subExpiry
+			}
 			transaction.PaymentStatus = choices.PSSUCCEEDED
 			db.Save(&user)
 			db.Save(&transaction)

@@ -21,13 +21,13 @@ type Transaction struct {
 	// FOR COINS
 	CoinID   *uuid.UUID `json:"coin_id"`
 	Coin     *Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:SET NULL"`
-	Quantity *int  
+	Quantity *int
 	// -----------------
 
 	// FOR SUBSCRIPTION
-	SubscriptionPlanID   *uuid.UUID `json:"subscription_plan_id"`
-	SubscriptionPlan     *SubscriptionPlan      `gorm:"foreignKey:SubscriptionPlanID;constraint:OnDelete:SET NULL"`
-	
+	SubscriptionPlanID *uuid.UUID        `json:"subscription_plan_id"`
+	SubscriptionPlan   *SubscriptionPlan `gorm:"foreignKey:SubscriptionPlanID;constraint:OnDelete:SET NULL"`
+
 	// ---------------------
 
 	PaymentType    choices.PaymentType    `json:"payment_type"`
