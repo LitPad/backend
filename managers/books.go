@@ -264,7 +264,7 @@ func (b BoughtChapterManager) GetBoughtBooks(db *gorm.DB, buyer *models.User) []
 	db.Model(&models.Book{}).
 		Joins("JOIN chapters ON chapters.book_id = books.id").
 		Where("chapters.id IN (?)", subQuery).
-		Distinct("books.*"). // To ensure unique books
+		Distinct("books.*"). // To ensure unique book	s
 		Scopes(scopes.AuthorGenreTagReviewsBookScope).
 		Find(&books)
 	return books
