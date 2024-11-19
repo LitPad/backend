@@ -32,7 +32,7 @@ type TransactionSchema struct {
 	CoinsTotal     *int                   `json:"coins_total" example:"30"`
 	PaymentType    choices.PaymentType    `json:"payment_type" example:"STRIPE"`
 	PaymentPurpose choices.PaymentPurpose `json:"payment_purpose" example:"SUBSCRIPTION"`
-	Quantity       *int                   `json:"quantity" example:"10"`
+	Quantity       int                   `json:"quantity" example:"10"`
 	Amount         decimal.Decimal        `json:"amount" example:"10.35"`
 	AmountTotal    decimal.Decimal        `json:"amount_total" example:"30.35"`
 	PaymentStatus  choices.PaymentStatus  `json:"payment_status"`
@@ -44,20 +44,19 @@ func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchem
 	if transaction.Coin != nil {
 		amount := transaction.Coin.Amount
 		t.Coins = &amount
-		coinsTotal := *transaction.Quantity * amount
+		coinsTotal := transaction.Quantity * amount
 		t.CoinsTotal = &coinsTotal
 	}
 	t.PaymentType = transaction.PaymentType
 	t.PaymentStatus = transaction.PaymentStatus
 	t.PaymentPurpose = transaction.PaymentPurpose
 	if t.PaymentPurpose == choices.PP_COINS {
-		quantity := transaction.Quantity
 		t.Amount = transaction.Coin.Price
-		t.AmountTotal = transaction.Coin.Price.Mul(decimal.NewFromInt(int64(*quantity)))
 	} else if t.PaymentPurpose == choices.PP_SUB {
 		t.Amount = transaction.SubscriptionPlan.Amount
-		t.AmountTotal = t.Amount
 	}
+	t.AmountTotal = t.Amount.Mul(decimal.NewFromInt(int64(transaction.Quantity)))
+
 
 	t.Quantity = transaction.Quantity
 	t.CheckoutURL = transaction.CheckoutURL
@@ -105,13 +104,13 @@ type TransactionsResponseSchema struct {
 }
 
 type SubscriptionPlanSchema struct {
-	Amount decimal.Decimal                `json:"amount" validate:"required"`
-	Type   choices.SubscriptionTypeChoice `json:"type" validate:"required,subscription_type_validator"`
+	Amount  decimal.Decimal                `json:"amount" validate:"required"`
+	SubType choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
 }
 
 func (s SubscriptionPlanSchema) Init(subscriptionPlan models.SubscriptionPlan) SubscriptionPlanSchema {
 	s.Amount = subscriptionPlan.Amount
-	s.Type = subscriptionPlan.Type
+	s.SubType = subscriptionPlan.SubType
 	return s
 }
 
@@ -135,6 +134,6 @@ type SubscriptionPlanResponseSchema struct {
 	Data SubscriptionPlanSchema `json:"data"`
 }
 
-type Subscribe struct {
-	Type choices.SubscriptionTypeChoice `json:"type" validate:"required,subscription_type_validator"`
+type CreateSubscriptionSchema struct {
+	SubType choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
 }

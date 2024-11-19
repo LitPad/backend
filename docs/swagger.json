@@ -2592,11 +2592,11 @@
                 "parameters": [
                     {
                         "description": "Payment object",
-                        "name": "coin",
+                        "name": "subscription",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.Subscribe"
+                            "$ref": "#/definitions/schemas.CreateSubscriptionSchema"
                         }
                     }
                 ],
@@ -3402,6 +3402,17 @@
                 }
             }
         },
+        "schemas.CreateSubscriptionSchema": {
+            "type": "object",
+            "required": [
+                "subtype"
+            ],
+            "properties": {
+                "subtype": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
         "schemas.EmailRequestSchema": {
             "type": "object",
             "required": [
@@ -4094,17 +4105,6 @@
                 }
             }
         },
-        "schemas.Subscribe": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "type": {
-                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
-                }
-            }
-        },
         "schemas.SubscriberResponseSchema": {
             "type": "object",
             "properties": {
@@ -4141,13 +4141,13 @@
             "type": "object",
             "required": [
                 "amount",
-                "type"
+                "subtype"
             ],
             "properties": {
                 "amount": {
                     "type": "number"
                 },
-                "type": {
+                "subtype": {
                     "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 }
             }

@@ -525,6 +525,13 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.CreateSubscriptionSchema:
+    properties:
+      subtype:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
+    required:
+    - subtype
+    type: object
   schemas.EmailRequestSchema:
     properties:
       email:
@@ -1005,13 +1012,6 @@ definitions:
     required:
     - token
     type: object
-  schemas.Subscribe:
-    properties:
-      type:
-        $ref: '#/definitions/choices.SubscriptionTypeChoice'
-    required:
-    - type
-    type: object
   schemas.SubscriberResponseSchema:
     properties:
       data:
@@ -1038,11 +1038,11 @@ definitions:
     properties:
       amount:
         type: number
-      type:
+      subtype:
         $ref: '#/definitions/choices.SubscriptionTypeChoice'
     required:
     - amount
-    - type
+    - subtype
     type: object
   schemas.SubscriptionPlansResponseSchema:
     properties:
@@ -3023,10 +3023,10 @@ paths:
       parameters:
       - description: Payment object
         in: body
-        name: coin
+        name: subscription
         required: true
         schema:
-          $ref: '#/definitions/schemas.Subscribe'
+          $ref: '#/definitions/schemas.CreateSubscriptionSchema'
       responses:
         "200":
           description: OK

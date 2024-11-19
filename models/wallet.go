@@ -21,7 +21,7 @@ type Transaction struct {
 	// FOR COINS
 	CoinID   *uuid.UUID `json:"coin_id"`
 	Coin     *Coin      `gorm:"foreignKey:CoinID;constraint:OnDelete:SET NULL"`
-	Quantity *int
+	Quantity int        `gorm:"default:1"`
 	// -----------------
 
 	// FOR SUBSCRIPTION
@@ -39,7 +39,7 @@ type Transaction struct {
 func (t Transaction) CoinsTotal() *int {
 	if t.Coin != nil {
 		amount := t.Coin.Amount
-		coinsTotal := *t.Quantity * amount
+		coinsTotal := t.Quantity * amount
 		return &coinsTotal
 	}
 	return nil
@@ -47,6 +47,6 @@ func (t Transaction) CoinsTotal() *int {
 
 type SubscriptionPlan struct {
 	BaseModel
-	Amount decimal.Decimal                `gorm:"default:0"`
-	Type   choices.SubscriptionTypeChoice `gorm:"default:MONTHLY;unique"`
+	Amount  decimal.Decimal                `gorm:"default:0"`
+	SubType choices.SubscriptionTypeChoice `gorm:"default:MONTHLY;unique"`
 }

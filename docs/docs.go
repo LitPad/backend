@@ -2599,11 +2599,11 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "description": "Payment object",
-                        "name": "coin",
+                        "name": "subscription",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.Subscribe"
+                            "$ref": "#/definitions/schemas.CreateSubscriptionSchema"
                         }
                     }
                 ],
@@ -3409,6 +3409,17 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.CreateSubscriptionSchema": {
+            "type": "object",
+            "required": [
+                "subtype"
+            ],
+            "properties": {
+                "subtype": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
         "schemas.EmailRequestSchema": {
             "type": "object",
             "required": [
@@ -4101,17 +4112,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.Subscribe": {
-            "type": "object",
-            "required": [
-                "type"
-            ],
-            "properties": {
-                "type": {
-                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
-                }
-            }
-        },
         "schemas.SubscriberResponseSchema": {
             "type": "object",
             "properties": {
@@ -4148,13 +4148,13 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "amount",
-                "type"
+                "subtype"
             ],
             "properties": {
                 "amount": {
                     "type": "number"
                 },
-                "type": {
+                "subtype": {
                     "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 }
             }

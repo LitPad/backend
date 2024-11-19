@@ -102,7 +102,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 	walletRouter.Get("/plans", endpoint.GetSubscriptionPlans)
 	walletRouter.Put("/plans", endpoint.AdminMiddleware, endpoint.UpdateSubscriptionPlan)
-	walletRouter.Post("/subscription", endpoint.AuthMiddleware, endpoint.BuyCoins)
+	walletRouter.Post("/subscription", endpoint.AuthMiddleware, endpoint.BookSubscription)
 
 	// Internet Computer
 	walletRouter.Get("balance", walletService.GetOnChainBalance)

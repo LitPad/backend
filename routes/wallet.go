@@ -61,7 +61,7 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 	var transaction models.Transaction
 	if data.PaymentType == choices.PTYPE_STRIPE {
 		// Create payment intent
-		trans, errD := CreateCheckoutSession(c, db, *user, &coin, &data.Quantity, nil)
+		trans, errD := CreateCheckoutSession(c, db, *user, &coin, data.Quantity, nil)
 		if errD != nil {
 			return c.Status(500).JSON(errD)
 		}
@@ -144,7 +144,7 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 			} else {
 				// For subscription
 				subExpiry := time.Now().AddDate(0, 1, 0)
-				if transaction.SubscriptionPlan.Type == choices.ST_ANNUAL {
+				if transaction.SubscriptionPlan.SubType == choices.ST_ANNUAL {
 					subExpiry = time.Now().AddDate(0, 12, 0)
 				}
 				user.SubscriptionExpiry = &subExpiry
@@ -218,7 +218,7 @@ func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	plan := models.SubscriptionPlan{Type: data.Type}
+	plan := models.SubscriptionPlan{SubType: data.SubType}
 	db.Take(&plan, plan)
 	plan.Amount = data.Amount
 	db.Save(&plan)
@@ -232,7 +232,7 @@ func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
 // @Summary Subscribe
 // @Description This endpoint allows a user to create a subscription for books
 // @Tags Wallet
-// @Param coin body schemas.Subscribe true "Payment object"
+// @Param subscription body schemas.CreateSubscriptionSchema true "Payment object"
 // @Success 200 {object} schemas.PaymentResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /wallet/subscription [post]
@@ -242,7 +242,7 @@ func (ep Endpoint) BookSubscription(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 
-	data := schemas.Subscribe{}
+	data := schemas.CreateSubscriptionSchema{}
 
 	// Validate request
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
@@ -250,14 +250,14 @@ func (ep Endpoint) BookSubscription(c *fiber.Ctx) error {
 	}
 
 	plan := models.SubscriptionPlan{}
-	db.Where("type = ?", data.Type).Take(&plan)
+	db.Where("type = ?", data.SubType).Take(&plan)
 	if plan.ID == uuid.Nil {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No subscription plan with that type"))
 	}
 
 	var transaction models.Transaction
 	// Create payment intent
-	trans, errD := CreateCheckoutSession(c, db, *user, nil, nil, &plan)
+	trans, errD := CreateCheckoutSession(c, db, *user, nil, 1, &plan)
 	if errD != nil {
 		return c.Status(500).JSON(errD)
 	}

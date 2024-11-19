@@ -28,11 +28,20 @@ func GetBaseReferer(c *fiber.Ctx) string {
 	return string(referer[:])
 }
 
-func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin *models.Coin, quantity *int, plan *models.SubscriptionPlan) (*models.Transaction, *utils.ErrorResponse) {
+func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin *models.Coin, quantity int, plan *models.SubscriptionPlan) (*models.Transaction, *utils.ErrorResponse) {
 	baseUrl := GetBaseReferer(c)
 	stripe.Key = cfg.StripeSecretKey
-	price := coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
-	productName := fmt.Sprintf("%s coins", fmt.Sprint(coin.Amount))
+	// IF COINS
+	var productName string 
+	var price int64 
+	if coin != nil {
+		productName = fmt.Sprintf("%s coins", fmt.Sprint(coin.Amount))
+		price = coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
+	} else {
+		subtype := plan.SubType
+		productName = fmt.Sprintf("%s subscription", utils.Title(string(subtype)))
+		price = plan.Amount.Mul(decimal.NewFromFloat(100)).IntPart()
+	}
 	params := &stripe.CheckoutSessionParams{
 		SuccessURL: stripe.String(baseUrl + cfg.StripeCheckoutSuccessUrlPath),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
@@ -45,7 +54,7 @@ func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin *mo
 					TaxBehavior: stripe.String(string(stripe.PriceTaxBehaviorExclusive)),
 					UnitAmount:  stripe.Int64(price),
 				},
-				Quantity: stripe.Int64(int64(*quantity)),
+				Quantity: stripe.Int64(int64(quantity)),
 			},
 		},
 		Mode:          stripe.String(string(stripe.CheckoutSessionModePayment)),
@@ -62,8 +71,10 @@ func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin *mo
 	if coin != nil {
 		transaction.CoinID = &coin.ID
 		transaction.Quantity = quantity
+		transaction.PaymentPurpose = choices.PP_COINS
 	} else if plan != nil {
 		transaction.SubscriptionPlanID = &plan.ID
+		transaction.PaymentPurpose = choices.PP_SUB
 	}
 	db.Create(&transaction)
 	if coin != nil {
