@@ -98,7 +98,7 @@ func (ep Endpoint) AllUserTransactions(c *fiber.Ctx) error {
 	if paymentStatus != &empty {
 		filterData.PaymentStatus = choices.PaymentStatus(*paymentStatus)
 	}
-	db.Where(filterData).Order("created_at DESC").Joins("Coin").Find(&transactions)
+	db.Where(filterData).Order("created_at DESC").Joins("Coin").Joins("SubscriptionPlan").Find(&transactions)
 	// Paginate and return transactions
 	paginatedData, paginatedTransactions, err := PaginateQueryset(transactions, c)
 	if err != nil {

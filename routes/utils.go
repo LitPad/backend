@@ -35,11 +35,11 @@ func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin *mo
 	var productName string 
 	var price int64 
 	if coin != nil {
-		productName = fmt.Sprintf("%s coins", fmt.Sprint(coin.Amount))
+		productName = fmt.Sprintf("LitPad %s coins", fmt.Sprint(coin.Amount))
 		price = coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
 	} else {
 		subtype := plan.SubType
-		productName = fmt.Sprintf("%s subscription", utils.Title(string(subtype)))
+		productName = fmt.Sprintf("LitPad %s subscription", utils.Title(string(subtype)))
 		price = plan.Amount.Mul(decimal.NewFromFloat(100)).IntPart()
 	}
 	params := &stripe.CheckoutSessionParams{
