@@ -9,9 +9,11 @@ import (
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
+	"github.com/LitPad/backend/senders"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/webhook"
 )
@@ -58,19 +60,15 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No set of coins with that ID"))
 	}
 
-	var transaction models.Transaction
-	if data.PaymentType == choices.PTYPE_STRIPE {
-		// Create payment intent
-		trans, errD := CreateCheckoutSession(c, db, *user, &coin, data.Quantity, nil)
-		if errD != nil {
-			return c.Status(500).JSON(errD)
-		}
-		transaction = *trans
+	// Create payment intent
+	transaction, errD := CreatePaymentIntent(db, *user, nil, nil, &coin, data.Quantity)
+	if errD != nil {
+		return c.Status(500).JSON(errD)
 	}
 
 	response := schemas.PaymentResponseSchema{
 		ResponseSchema: ResponseMessage("Payment Data Generated"),
-		Data:           schemas.TransactionSchema{}.Init(transaction),
+		Data:           schemas.TransactionSchema{}.Init(*transaction),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -126,42 +124,97 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 
 	// Handle different event types
 	switch event.Type {
-	case "checkout.session.completed":
-		var checkoutSession stripe.CheckoutSession
-		err := json.Unmarshal(event.Data.Raw, &checkoutSession)
+	case "payment_intent.succeeded":
+		var intent stripe.PaymentIntent
+		err := json.Unmarshal(event.Data.Raw, &intent)
 		if err != nil {
 			return c.SendStatus(fiber.StatusBadRequest)
 		}
 		// Payment was successful
-		transaction.Reference = checkoutSession.ID
+		transaction.Reference = intent.ID
 		db.Joins("User").Joins("Coin").Joins("SubscriptionPlan").Take(&transaction, transaction)
 		if transaction.ID != uuid.Nil {
-			// For Coins
 			user := transaction.User
-			if transaction.Coin != nil {
-				coinsTotal := transaction.CoinsTotal()
-				user.Coins = user.Coins + *coinsTotal
-			} else {
+			subPlan := transaction.SubscriptionPlan
+			if subPlan != nil {
 				// For subscription
-				subExpiry := time.Now().AddDate(0, 1, 0)
-				if transaction.SubscriptionPlan.SubType == choices.ST_ANNUAL {
-					subExpiry = time.Now().AddDate(0, 12, 0)
+				emailD := map[string]interface{}{"amount": subPlan.Amount}
+				expectedAmount := subPlan.Amount.Mul(decimal.NewFromFloat(100)).IntPart() // Convert to cents
+				if intent.AmountReceived < expectedAmount {
+					transaction.PaymentStatus = choices.PSFAILED
+					go senders.SendEmail(&transaction.User, "payment-failed", nil, nil, emailD)
+				} else {
+					subExpiry := time.Now().AddDate(0, 1, 0)
+					if transaction.SubscriptionPlan.SubType == choices.ST_ANNUAL {
+						subExpiry = time.Now().AddDate(0, 12, 0)
+					}
+					user.SubscriptionExpiry = &subExpiry
+					transaction.PaymentStatus = choices.PSSUCCEEDED
+					go senders.SendEmail(&transaction.User, "payment-succeeded", nil, nil, emailD)
 				}
-				user.SubscriptionExpiry = &subExpiry
+			} else {
+				coin := transaction.Coin
+				emailD := map[string]interface{}{"amount": coin.Price}
+				expectedAmount := coin.Price.Mul(decimal.NewFromFloat(100)).IntPart() // Convert to cents
+				if intent.AmountReceived < expectedAmount {
+					transaction.PaymentStatus = choices.PSFAILED
+					go senders.SendEmail(&transaction.User, "payment-failed", nil, nil, emailD)
+				} else {
+					coinsTotal := transaction.CoinsTotal()
+					user.Coins = user.Coins + *coinsTotal
+					transaction.PaymentStatus = choices.PSSUCCEEDED
+					go senders.SendEmail(&transaction.User, "payment-succeeded", nil, nil, emailD)
+				}
 			}
-			transaction.PaymentStatus = choices.PSSUCCEEDED
 			db.Save(&user)
 			db.Save(&transaction)
 		}
-	case "checkout.session.expired":
-		var checkoutSession stripe.CheckoutSession
-		err := json.Unmarshal(event.Data.Raw, &checkoutSession)
+	case "payment_intent.payment_failed":
+		var intent stripe.PaymentIntent
+		err := json.Unmarshal(event.Data.Raw, &intent)
 		if err != nil {
 			return c.SendStatus(fiber.StatusBadRequest)
 		}
-		// Payment was canceled
-		transaction.Reference = checkoutSession.ID
-		db.Model(&transaction).Update("payment_status", choices.PSCANCELED)
+		// Payment failed
+		transaction.Reference = intent.ID
+		db.Joins("User").Joins("Coin").Joins("SubscriptionPlan").Take(&transaction, transaction)
+		if transaction.ID != uuid.Nil {
+			transaction.PaymentStatus = choices.PSFAILED
+			db.Save(&transaction)
+			coin := transaction.Coin
+			plan := transaction.SubscriptionPlan
+			var amount decimal.Decimal
+			if coin != nil {
+				amount = coin.Price
+			} else {
+				amount = plan.Amount
+			}
+			emailD := map[string]interface{}{"amount": amount}
+			go senders.SendEmail(&transaction.User, "payment-failed", nil, nil, emailD)
+		}
+	case "payment_intent.canceled":
+		var intent stripe.PaymentIntent
+		err := json.Unmarshal(event.Data.Raw, &intent)
+		if err != nil {
+			return c.SendStatus(fiber.StatusBadRequest)
+		}
+		// Payment canceled
+		transaction.Reference = intent.ID
+		db.Joins("User").Joins("Coin").Joins("SubscriptionPlan").Take(&transaction, transaction)
+		if transaction.ID != uuid.Nil {
+			transaction.PaymentStatus = choices.PSCANCELED
+			db.Save(&transaction)
+			coin := transaction.Coin
+			plan := transaction.SubscriptionPlan
+			var amount decimal.Decimal
+			if coin != nil {
+				amount = coin.Price
+			} else {
+				amount = plan.Amount
+			}
+			emailD := map[string]interface{}{"amount": amount}
+			go senders.SendEmail(&transaction.User, "payment-canceled", nil, nil, emailD)
+		}
 	default:
 		log.Printf("Unhandled event type: %s\n", event.Type)
 	}
@@ -255,17 +308,15 @@ func (ep Endpoint) BookSubscription(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No subscription plan with that type"))
 	}
 
-	var transaction models.Transaction
 	// Create payment intent
-	trans, errD := CreateCheckoutSession(c, db, *user, nil, 1, &plan)
+	transaction, errD := CreatePaymentIntent(db, *user, &plan, &data.PaymentMethodToken, nil, 1)
 	if errD != nil {
 		return c.Status(500).JSON(errD)
 	}
-	transaction = *trans
 
 	response := schemas.PaymentResponseSchema{
 		ResponseSchema: ResponseMessage("Payment Data Generated"),
-		Data:           schemas.TransactionSchema{}.Init(transaction),
+		Data:           schemas.TransactionSchema{}.Init(*transaction),
 	}
 	return c.Status(200).JSON(response)
 }

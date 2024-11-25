@@ -21,7 +21,7 @@ func (c CoinSchema) Init(coin models.Coin) CoinSchema {
 }
 
 type BuyCoinSchema struct {
-	PaymentType choices.PaymentType `json:"payment_type" validate:"required,payment_type_validator" example:"STRIPE"`
+	// PaymentType choices.PaymentType `json:"payment_type" validate:"required,payment_type_validator" example:"STRIPE"` // This should be stripe by default
 	Quantity    int                 `json:"quantity" validate:"required" example:"2"`
 	CoinID      uuid.UUID           `json:"coin_id" validate:"required" example:"19e8bd22-fab1-4bb4-ba82-77c41bea6b99"`
 }
@@ -32,11 +32,11 @@ type TransactionSchema struct {
 	CoinsTotal     *int                   `json:"coins_total" example:"30"`
 	PaymentType    choices.PaymentType    `json:"payment_type" example:"STRIPE"`
 	PaymentPurpose choices.PaymentPurpose `json:"payment_purpose" example:"SUBSCRIPTION"`
-	Quantity       int                   `json:"quantity" example:"10"`
+	Quantity       int                    `json:"quantity" example:"10"`
 	Amount         decimal.Decimal        `json:"amount" example:"10.35"`
 	AmountTotal    decimal.Decimal        `json:"amount_total" example:"30.35"`
 	PaymentStatus  choices.PaymentStatus  `json:"payment_status"`
-	CheckoutURL    string                 `json:"checkout_url"`
+	ClientSecret    string                 `json:"client_secret"`
 }
 
 func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchema {
@@ -57,9 +57,8 @@ func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchem
 	}
 	t.AmountTotal = t.Amount.Mul(decimal.NewFromInt(int64(transaction.Quantity)))
 
-
 	t.Quantity = transaction.Quantity
-	t.CheckoutURL = transaction.CheckoutURL
+	t.ClientSecret = transaction.ClientSecret
 	return t
 }
 
@@ -135,5 +134,6 @@ type SubscriptionPlanResponseSchema struct {
 }
 
 type CreateSubscriptionSchema struct {
-	SubType choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
+	SubType         choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
+	PaymentMethodToken string                         `json:"payment_method_token" validate:"required"`
 }

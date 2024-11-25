@@ -3118,7 +3118,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "coin_id",
-                "payment_type",
                 "quantity"
             ],
             "properties": {
@@ -3126,15 +3125,8 @@ const docTemplate = `{
                     "type": "string",
                     "example": "19e8bd22-fab1-4bb4-ba82-77c41bea6b99"
                 },
-                "payment_type": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/choices.PaymentType"
-                        }
-                    ],
-                    "example": "STRIPE"
-                },
                 "quantity": {
+                    "description": "PaymentType choices.PaymentType ` + "`" + `json:\"payment_type\" validate:\"required,payment_type_validator\" example:\"STRIPE\"` + "`" + ` // This should be stripe by default",
                     "type": "integer",
                     "example": 2
                 }
@@ -3412,9 +3404,13 @@ const docTemplate = `{
         "schemas.CreateSubscriptionSchema": {
             "type": "object",
             "required": [
+                "payment_method_token",
                 "subtype"
             ],
             "properties": {
+                "payment_method_token": {
+                    "type": "string"
+                },
                 "subtype": {
                     "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 }
@@ -4272,7 +4268,7 @@ const docTemplate = `{
                     "type": "number",
                     "example": 30.35
                 },
-                "checkout_url": {
+                "client_secret": {
                     "type": "string"
                 },
                 "coins": {

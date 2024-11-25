@@ -13,38 +13,66 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
+	"github.com/shopspring/decimal"
 	"gopkg.in/mail.v2"
 )
 
 var cfg = config.GetConfig()
 
-func sortEmail(emailType string, tokenString *string, url *string) map[string]interface{} {
+func sortEmail(emailType string, tokenString *string, url *string, paymentData map[string]interface{}) map[string]interface{} {
 	templateFile := "templates/welcome.html"
 	subject := "Account verified"
 	data := make(map[string]interface{})
 	data["template_file"] = templateFile
 	data["subject"] = subject
+	data["text"] = "Your Verification was completed."
 
 	// Sort different templates and subject for respective email types
-	if emailType == "activate" {
+	switch emailType {
+	case "activate":
 		templateFile = "templates/email-activation.html"
 		subject = "Activate your account"
 		data["template_file"] = templateFile
 		data["subject"] = subject
+		data["text"] = "Please click the button below to verify your email."
 		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.EmailVerificationPath, *tokenString)
 
-	} else if emailType == "reset" {
+	case "reset":
 		templateFile = "templates/password-reset.html"
 		subject = "Reset your password"
 		data["template_file"] = templateFile
 		data["subject"] = subject
+		data["text"] = "Please click the button below to reset your password."
 		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.PasswordResetPath, *tokenString)
 
-	} else if emailType == "reset-success" {
+	case "reset-success":
 		templateFile = "templates/password-reset-success.html"
 		subject = "Password reset successfully"
 		data["template_file"] = templateFile
 		data["subject"] = subject
+		data["text"] = "Your password was reset successfully."
+	case "payment-succeeded":
+		templateFile = "templates/payment-success.html"
+		amount := paymentData["amount"].(decimal.Decimal)
+		subject = "Payment successful"
+		data["template_file"] = templateFile
+		data["subject"] = subject
+		data["text"] = fmt.Sprintf("Your payment of %s was successful.", amount) 
+	case "payment-failed":
+		templateFile = "templates/payment-failed.html"
+		subject = "Payment failed"
+		amount := paymentData["amount"].(decimal.Decimal)
+		data["template_file"] = templateFile
+		data["subject"] = subject
+		data["text"] = fmt.Sprintf("Your payment of %s was unsuccessful. Please contact support", amount) 
+	case "payment-canceled":
+		templateFile = "templates/payment-canceled.html"
+		subject = "Payment canceled"
+		amount := paymentData["amount"].(decimal.Decimal)
+		data["template_file"] = templateFile
+		data["subject"] = subject
+		data["text"] = "Your password was reset successfully."
+		data["text"] = fmt.Sprintf("Your payment of %s was canceled.", amount)
 	}
 	return data
 }
@@ -52,24 +80,22 @@ func sortEmail(emailType string, tokenString *string, url *string) map[string]in
 type EmailContext struct {
 	Name string
 	Url  *string
+	Text string
 }
 
-func SendEmail(user *models.User, emailType string, tokenString *string, urlOpts ...string) {
+func SendEmail(user *models.User, emailType string, tokenString *string, url *string, paymentData map[string]interface{}) {
 	if os.Getenv("ENVIRONMENT") == "TESTING" {
 		return
 	}
 	cfg := config.GetConfig()
-	var url *string
-	if len(urlOpts) > 0 {
-		url = &urlOpts[0]
-	}
-	emailData := sortEmail(emailType, tokenString, url)
+	emailData := sortEmail(emailType, tokenString, url, paymentData)
 	templateFile := emailData["template_file"]
 	subject := emailData["subject"]
 
 	// Create a context with dynamic data
 	data := EmailContext{
 		Name: user.FirstName,
+		Text: emailData["text"].(string),
 	}
 	if url, ok := emailData["url"]; ok {
 		url := url.(string)

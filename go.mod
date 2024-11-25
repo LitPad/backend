@@ -3,6 +3,7 @@ module github.com/LitPad/backend
 go 1.22.1
 
 require (
+	github.com/aviate-labs/agent-go v0.5.1
 	github.com/aws/aws-sdk-go v1.54.16
 	github.com/fasthttp/websocket v1.5.8
 	github.com/go-playground/locales v0.14.1
@@ -18,6 +19,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/spf13/viper v1.18.2
+	github.com/stripe/stripe-go/v72 v72.122.0
 	github.com/stripe/stripe-go/v78 v78.5.0
 	github.com/swaggo/swag v1.16.3
 	golang.org/x/crypto v0.21.0
@@ -33,7 +35,6 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aviate-labs/agent-go v0.5.1 // indirect
 	github.com/aviate-labs/leb128 v0.3.0 // indirect
 	github.com/aviate-labs/secp256k1 v0.0.0-5e6736a // indirect
 	github.com/bits-and-blooms/bitset v1.7.0 // indirect

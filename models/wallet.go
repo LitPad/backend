@@ -33,7 +33,7 @@ type Transaction struct {
 	PaymentType    choices.PaymentType    `json:"payment_type"`
 	PaymentPurpose choices.PaymentPurpose `json:"payment_purpose"`
 	PaymentStatus  choices.PaymentStatus  `json:"payment_status" gorm:"default:PENDING"`
-	CheckoutURL    string
+	ClientSecret  string 
 }
 
 func (t Transaction) CoinsTotal() *int {

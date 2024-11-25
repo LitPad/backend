@@ -331,16 +331,13 @@ definitions:
       coin_id:
         example: 19e8bd22-fab1-4bb4-ba82-77c41bea6b99
         type: string
-      payment_type:
-        allOf:
-        - $ref: '#/definitions/choices.PaymentType'
-        example: STRIPE
       quantity:
+        description: PaymentType choices.PaymentType `json:"payment_type" validate:"required,payment_type_validator"
+          example:"STRIPE"` // This should be stripe by default
         example: 2
         type: integer
     required:
     - coin_id
-    - payment_type
     - quantity
     type: object
   schemas.ChapterCreateSchema:
@@ -527,9 +524,12 @@ definitions:
     type: object
   schemas.CreateSubscriptionSchema:
     properties:
+      payment_method_token:
+        type: string
       subtype:
         $ref: '#/definitions/choices.SubscriptionTypeChoice'
     required:
+    - payment_method_token
     - subtype
     type: object
   schemas.EmailRequestSchema:
@@ -1121,7 +1121,7 @@ definitions:
       amount_total:
         example: 30.35
         type: number
-      checkout_url:
+      client_secret:
         type: string
       coins:
         example: 10
