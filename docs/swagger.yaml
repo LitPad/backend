@@ -1366,7 +1366,7 @@ paths:
       - BearerAuth: []
       summary: List Books with Pagination
       tags:
-      - Admin
+      - Admin | Books
   /admin/contracts:
     get:
       consumes:
@@ -1407,7 +1407,43 @@ paths:
       - BearerAuth: []
       summary: List Book Contracts with Pagination
       tags:
-      - Admin
+      - Admin | Books
+  /admin/payments/transactions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of current transactions with support for pagination
+        and optional filtering based on username.
+      parameters:
+      - description: Username to filter by
+        in: query
+        name: username
+        type: string
+      - default: 1
+        description: Current page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of transactions
+          schema:
+            $ref: '#/definitions/schemas.TransactionsResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Latest Transactions with Pagination
+      tags:
+      - Admin | Payments
   /admin/users:
     get:
       consumes:
@@ -1447,7 +1483,7 @@ paths:
       - BearerAuth: []
       summary: List Users with Pagination
       tags:
-      - Admin
+      - Admin | Users
   /admin/users/user:
     put:
       consumes:
@@ -1483,7 +1519,7 @@ paths:
       - BearerAuth: []
       summary: Update User Role
       tags:
-      - Admin
+      - Admin | Users
   /auth/facebook:
     post:
       description: |-

@@ -1,6 +1,8 @@
 package schemas
 
 import (
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/google/uuid"
@@ -22,8 +24,8 @@ func (c CoinSchema) Init(coin models.Coin) CoinSchema {
 
 type BuyCoinSchema struct {
 	// PaymentType choices.PaymentType `json:"payment_type" validate:"required,payment_type_validator" example:"STRIPE"` // This should be stripe by default
-	Quantity    int                 `json:"quantity" validate:"required" example:"2"`
-	CoinID      uuid.UUID           `json:"coin_id" validate:"required" example:"19e8bd22-fab1-4bb4-ba82-77c41bea6b99"`
+	Quantity int       `json:"quantity" validate:"required" example:"2"`
+	CoinID   uuid.UUID `json:"coin_id" validate:"required" example:"19e8bd22-fab1-4bb4-ba82-77c41bea6b99"`
 }
 
 type TransactionSchema struct {
@@ -36,7 +38,9 @@ type TransactionSchema struct {
 	Amount         decimal.Decimal        `json:"amount" example:"10.35"`
 	AmountTotal    decimal.Decimal        `json:"amount_total" example:"30.35"`
 	PaymentStatus  choices.PaymentStatus  `json:"payment_status"`
-	ClientSecret    string                 `json:"client_secret"`
+	ClientSecret   string                 `json:"client_secret"`
+	CreatedAt      time.Time              `json:"created_at"`
+	UpdatedAt      time.Time              `json:"updated_at"`
 }
 
 func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchema {
@@ -52,13 +56,14 @@ func (t TransactionSchema) Init(transaction models.Transaction) TransactionSchem
 	t.PaymentPurpose = transaction.PaymentPurpose
 	if t.PaymentPurpose == choices.PP_COINS {
 		t.Amount = transaction.Coin.Price
-	} else if t.PaymentPurpose == choices.PP_SUB {
+	} else {
 		t.Amount = transaction.SubscriptionPlan.Amount
 	}
 	t.AmountTotal = t.Amount.Mul(decimal.NewFromInt(int64(transaction.Quantity)))
-
 	t.Quantity = transaction.Quantity
 	t.ClientSecret = transaction.ClientSecret
+	t.CreatedAt = transaction.CreatedAt
+	t.UpdatedAt = transaction.UpdatedAt
 	return t
 }
 
@@ -90,8 +95,8 @@ type TransactionsResponseDataSchema struct {
 func (t TransactionsResponseDataSchema) Init(transactions []models.Transaction) TransactionsResponseDataSchema {
 	// Set Initial Data
 	transactionItems := []TransactionSchema{}
-	for i := range transactions {
-		transactionItems = append(transactionItems, TransactionSchema{}.Init(transactions[i]))
+	for _, transaction := range transactions {
+		transactionItems = append(transactionItems, TransactionSchema{}.Init(transaction))
 	}
 	t.Items = transactionItems
 	return t
@@ -134,6 +139,6 @@ type SubscriptionPlanResponseSchema struct {
 }
 
 type CreateSubscriptionSchema struct {
-	SubType         choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
+	SubType            choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
 	PaymentMethodToken string                         `json:"payment_method_token" validate:"required"`
 }

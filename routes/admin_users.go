@@ -11,7 +11,7 @@ import (
 var truthy = true
 // @Summary List Users with Pagination
 // @Description Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.
-// @Tags Admin
+// @Tags Admin | Users
 // @Accept json
 // @Produce json
 // @Param account_type query string false "Type of user to filter by" Enums(READER, WRITER, ADMIN)
@@ -47,7 +47,6 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 	users = paginatedUsers.([]models.User)
-
 	response := schemas.UserProfilesResponseSchema{
 		ResponseSchema: ResponseMessage("Profiles fetched successfully"),
 		Data: schemas.UserProfilesResponseDataSchema{
@@ -60,7 +59,7 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 
 // @Summary Update User Role
 // @Description Updates the account type of a specified user.
-// @Tags Admin
+// @Tags Admin | Users
 // @Accept json
 // @Produce json
 // @Param data body schemas.UpdateUserRoleSchema true "User role update data"

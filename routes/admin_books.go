@@ -10,7 +10,7 @@ import (
 
 // @Summary List Books with Pagination
 // @Description Retrieves a list of books with support for pagination and optional filtering based on book title.
-// @Tags Admin
+// @Tags Admin | Books
 // @Accept json
 // @Produce json
 // @Param page query int false "Current Page" default(1)
@@ -41,7 +41,7 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 
 // @Summary List Book Contracts with Pagination
 // @Description Retrieves a list of book contracts with support for pagination and optional filtering based on contract status.
-// @Tags Admin
+// @Tags Admin | Books
 // @Accept json
 // @Produce json
 // @Param page query int false "Current Page" default(1)

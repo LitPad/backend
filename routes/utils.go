@@ -154,3 +154,11 @@ func IsAmongUserType(target string) bool {
     }
     return false
 }
+
+func GetQueryValue (c *fiber.Ctx, key string) *string {
+	value := c.Query(key, "")
+	if value == "" {
+		return nil
+	}
+	return &value
+}

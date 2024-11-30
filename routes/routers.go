@@ -107,15 +107,25 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	// Internet Computer
 	walletRouter.Get("balance", walletService.GetOnChainBalance)
 
-	// Admin Routes (6)
+	// ADMIN ROUTES (7)
 	adminRouter := api.Group("/admin")
-	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
-	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
-	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
-	adminRouter.Put("/users/user", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
+	// Admin Users
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
+	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
+	adminRouter.Put("/users/user", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
+
+	// Admin Books (2)
+	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
 	adminRouter.Get("/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
 
+	// Admin Waitlist (1)
+	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
+
+	// Admin Payments (1)
+	adminRouter.Get("/payments/transactions", endpoint.AdminMiddleware, endpoint.AdminGetTransactions)
+	// --------------------------------------------------------------------------------
+
+	// Waitlist Routes (1)
 	api.Post("/waitlist", endpoint.AddToWaitlist)
 
 	// Register Sockets (1)

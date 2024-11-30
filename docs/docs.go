@@ -36,7 +36,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Books"
                 ],
                 "summary": "List Books with Pagination",
                 "parameters": [
@@ -85,7 +85,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Books"
                 ],
                 "summary": "List Book Contracts with Pagination",
                 "parameters": [
@@ -131,6 +131,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/payments/transactions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of current transactions with support for pagination and optional filtering based on username.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Payments"
+                ],
+                "summary": "Latest Transactions with Pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username to filter by",
+                        "name": "username",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of transactions",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TransactionsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -146,7 +201,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Users"
                 ],
                 "summary": "List Users with Pagination",
                 "parameters": [
@@ -206,7 +261,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Users"
                 ],
                 "summary": "Update User Role",
                 "parameters": [
