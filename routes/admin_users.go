@@ -5,6 +5,7 @@ import (
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
@@ -65,37 +66,28 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 // @Tags Admin | Users
 // @Accept json
 // @Produce json
+// @Param username path string true "Username" default(username)
 // @Param data body schemas.UpdateUserRoleSchema true "User role update data"
 // @Success 200 {object} schemas.UserProfileResponseSchema "Successfully updated user details"
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 404 {object} utils.ErrorResponse "User not found"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /admin/users/user [put]
+// @Router /admin/users/{username} [put]
 // @Security BearerAuth
 func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 	db := ep.DB
 	data := schemas.UpdateUserRoleSchema{}
-
-	if errCode, errData := ValidateRequest(c, &data);
-
-	errData != nil{
+	errCode, errData := ValidateRequest(c, &data);
+	if errData != nil{
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	accountType := choices.AccType(data.AccountType)
-
-	var user models.User
-
-	if data.Username != nil{
-		
-		result := db.Where("username = ?", data.Username).First(&user)
-		if result.Error != nil{
-			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NOT_FOUND, "User Not Found"))
-		}
-
-		user.AccountType = accountType
+	user := models.User{Username: c.Params("username")}
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
+	if user.ID == uuid.Nil{
+		return c.Status(404).JSON(utils.NotFoundErr("User Not Found"))
 	}
-
+	user.AccountType = data.AccountType
 	db.Save(&user)
 
 	response := schemas.UserProfileResponseSchema{
@@ -114,7 +106,7 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 404 {object} utils.ErrorResponse "User not found"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /admin/users/user/{username}/toggle-activation [get]
+// @Router /admin/users/{username}/toggle-activation [get]
 // @Security BearerAuth
 func (ep Endpoint) ToggleUserActivation(c *fiber.Ctx) error {
 	db := ep.DB

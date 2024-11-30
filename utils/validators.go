@@ -5,6 +5,11 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Validates if a account type value is the correct one
+func AccountTypeValidator(fl validator.FieldLevel) bool {
+	return fl.Field().Interface().(choices.AccType).IsValid()
+}
+
 // Validates if a payment type value is the correct one
 func PaymentTypeValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.PaymentType).IsValid()

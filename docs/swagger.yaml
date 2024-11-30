@@ -1203,16 +1203,10 @@ definitions:
     type: object
   schemas.UpdateUserRoleSchema:
     properties:
-      acc_type:
+      account_type:
+        allOf:
+        - $ref: '#/definitions/choices.AccType'
         example: WRITER
-        maxLength: 7
-        minLength: 6
-        type: string
-      username:
-        example: john-doe
-        maxLength: 1000
-        minLength: 3
-        type: string
     type: object
   schemas.UserDataSchema:
     properties:
@@ -1488,12 +1482,18 @@ paths:
       summary: List Users with Pagination
       tags:
       - Admin | Users
-  /admin/users/user:
+  /admin/users/{username}:
     put:
       consumes:
       - application/json
       description: Updates the account type of a specified user.
       parameters:
+      - default: username
+        description: Username
+        in: path
+        name: username
+        required: true
+        type: string
       - description: User role update data
         in: body
         name: data
@@ -1524,7 +1524,7 @@ paths:
       summary: Update User Role
       tags:
       - Admin | Users
-  /admin/users/user/{username}/toggle-activation:
+  /admin/users/{username}/toggle-activation:
     get:
       consumes:
       - application/json

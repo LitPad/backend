@@ -246,7 +246,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/users/user": {
+        "/admin/users/{username}": {
             "put": {
                 "security": [
                     {
@@ -265,6 +265,14 @@ const docTemplate = `{
                 ],
                 "summary": "Update User Role",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "username",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "User role update data",
                         "name": "data",
@@ -303,7 +311,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/users/user/{username}/toggle-activation": {
+        "/admin/users/{username}/toggle-activation": {
             "get": {
                 "security": [
                     {
@@ -4493,17 +4501,13 @@ const docTemplate = `{
         "schemas.UpdateUserRoleSchema": {
             "type": "object",
             "properties": {
-                "acc_type": {
-                    "type": "string",
-                    "maxLength": 7,
-                    "minLength": 6,
+                "account_type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.AccType"
+                        }
+                    ],
                     "example": "WRITER"
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 3,
-                    "example": "john-doe"
                 }
             }
         },

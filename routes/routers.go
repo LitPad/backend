@@ -112,8 +112,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 	// Admin Users
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
-	adminRouter.Put("/users/user", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
-	adminRouter.Get("/users/user/:username/toggle-activation", endpoint.AdminMiddleware, endpoint.ToggleUserActivation)
+	adminRouter.Put("/users/:username", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
+	adminRouter.Get("/users/:username/toggle-activation", endpoint.AdminMiddleware, endpoint.ToggleUserActivation)
 
 	// Admin Books (2)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)

@@ -36,6 +36,7 @@ func init() {
 	translator, _ = uni.GetTranslator("en")
 
 	// Register Custom Validators
+	customValidator.RegisterValidation("account_type_validator", AccountTypeValidator)
 	customValidator.RegisterValidation("payment_type_validator", PaymentTypeValidator)
 	customValidator.RegisterValidation("subscription_type_validator", SubscriptionTypeValidator)
 	customValidator.RegisterValidation("rating_choice_validator", RatingChoiceValidator)
@@ -63,6 +64,7 @@ func registerTranslations(param string) {
 	registerTranslation("required", "This field is required.", translator)
 	registerTranslation("required_if", "This field is required.", translator)
 	registerTranslation("required_without", "This field is required.", translator)
+	registerTranslation("account_type_validator", "Invalid account type", translator)
 	registerTranslation("payment_type_validator", "Invalid payment type", translator)
 	registerTranslation("subscription_type_validator", "Invalid subscription type", translator)
 	registerTranslation("rating_choice_validator", "Invalid rating choice", translator)

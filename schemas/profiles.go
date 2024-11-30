@@ -81,8 +81,7 @@ type UpdateUserProfileSchema struct {
 }
 
 type UpdateUserRoleSchema struct {
-	AccountType string `json:"acc_type" validate:"min=6,max=7" example:"WRITER"` 
-	Username *string `json:"username,omitempty" validate:"min=3,max=1000" example:"john-doe"` 
+	AccountType choices.AccType `json:"account_type" validate:"account_type_validator" example:"WRITER"`
 }
 
 type UpdatePasswordSchema struct {
