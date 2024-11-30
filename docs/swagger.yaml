@@ -1129,6 +1129,8 @@ definitions:
       coins_total:
         example: 30
         type: integer
+      created_at:
+        type: string
       payment_purpose:
         allOf:
         - $ref: '#/definitions/choices.PaymentPurpose'
@@ -1143,6 +1145,8 @@ definitions:
         example: 10
         type: integer
       reference:
+        type: string
+      updated_at:
         type: string
     type: object
   schemas.TransactionsResponseDataSchema:
@@ -1518,6 +1522,38 @@ paths:
       security:
       - BearerAuth: []
       summary: Update User Role
+      tags:
+      - Admin | Users
+  /admin/users/user/{username}/toggle-activation:
+    get:
+      consumes:
+      - application/json
+      description: Allows the admin to deactivate/reactivate a user.
+      parameters:
+      - default: username
+        description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reactivate/Deactivate User
       tags:
       - Admin | Users
   /auth/facebook:

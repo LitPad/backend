@@ -13,25 +13,26 @@ import (
 
 type User struct {
 	BaseModel
-	FirstName          string          `json:"first_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"John"`
-	LastName           string          `json:"last_name" gorm:"type: varchar(255);not null" validate:"required,max=255" example:"Doe"`
-	Username           string          `json:"username" gorm:"type: varchar(1000);not null;unique;" validate:"required,max=255" example:"john-doe"`
-	Email              string          `json:"email" gorm:"not null;unique;" validate:"required,min=5,email" example:"johndoe@email.com"`
-	Password           string          `json:"password" gorm:"not null" validate:"required,min=8,max=50" example:"strongpassword"`
-	IsEmailVerified    bool            `json:"is_email_verified" gorm:"default:false" swaggerignore:"true"`
-	IsSuperuser        bool            `json:"is_superuser" gorm:"default:false" swaggerignore:"true"`
-	IsStaff            bool            `json:"is_staff" gorm:"default:false" swaggerignore:"true"`
-	TermsAgreement     bool            `json:"terms_agreement" gorm:"default:false" validate:"eq=true"`
-	Avatar             string          `gorm:"type:varchar(1000);null;" json:"avatar"`
-	Access             *string         `gorm:"type:varchar(1000);null;" json:"access"`
-	Refresh            *string         `gorm:"type:varchar(1000);null;" json:"refresh"`
+	FirstName          string          `gorm:"type: varchar(255);not null"`
+	LastName           string          `gorm:"type: varchar(255);not null"`
+	Username           string          `gorm:"type: varchar(1000);not null;unique;"`
+	Email              string          `gorm:"not null;unique;"`
+	Password           string          `gorm:"not null"`
+	IsEmailVerified    bool            `gorm:"default:false"`
+	IsSuperuser        bool            `gorm:"default:false"`
+	IsStaff            bool            `gorm:"default:false"`
+	IsActive           bool            `gorm:"default:true"`
+	TermsAgreement     bool            `gorm:"default:false"`
+	Avatar             string          `gorm:"type:varchar(1000);null;"`
+	Access             *string         `gorm:"type:varchar(1000);null;"`
+	Refresh            *string         `gorm:"type:varchar(1000);null;"`
 	SocialLogin        bool            `gorm:"default:false"`
-	Bio                *string         `gorm:"type:varchar(1000);null;" json:"bio"`
-	AccountType        choices.AccType `gorm:"type:varchar(100); default:READER" json:"account_type"`
+	Bio                *string         `gorm:"type:varchar(1000);null;"`
+	AccountType        choices.AccType `gorm:"type:varchar(100); default:READER"`
 	Followings         []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
 	Followers          []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
-	Coins              int             `json:"coins" gorm:"default:0"`
-	Lanterns           int             `json:"lanterns" gorm:"default:0"`
+	Coins              int             `gorm:"default:0"`
+	Lanterns           int             `gorm:"default:0"`
 	LikeNotification   bool            `gorm:"default:false"`
 	ReplyNotification  bool            `gorm:"default:false"`
 	SubscriptionExpiry *time.Time      `gorm:"null"`
@@ -41,10 +42,10 @@ type User struct {
 }
 
 func (user User) SubscriptionExpired() bool {
-    if user.SubscriptionExpiry == nil {
-        return true 
-    }
-    return time.Now().After(*user.SubscriptionExpiry)
+	if user.SubscriptionExpiry == nil {
+		return true
+	}
+	return time.Now().After(*user.SubscriptionExpiry)
 }
 
 func (u User) AvatarUrl() *string {
@@ -80,9 +81,9 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 
 type Token struct {
 	BaseModel
-	UserId      uuid.UUID `json:"user_id" gorm:"unique"`
+	UserId      uuid.UUID `gorm:"unique"`
 	User        User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE"`
-	TokenString string    `json:"token_string"`
+	TokenString string
 }
 
 func (token *Token) BeforeSave(tx *gorm.DB) (err error) {

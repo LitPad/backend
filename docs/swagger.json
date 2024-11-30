@@ -296,6 +296,56 @@
                 }
             }
         },
+        "/admin/users/user/{username}/toggle-activation": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Allows the admin to deactivate/reactivate a user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Users"
+                ],
+                "summary": "Reactivate/Deactivate User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "username",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/facebook": {
             "post": {
                 "description": "`This endpoint generates new access and refresh tokens for authentication via facebook`\n`Pass in token gotten from facebook client authentication here in payload to retrieve tokens for authorization`",
@@ -4327,6 +4377,9 @@
                     "type": "integer",
                     "example": 30
                 },
+                "created_at": {
+                    "type": "string"
+                },
                 "payment_purpose": {
                     "allOf": [
                         {
@@ -4351,6 +4404,9 @@
                     "example": 10
                 },
                 "reference": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }

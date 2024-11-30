@@ -51,3 +51,7 @@ func RequestErr(code string, message string, opts ...map[string]string) ErrorRes
 	resp := ErrorResponse{Status: "failure", Code: code, Message: message, Data: data}
 	return resp
 }
+
+func NotFoundErr(message string) ErrorResponse {
+	return RequestErr(ERR_NON_EXISTENT, message)
+}

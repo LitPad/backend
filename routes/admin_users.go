@@ -1,11 +1,14 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 var truthy = true
@@ -79,7 +82,7 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	account_type := choices.AccType(data.AccountType)
+	accountType := choices.AccType(data.AccountType)
 
 	var user models.User
 
@@ -90,7 +93,7 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NOT_FOUND, "User Not Found"))
 		}
 
-		user.AccountType = account_type
+		user.AccountType = accountType
 	}
 
 	db.Save(&user)
@@ -100,6 +103,36 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 		Data: schemas.UserProfile{}.Init(user),
 	}
 	return c.Status(200).JSON(response)
+}
+
+// @Summary Reactivate/Deactivate User
+// @Description Allows the admin to deactivate/reactivate a user.
+// @Tags Admin | Users
+// @Param username path string true "Username" default(username)
+// @Accept json
+// @Produce json
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 404 {object} utils.ErrorResponse "User not found"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/users/user/{username}/toggle-activation [get]
+// @Security BearerAuth
+func (ep Endpoint) ToggleUserActivation(c *fiber.Ctx) error {
+	db := ep.DB
+	username := c.Params("username")
+	user := models.User{Username: username}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.NotFoundErr("User with that username not found"))
+	}
+	responseMessageSubstring := "deactivated"
+	if user.IsActive {
+		user.IsActive = false
+	} else {
+		responseMessageSubstring = "reactivated"
+		user.IsActive = true
+	}
+	db.Save(&user)
+	return c.Status(200).JSON(ResponseMessage(fmt.Sprintf("User %s successfully", responseMessageSubstring)))
 }
 
 func (ep Endpoint) AdminGetWaitlist(c *fiber.Ctx)error{
