@@ -110,7 +110,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 		b.PartialViewChapter = &chapter
 	}
 
-	b.CoverImage = book.CoverImageUrl()
+	b.CoverImage = book.CoverImage
 	b.Views = book.ViewsCount()
 	b.CreatedAt = book.CreatedAt
 	b.UpdatedAt = book.UpdatedAt
@@ -301,8 +301,8 @@ func (c ContractSchema) Init(book models.Book) ContractSchema {
 	c.ContractStatus = book.ContractStatus
 	c.FullPrice = book.FullPrice
 	c.ChapterPrice = book.ChapterPrice
-	c.IDFrontImage = *book.IDFrontImageUrl()
-	c.IDBackImage = *book.IDBackImageUrl()
+	c.IDFrontImage = book.IDFrontImage
+	c.IDBackImage = book.IDBackImage
 	return c
 }
 

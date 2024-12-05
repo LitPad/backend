@@ -122,18 +122,21 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, coverImage string, Tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
 	book.GenreID = genre.ID
 	book.Genre = genre
 	book.Tags = Tags
+	if coverImage != "" {
+		book.CoverImage = coverImage
+	}
 	db.Omit("Tags.*").Save(&book)
 	return book
 }
 
-func (b BookManager) SetContract(db *gorm.DB, book models.Book, data schemas.ContractCreateSchema) models.Book {
+func (b BookManager) SetContract(db *gorm.DB, book models.Book, idFrontImage string, idBackImage string, data schemas.ContractCreateSchema) models.Book {
 	book.FullName = data.FullName
 	book.Email = data.Email
 	book.PenName = data.PenName
@@ -152,10 +155,14 @@ func (b BookManager) SetContract(db *gorm.DB, book models.Book, data schemas.Con
 	book.Synopsis = data.Synopsis
 	book.Outline = data.Outline
 	book.IntendedContract = data.IntendedContract
-	book.FullPurchaseMode = data.FullPurchaseMode
-	username := book.Author.Username
-	book.IDFrontImage = username
-	book.IDBackImage = username
+	book.FullPurchaseMode = data.FullPurchaseMode	
+	if idFrontImage != "" {
+		book.IDFrontImage = idFrontImage
+	}
+	if idBackImage != "" {
+		book.IDBackImage = idBackImage
+	}
+
 	if book.ContractStatus == choices.CTS_DECLINED {
 		book.ContractStatus = choices.CTS_UPDATED
 	}

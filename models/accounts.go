@@ -48,15 +48,6 @@ func (user User) SubscriptionExpired() bool {
 	return time.Now().After(*user.SubscriptionExpiry)
 }
 
-func (u User) AvatarUrl() *string {
-	avatar := u.Avatar
-	if avatar != "" {
-		avatarUrl := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.UserImagesBucket, u.Avatar)
-		return &avatarUrl
-	}
-	return &avatar
-}
-
 func (user User) BooksCount() int {
 	return len(user.Books)
 }
@@ -75,7 +66,6 @@ func (user User) FullName() string {
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 	user.Password = utils.HashPassword(user.Password)
-	user.Avatar = user.Username
 	return
 }
 

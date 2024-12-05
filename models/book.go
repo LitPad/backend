@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/LitPad/backend/models/choices"
@@ -81,28 +80,6 @@ type Book struct {
 	ContractStatus       choices.ContractStatusChoice `gorm:"default:PENDING"`
 }
 
-func (b Book) CoverImageUrl() string {
-	return fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.BookCoverImagesBucket, b.CoverImage)
-}
-
-func (b Book) IDFrontImageUrl() *string {
-	imageText := b.IDFrontImage
-	if imageText != "" {
-		image := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.IDFrontImagesBucket, imageText)
-		return &image
-	}
-	return nil
-}
-
-func (b Book) IDBackImageUrl() *string {
-	imageText := b.IDBackImage
-	if imageText != "" {
-		image := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.IDBackImagesBucket, imageText)
-		return &image
-	}
-	return nil
-}
-
 func (b Book) ViewsCount() int {
 	views := b.Views
 	if len(views) > 0 {
@@ -150,7 +127,6 @@ func (b *Book) GenerateUniqueSlug(tx *gorm.DB) string {
 func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
 	slug := b.GenerateUniqueSlug(tx)
 	b.Slug = slug
-	b.CoverImage = slug
 	return
 }
 

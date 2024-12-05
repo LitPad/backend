@@ -1,51 +1,55 @@
 package routes
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
 
 	"github.com/LitPad/backend/utils"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
-var sess *session.Session
+var cld *cloudinary.Cloudinary
+var err error
 
-func init() {
-	var err error
-	// Configure the S3 client
-	sess, err = session.NewSession(&aws.Config{
-		Region:      aws.String("us-east-1"), // Dummy region, replace if necessary
-		Credentials: credentials.NewStaticCredentials(cfg.S3AccessKey, cfg.S3SecretKey, ""),
-		Endpoint:    aws.String(cfg.S3EndpointUrl),
-		S3ForcePathStyle: aws.Bool(true),
-	})
+func init () {
+	// Initialize Cloudinary client
+	cld, err = cloudinary.NewFromParams(cfg.CloudinaryCloudName, cfg.CloudinaryApiKey, cfg.CloudinaryApiSecret)
 	if err != nil {
-		log.Fatalf("Failed to create session: %v", err)
+		fmt.Println("failed to initialize Cloudinary client: %w", err)
 	}
 }
 
-// uploadToCloudinary uploads the file to Cloudinary and returns the URL of the uploaded file
-func UploadFile(fileHeader *multipart.FileHeader, key string, folder string) {
-	file, err := fileHeader.Open()
-	if err != nil {
-		log.Println("failed to open file")
+func UploadFile(file *multipart.FileHeader, folder string) string {
+	if cfg.Debug {
+		folder = fmt.Sprintf("test/%s", folder)
+	} else {
+		folder = fmt.Sprintf("live/%s", folder)
 	}
-	defer file.Close()
-	uploader := s3manager.NewUploader(sess)
 
-	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(folder),
-		Key:    aws.String(key),
-		Body:   file,
-	})
+	// Open the file
+	src, err := file.Open()
 	if err != nil {
-		log.Println("failed to upload file")
-	}	
+		fmt.Println("failed to open file: %w", err)
+		return ""
+	}
+	defer src.Close()
+
+	// Upload the file to Cloudinary
+	uploadResult, err := cld.Upload.Upload(context.Background(), src, uploader.UploadParams{Folder: folder})
+	if err != nil {
+		fmt.Println("failed to upload to Cloudinary: %w", err)
+		return ""
+	}
+	log.Println("Hahalalalla")
+
+	// Return the secure URL of the uploaded file
+	return uploadResult.SecureURL
 }
 
 func ValidateImage(c *fiber.Ctx, name string, required bool) (*multipart.FileHeader, *utils.ErrorResponse) {
@@ -68,7 +72,7 @@ func ValidateImage(c *fiber.Ctx, name string, required bool) (*multipart.FileHea
 		if err != nil {
 			return nil, &errData
 		}
-		
+
 		defer fileHandle.Close()
 
 		// Read the first 512 bytes for content type detection
@@ -81,8 +85,8 @@ func ValidateImage(c *fiber.Ctx, name string, required bool) (*multipart.FileHea
 		// Detect the content type
 		contentType := http.DetectContentType(buffer)
 		switch contentType {
-			case "image/jpeg", "image/png", "image/gif":
-				return file, nil
+		case "image/jpeg", "image/png", "image/gif":
+			return file, nil
 		}
 		return nil, &errData
 	}

@@ -247,9 +247,9 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(err)
 	}
 
-	book := bookManager.Create(db, *author, data, genre, "", tags)
 	// Upload File
-	UploadFile(file, book.CoverImage, cfg.BookCoverImagesBucket)
+	coverImage := UploadFile(file, "BOOK_COVER_IMAGES")
+	book := bookManager.Create(db, *author, data, genre, coverImage, tags)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
 		Data:           schemas.BookSchema{}.Init(book),
@@ -307,11 +307,14 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(err)
 	}
 
-	updatedBook := bookManager.Update(db, *book, data, genre, tags)
 	// Upload File
+	coverImage := ""
 	if file != nil {
-		UploadFile(file, updatedBook.CoverImage, cfg.BookCoverImagesBucket)
+		coverImage = UploadFile(file, "BOOK_COVER_IMAGES")
 	}
+
+	updatedBook := bookManager.Update(db, *book, data, genre, coverImage, tags)
+
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book updated successfully"),
 		Data:           schemas.BookSchema{}.Init(updatedBook),
@@ -902,25 +905,27 @@ func (ep Endpoint) SetContract(c *fiber.Ctx) error {
 	if book.FullName == "" {
 		imageRequired = true
 	}
-	id_front_image_file, id_front_image_file_err := ValidateImage(c, "id_front_image", imageRequired)
-	if id_front_image_file_err != nil {
-		return c.Status(422).JSON(id_front_image_file_err)
+	idFrontImageFile, idFrontImageFileErr := ValidateImage(c, "id_front_image", imageRequired)
+	if idFrontImageFileErr != nil {
+		return c.Status(422).JSON(idFrontImageFileErr)
 	}
 
-	id_back_image_file, id_back_image_file_err := ValidateImage(c, "id_back_image", imageRequired)
-	if id_back_image_file_err != nil {
-		return c.Status(422).JSON(id_back_image_file_err)
+	idBackImageFile, idBackImageFileErr := ValidateImage(c, "id_back_image", imageRequired)
+	if idBackImageFileErr != nil {
+		return c.Status(422).JSON(idBackImageFileErr)
 	}
-
-	updatedBook := bookManager.SetContract(db, *book, data)
 
 	// Upload File
-	if id_front_image_file != nil {
-		UploadFile(id_front_image_file, updatedBook.IDFrontImage, cfg.IDFrontImagesBucket)
+	var idFrontImage string
+	var idBackImage string
+	if idFrontImageFile != nil {
+		idFrontImage = UploadFile(idFrontImageFile, "ID_FRONT_IMAGES")
 	}
-	if id_back_image_file != nil {
-		UploadFile(id_back_image_file, updatedBook.IDBackImage, cfg.IDBackImagesBucket)
+	if idBackImageFile != nil {
+		idBackImage = UploadFile(idBackImageFile, "ID_BACK_IMAGES")
 	}
+
+	updatedBook := bookManager.SetContract(db, *book, idFrontImage, idBackImage, data)
 	response := schemas.ContractResponseSchema{
 		ResponseSchema: ResponseMessage("Contract set successfully"),
 		Data:           schemas.ContractSchema{}.Init(updatedBook),
