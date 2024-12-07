@@ -20,7 +20,7 @@ import (
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books/genres [post]
 // @Security BearerAuth
-func (ep Endpoint) AdminAddBookGenres(c *fiber.Ctx) error {
+func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 	db := ep.DB
 	data := schemas.GenreAddSchema{}
 	errCode, errData := ValidateRequest(c, &data);
@@ -44,7 +44,7 @@ func (ep Endpoint) AdminAddBookGenres(c *fiber.Ctx) error {
 	return c.Status(201).JSON(ResponseMessage("Genre added successfully"))
 }
 
-// @Summary Add Tags
+// @Summary Add Tag
 // @Description Add a new tag to the app.
 // @Tags Admin | Books
 // @Accept json
@@ -55,7 +55,7 @@ func (ep Endpoint) AdminAddBookGenres(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books/tags [post]
 // @Security BearerAuth
-func (ep Endpoint) AdminAddBookTags(c *fiber.Ctx) error {
+func (ep Endpoint) AdminAddBookTag(c *fiber.Ctx) error {
 	db := ep.DB
 	data := schemas.TagsAddSchema{}
 	errCode, errData := ValidateRequest(c, &data);
@@ -116,7 +116,7 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Genre updated successfully"))
 }
 
-// @Summary Update Tags
+// @Summary Update Tag
 // @Description Update a tag to the app.
 // @Tags Admin | Books
 // @Accept json
@@ -128,7 +128,7 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books/tags/{slug} [put]
 // @Security BearerAuth
-func (ep Endpoint) AdminUpdateBookTags(c *fiber.Ctx) error {
+func (ep Endpoint) AdminUpdateBookTag(c *fiber.Ctx) error {
 	db := ep.DB
 
 	tag := tagManager.GetBySlug(db, c.Params("slug"))
@@ -150,6 +150,51 @@ func (ep Endpoint) AdminUpdateBookTags(c *fiber.Ctx) error {
 	tag.Name = name
 	db.Save(&tag)
 	return c.Status(200).JSON(ResponseMessage("Tag updated successfully"))
+}
+
+// @Summary Delete Genre
+// @Description Delete a genre.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Genre slug"
+// @Success 200 {object} schemas.ResponseSchema "Genre Deleted Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/genres/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) AdminDeleteBookGenre(c *fiber.Ctx) error {
+	db := ep.DB
+	genre := genreManager.GetBySlug(db, c.Params("slug"))
+	if genre == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Genre does not exist"))
+	}
+	db.Model(&genre).Association("Tags").Clear()
+	db.Delete(&genre)
+	return c.Status(200).JSON(ResponseMessage("Genre deleted successfully"))
+}
+
+// @Summary Delete Tag
+// @Description Delete a tag from the app.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Tag slug"
+// @Success 200 {object} schemas.ResponseSchema "Tag delete successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/tags/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
+	db := ep.DB
+
+	tag := tagManager.GetBySlug(db, c.Params("slug"))
+	if tag == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Tag does not exist"))
+	}
+	db.Model(&tag).Association("Genres").Clear()
+	db.Delete(&tag)
+	return c.Status(200).JSON(ResponseMessage("Tag deleted successfully"))
 }
 
 // @Summary List Books with Pagination

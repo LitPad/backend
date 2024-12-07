@@ -12,8 +12,9 @@ import (
 
 type Tag struct {
 	BaseModel
-	Name string `gorm:"unique"`
-	Slug string `gorm:"unique"`
+	Name   string  `gorm:"unique"`
+	Slug   string  `gorm:"unique"`
+	Genres []Genre `gorm:"many2many:genre_tags;"`
 }
 
 func (tag *Tag) BeforeSave(tx *gorm.DB) (err error) {
@@ -25,7 +26,7 @@ type Genre struct {
 	BaseModel
 	Name string `gorm:"unique"`
 	Slug string `gorm:"unique"`
-	Tags []Tag  `json:"tags" gorm:"many2many:genre_tags;"`
+	Tags []Tag  `gorm:"many2many:genre_tags;"`
 }
 
 func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
@@ -36,14 +37,14 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 type Book struct {
 	BaseModel
 	AuthorID      uuid.UUID
-	Author        User   `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
+	Author        User   `gorm:"foreignKey:AuthorID;constraint:OnDelete:SET NULL;<-:false"`
 	Title         string `gorm:"type: varchar(255)"`
 	Slug          string `gorm:"unique"`
 	Blurb         string `gorm:"type: varchar(255)"`
 	AgeDiscretion choices.AgeType
 
 	GenreID    uuid.UUID `json:"genre_id"`
-	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
+	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 	Tags       []Tag     `gorm:"many2many:book_tags;<-:false"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`

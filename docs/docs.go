@@ -238,6 +238,53 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a genre.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Delete Genre",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Genre slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Genre Deleted Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/admin/books/tags": {
@@ -257,7 +304,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin | Books"
                 ],
-                "summary": "Add Tags",
+                "summary": "Add Tag",
                 "parameters": [
                     {
                         "description": "Tag",
@@ -308,7 +355,7 @@ const docTemplate = `{
                 "tags": [
                     "Admin | Books"
                 ],
-                "summary": "Update Tags",
+                "summary": "Update Tag",
                 "parameters": [
                     {
                         "type": "string",
@@ -330,6 +377,53 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Tag updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a tag from the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Delete Tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag delete successfully",
                         "schema": {
                             "$ref": "#/definitions/schemas.ResponseSchema"
                         }

@@ -1457,6 +1457,36 @@ paths:
       tags:
       - Admin | Books
   /admin/books/genres/{slug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a genre.
+      parameters:
+      - description: Genre slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Genre Deleted Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Genre
+      tags:
+      - Admin | Books
     put:
       consumes:
       - application/json
@@ -1522,10 +1552,40 @@ paths:
             $ref: '#/definitions/utils.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Add Tags
+      summary: Add Tag
       tags:
       - Admin | Books
   /admin/books/tags/{slug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a tag from the app.
+      parameters:
+      - description: Tag slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tag delete successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Tag
+      tags:
+      - Admin | Books
     put:
       consumes:
       - application/json
@@ -1559,7 +1619,7 @@ paths:
             $ref: '#/definitions/utils.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update Tags
+      summary: Update Tag
       tags:
       - Admin | Books
   /admin/payments/transactions:
