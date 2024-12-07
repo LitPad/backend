@@ -556,6 +556,17 @@ definitions:
       username:
         type: string
     type: object
+  schemas.GenreAddSchema:
+    properties:
+      name:
+        type: string
+      tag_slugs:
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
   schemas.GenreSchema:
     properties:
       name:
@@ -1064,6 +1075,13 @@ definitions:
       slug:
         type: string
     type: object
+  schemas.TagsAddSchema:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   schemas.TagsResponseSchema:
     properties:
       data:
@@ -1365,7 +1383,7 @@ paths:
       summary: List Books with Pagination
       tags:
       - Admin | Books
-  /admin/contracts:
+  /admin/books/contracts:
     get:
       consumes:
       - application/json
@@ -1404,6 +1422,144 @@ paths:
       security:
       - BearerAuth: []
       summary: List Book Contracts with Pagination
+      tags:
+      - Admin | Books
+  /admin/books/genres:
+    post:
+      consumes:
+      - application/json
+      description: Add a new genre to the app.
+      parameters:
+      - description: Genre
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.GenreAddSchema'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Genre Added Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Genre
+      tags:
+      - Admin | Books
+  /admin/books/genres/{slug}:
+    put:
+      consumes:
+      - application/json
+      description: Update a genre.
+      parameters:
+      - description: Genre slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Genre
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.GenreAddSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Genre Updated Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Genre
+      tags:
+      - Admin | Books
+  /admin/books/tags:
+    post:
+      consumes:
+      - application/json
+      description: Add a new tag to the app.
+      parameters:
+      - description: Tag
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tag added successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Tags
+      tags:
+      - Admin | Books
+  /admin/books/tags/{slug}:
+    put:
+      consumes:
+      - application/json
+      description: Update a tag to the app.
+      parameters:
+      - description: Tag slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Tag
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tag updated successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Tags
       tags:
       - Admin | Books
   /admin/payments/transactions:

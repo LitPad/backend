@@ -55,3 +55,8 @@ func RequestErr(code string, message string, opts ...map[string]string) ErrorRes
 func NotFoundErr(message string) ErrorResponse {
 	return RequestErr(ERR_NON_EXISTENT, message)
 }
+
+func ValidationErr(field string, message string) ErrorResponse {
+	data := map[string]string{field: message}
+	return RequestErr(ERR_INVALID_ENTRY, "Invalid Entry", data)
+}

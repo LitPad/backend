@@ -215,18 +215,30 @@ func (t TagManager) GetAll(db *gorm.DB) []models.Tag {
 	return tags
 }
 
+func (t TagManager) GetBySlug(db *gorm.DB, slug string) *models.Tag {
+	
+	tag := models.Tag{Slug:slug}
+	db.Take(&tag, tag)
+
+	if tag.ID == uuid.Nil{
+		return nil
+	}
+
+	return &tag
+}
+
 type GenreManager struct {
 	Model     models.Genre
 	ModelList []models.Genre
 }
 
-func (t GenreManager) GetAll(db *gorm.DB) []models.Genre {
-	genres := t.ModelList
+func (g GenreManager) GetAll(db *gorm.DB) []models.Genre {
+	genres := g.ModelList
 	db.Preload("Tags").Find(&genres)
 	return genres
 }
 
-func (t GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
+func (g GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
 	
 	genre := models.Genre{Slug:slug}
 	db.Take(&genre, genre)

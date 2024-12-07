@@ -117,7 +117,11 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 
 	// Admin Books (2)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
-	adminRouter.Get("/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
+	adminRouter.Get("/books/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
+	adminRouter.Post("/books/genres", endpoint.AdminMiddleware, endpoint.AdminAddBookGenres)
+	adminRouter.Post("/books/tags", endpoint.AdminMiddleware, endpoint.AdminAddBookTags)
+	adminRouter.Put("/books/genres/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookGenre)
+	adminRouter.Put("/books/tags/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookTags)
 
 	// Admin Waitlist (1)
 	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
