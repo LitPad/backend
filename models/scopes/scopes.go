@@ -21,8 +21,16 @@ func AuthorGenreTagBookScope(db *gorm.DB) *gorm.DB {
 	return db.Joins("Author").Joins("Genre").Preload("Tags").Preload("Chapters").Preload("Votes")
 }
 
+func AuthorGenreTagBookPreloadScope(db *gorm.DB) *gorm.DB {
+	return db.Preload("Author").Preload("Genre").Preload("Tags").Preload("Chapters").Preload("Votes")
+}
+
+func TagsChaptersVotesBookScope(db *gorm.DB) *gorm.DB {
+	return db.Preload("Tags").Preload("Chapters").Preload("Votes")
+}
+
 func AuthorGenreTagReviewsBookScope(db *gorm.DB) *gorm.DB {
-	return db.Scopes(AuthorGenreTagBookScope).Preload("Reviews").Preload("Reviews.User").Preload("Reviews.Likes").Preload("Reviews.Replies")
+	return db.Scopes(AuthorGenreTagBookPreloadScope).Preload("Reviews").Preload("Reviews.User").Preload("Reviews.Likes").Preload("Reviews.Replies")
 }
 
 func BoughtChapterScope(db *gorm.DB) *gorm.DB {

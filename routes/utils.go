@@ -15,6 +15,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var falsy = false
+
 func ResponseMessage(message string) schemas.ResponseSchema {
 	return schemas.ResponseSchema{Status: "success", Message: message}
 }
@@ -149,7 +151,7 @@ func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {
 
 func IsAmongUserType(target string) bool {
     switch target {
-    case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_WRITER):
+    case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_AUTHOR):
         return true
     }
     return false

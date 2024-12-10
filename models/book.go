@@ -53,6 +53,7 @@ type Book struct {
 	Views     string   `gorm:"type:varchar(10000000)"`
 	Reviews   []Review `gorm:"<-:false"`
 	Votes     []Vote   `gorm:"<-:false"`
+	AvgRating float64
 
 	// BOOK CONTRACT
 	FullName             string `gorm:"type: varchar(1000)"`

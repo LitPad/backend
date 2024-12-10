@@ -69,7 +69,7 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "")
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, "", "")
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -104,7 +104,7 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", username)
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, username, "")
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -578,9 +578,11 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 	}
 
 	// Check if current user has bought at least a chapter of the book
-	chapterBought := boughtChapterManager.CheckIfAtLeastAChapterWasBought(db, user, *book)
-	if !chapterBought {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Only the reader who has bought at least a chapter of the book can review it"))
+	if (user.SubscriptionExpired()) {
+		chapterBought := boughtChapterManager.CheckIfAtLeastAChapterWasBought(db, user, *book)
+		if !chapterBought {
+			return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "User doesn't have active subscription and/or hasn't bought at least a chapter of the book"))
+		}
 	}
 	data := schemas.ReviewBookSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {

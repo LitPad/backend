@@ -79,6 +79,7 @@ type BookSchema struct {
 	ChapterPrice       int                   `json:"chapter_price"`
 	Views              int                   `json:"views"`
 	Votes              int                   `json:"votes"`
+	AvgRating          float64               `json:"avg_rating"`
 	CreatedAt          time.Time             `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt          time.Time             `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
@@ -103,6 +104,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.WordCount = book.WordCount()
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()
+	b.AvgRating = book.AvgRating
 
 	chapters := book.Chapters
 	if len(chapters) > 0 {

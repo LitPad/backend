@@ -30,9 +30,9 @@ func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
 func createWriter(db *gorm.DB, cfg config.Config) models.User {
 	user := models.User{
 		FirstName:       "Test",
-		LastName:        "Writer",
-		Username:        "test-writer",
-		AccountType:     choices.ACCTYPE_WRITER,
+		LastName:        "Author",
+		Username:        "test-author",
+		AccountType:     choices.ACCTYPE_AUTHOR,
 		Email:           cfg.FirstWriterEmail,
 		Password:        cfg.FirstWriterPassword,
 		IsEmailVerified: true,

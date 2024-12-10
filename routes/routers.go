@@ -117,6 +117,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB, ws *internetcomputer.WalletService
 
 	// Admin Books (2)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
+	adminRouter.Get("/books/by-username/:username", endpoint.AdminMiddleware, endpoint.AdminGetAuthorBooks)
+	adminRouter.Get("/books/book-detail/:slug", endpoint.AdminMiddleware, endpoint.AdminGetBookDetails)
 	adminRouter.Get("/books/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
 	adminRouter.Post("/books/genres", endpoint.AdminMiddleware, endpoint.AdminAddBookGenre)
 	adminRouter.Post("/books/tags", endpoint.AdminMiddleware, endpoint.AdminAddBookTag)

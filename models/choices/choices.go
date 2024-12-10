@@ -4,11 +4,11 @@ type AccType string
 
 const (
 	ACCTYPE_READER AccType = "READER"
-	ACCTYPE_WRITER AccType = "WRITER"
+	ACCTYPE_AUTHOR AccType = "AUTHOR"
 )
 func (a AccType) IsValid() bool {
 	switch a {
-	case ACCTYPE_READER, ACCTYPE_WRITER:
+	case ACCTYPE_READER, ACCTYPE_AUTHOR:
 		return true
 	}
 	return false

@@ -1367,6 +1367,23 @@ paths:
         in: query
         name: title
         type: string
+      - description: First name, last name or username of the book author to filter
+          by
+        in: query
+        name: name
+        type: string
+      - description: Filter by highest ratings
+        in: query
+        name: rating
+        type: boolean
+      - description: Filter by Genre slug
+        in: query
+        name: genre_slug
+        type: string
+      - description: Filter by Tag slug
+        in: query
+        name: tag_slug
+        type: string
       produces:
       - application/json
       responses:
@@ -1381,6 +1398,83 @@ paths:
       security:
       - BearerAuth: []
       summary: List Books with Pagination
+      tags:
+      - Admin | Books
+  /admin/books/book-detail/{slug}:
+    get:
+      description: This endpoint allows an admin to view details of a book
+      parameters:
+      - default: 1
+        description: Current Page (for reviews pagination)
+        in: query
+        name: page
+        type: integer
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BookDetailResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Book Details
+      tags:
+      - Admin | Books
+  /admin/books/by-username/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of a particular author books with support for
+        pagination and optional filtering based on book title.
+      parameters:
+      - description: Username of the author
+        in: path
+        name: username
+        required: true
+        type: string
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      - description: Title of the book to filter by
+        in: query
+        name: title
+        type: string
+      - description: Filter by highest ratings
+        in: query
+        name: rating
+        type: boolean
+      - description: Filter by Genre slug
+        in: query
+        name: genre_slug
+        type: string
+      - description: Filter by Tag slug
+        in: query
+        name: tag_slug
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of books
+          schema:
+            $ref: '#/definitions/schemas.BooksResponseSchema'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Author Books with Pagination
       tags:
       - Admin | Books
   /admin/books/contracts:

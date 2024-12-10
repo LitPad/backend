@@ -204,6 +204,10 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 // @Produce json
 // @Param page query int false "Current Page" default(1)
 // @Param title query string false "Title of the book to filter by"
+// @Param name query string false "First name, last name or username of the book author to filter by"
+// @Param rating query bool false "Filter by highest ratings"
+// @Param genre_slug query string false "Filter by Genre slug"
+// @Param tag_slug query string false "Filter by Tag slug"
 // @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books [get]
@@ -211,7 +215,12 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	titleQuery := c.Query("title", "")
-	books, _ := bookManager.GetLatest(db, "", "", titleQuery)
+	ratingQuery := c.QueryBool("rating", false)
+	nameQuery := c.Query("name", "")
+	genreSlug := c.Query("genre_slug", "")
+	tagSlug := c.Query("tag_slug", "")
+
+	books, _ := bookManager.GetLatest(db, genreSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
@@ -224,6 +233,83 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 		Data: schemas.BooksResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(books),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary List Author Books with Pagination
+// @Description Retrieves a list of a particular author books with support for pagination and optional filtering based on book title.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param username path string true "Username of the author"
+// @Param page query int false "Current Page" default(1)
+// @Param title query string false "Title of the book to filter by"
+// @Param rating query bool false "Filter by highest ratings"
+// @Param genre_slug query string false "Filter by Genre slug"
+// @Param tag_slug query string false "Filter by Tag slug"
+// @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/by-username/{username} [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
+	db := ep.DB
+	titleQuery := c.Query("title", "")
+	ratingQuery := c.QueryBool("rating", false)
+	username := c.Params("username")
+	genreSlug := c.Query("genre_slug", "")
+	tagSlug := c.Query("tag_slug", "")
+
+	author := models.User{Username: username, AccountType: choices.ACCTYPE_AUTHOR}
+	db.Take(&author, author)
+
+	if author.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Author does not exist!"))
+	}
+
+	books, _ := bookManager.GetLatest(db, genreSlug, tagSlug, titleQuery, ratingQuery, username, "")
+
+	// Paginate and return books
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	books = paginatedBooks.([]models.Book)
+	response := schemas.BooksResponseSchema{
+		ResponseSchema: ResponseMessage("Books fetched successfully"),
+		Data: schemas.BooksResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(books),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Book Details
+// @Description This endpoint allows an admin to view details of a book
+// @Tags Admin | Books
+// @Param page query int false "Current Page (for reviews pagination)" default(1)
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.BookDetailResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /admin/books/book-detail/{slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetBookDetails(c *fiber.Ctx) error {
+	db := ep.DB
+	book, err := bookManager.GetBySlugWithReviews(db, c.Params("slug"))
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	// Paginate book reviews
+	paginatedData, paginatedReviews, err := PaginateQueryset(book.Reviews, c, 30)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+
+	reviews := paginatedReviews.([]models.Review)
+	response := schemas.BookDetailResponseSchema{
+		ResponseSchema: ResponseMessage("Book details fetched successfully"),
+		Data:           schemas.BookDetailSchema{}.Init(*book, *paginatedData, reviews),
 	}
 	return c.Status(200).JSON(response)
 }

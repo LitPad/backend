@@ -16,7 +16,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, title string, usernameOpts ...string) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, title string, byRating bool, username string, nameContains string) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -33,8 +33,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 		tag := models.Tag{Slug: tagSlug}
 		db.Take(&tag, tag)
 		if tag.ID == uuid.Nil {
-			errData := utils.RequestErr(utils.ERR_NON_EXISTENT, "Invalid book tag")
-			return books, &errData
+			return books, nil
 		}
 		query = query.Where("books.id IN (?)", db.Table("book_tags").Select("book_id").Where("tag_id = ?", tag.ID))
 	}
@@ -43,9 +42,8 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 		query = query.Where("title ILIKE ?", "%"+title+"%")
 	}
 
-	if len(usernameOpts) > 0 {
-		username := usernameOpts[0]
-		author := models.User{Username: username, AccountType: choices.ACCTYPE_WRITER}
+	if username != "" {
+		author := models.User{Username: username, AccountType: choices.ACCTYPE_AUTHOR}
 		db.Take(&author, author)
 		if author.ID == uuid.Nil {
 			errData := utils.RequestErr(utils.ERR_NON_EXISTENT, "Invalid author username")
@@ -53,7 +51,22 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 		}
 		query = query.Where(models.Book{AuthorID: author.ID})
 	}
-	query.Scopes(scopes.AuthorGenreTagBookScope).Order("created_at DESC").Find(&books)
+
+	if nameContains != "" {
+		query = query.Joins("left join users on users.id = books.author_id").
+			Where("users.username ILIKE ? OR users.first_name ILIKE ? OR users.last_name ILIKE ?", "%"+nameContains+"%", "%"+nameContains+"%", "%"+nameContains+"%")
+	}
+
+	query = query.Select("books.*, COALESCE(AVG(reviews.rating), 0) AS avg_rating").
+		Joins("left join reviews on reviews.book_id = books.id").
+		Group("books.id")
+
+	if byRating {
+		query = query.Order("COALESCE(AVG(reviews.rating), 0) DESC")
+	} else {
+		query = query.Order("books.created_at DESC")
+	}
+	query.Scopes(scopes.AuthorGenreTagBookPreloadScope).Find(&books)
 	return books, nil
 }
 
@@ -67,7 +80,7 @@ func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.E
 	return &book, nil
 }
 
-func (b BookManager) GetBookContracts(db *gorm.DB, name *string, contractStatus *choices.ContractStatusChoice) ([]models.Book) {
+func (b BookManager) GetBookContracts(db *gorm.DB, name *string, contractStatus *choices.ContractStatusChoice) []models.Book {
 	books := []models.Book{}
 	q := db.Not("full_name = ?", "")
 	if contractStatus != nil {
@@ -92,7 +105,11 @@ func (b BookManager) GetContractedBookBySlug(db *gorm.DB, slug string) (*models.
 
 func (b BookManager) GetBySlugWithReviews(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
-	db.Scopes(scopes.AuthorGenreTagReviewsBookScope).Take(&book, book)
+	db.Scopes(scopes.AuthorGenreTagReviewsBookScope).
+		Select("books.*, AVG(reviews.rating) as avg_rating").
+		Joins("LEFT JOIN reviews ON reviews.book_id = books.id").
+		Group("books.id").
+		Take(&book, book)
 	if book.ID == uuid.Nil {
 		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "No book with that slug")
 		return nil, &errD
@@ -155,7 +172,7 @@ func (b BookManager) SetContract(db *gorm.DB, book models.Book, idFrontImage str
 	book.Synopsis = data.Synopsis
 	book.Outline = data.Outline
 	book.IntendedContract = data.IntendedContract
-	book.FullPurchaseMode = data.FullPurchaseMode	
+	book.FullPurchaseMode = data.FullPurchaseMode
 	if idFrontImage != "" {
 		book.IDFrontImage = idFrontImage
 	}
@@ -216,11 +233,11 @@ func (t TagManager) GetAll(db *gorm.DB) []models.Tag {
 }
 
 func (t TagManager) GetBySlug(db *gorm.DB, slug string) *models.Tag {
-	
-	tag := models.Tag{Slug:slug}
+
+	tag := models.Tag{Slug: slug}
 	db.Take(&tag, tag)
 
-	if tag.ID == uuid.Nil{
+	if tag.ID == uuid.Nil {
 		return nil
 	}
 
@@ -239,11 +256,11 @@ func (g GenreManager) GetAll(db *gorm.DB) []models.Genre {
 }
 
 func (g GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
-	
-	genre := models.Genre{Slug:slug}
+
+	genre := models.Genre{Slug: slug}
 	db.Take(&genre, genre)
 
-	if genre.ID == uuid.Nil{
+	if genre.ID == uuid.Nil {
 		return nil
 	}
 
@@ -266,7 +283,7 @@ func (b BoughtChapterManager) GetBoughtChapters(db *gorm.DB, buyer *models.User,
 			chapters = append(chapters, boughtChapters[i].Chapter)
 		}
 	}
-	
+
 	if len(chapters) == 0 {
 		// If the user hasn't bought any, he should see the first chapter for free
 		chapters = book.Chapters[:1]
