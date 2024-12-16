@@ -107,6 +107,10 @@ type TransactionsResponseSchema struct {
 	Data TransactionsResponseDataSchema `json:"data"`
 }
 
+type CreateICPWallet struct{
+	Username       string `json:"username" validate:"required,max=1000" example:"john-doe"`
+}
+
 type SubscriptionPlanSchema struct {
 	Amount  decimal.Decimal                `json:"amount" validate:"required"`
 	SubType choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
@@ -142,3 +146,4 @@ type CreateSubscriptionSchema struct {
 	SubType            choices.SubscriptionTypeChoice `json:"subtype" validate:"required,subscription_type_validator"`
 	PaymentMethodToken string                         `json:"payment_method_token" validate:"required"`
 }
+

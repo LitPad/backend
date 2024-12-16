@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"time"
 
@@ -219,22 +218,6 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 		log.Printf("Unhandled event type: %s\n", event.Type)
 	}
 	return c.SendStatus(fiber.StatusOK)
-}
-
-func (ws WalletService) GetOnChainBalance(c *fiber.Ctx) error {
-	accountID := c.Query("accountID")
-
-	if len(accountID) == 0 {
-		return c.Status(400).JSON(fiber.Map{"err": errors.New("Provide a valid account id")})
-	}
-
-	balance, err := ws.WS.GetBalance(accountID)
-
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"err": errors.New("Failed to retrieve balance")})
-	}
-
-	return c.JSON(fiber.Map{"balance": balance})
 }
 
 // @Summary List Available Subscription Plans
