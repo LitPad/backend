@@ -10,10 +10,12 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/shopspring/decimal"
-	"github.com/stripe/stripe-go/v78"
-	"github.com/stripe/stripe-go/v78/checkout/session"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/paymentintent"
 	"gorm.io/gorm"
 )
+
+var falsy = false
 
 func ResponseMessage(message string) schemas.ResponseSchema {
 	return schemas.ResponseSchema{Status: "success", Message: message}
@@ -28,40 +30,64 @@ func GetBaseReferer(c *fiber.Ctx) string {
 	return string(referer[:])
 }
 
-func CreateCheckoutSession(c *fiber.Ctx, db *gorm.DB, user models.User, coin models.Coin, quantity int64) (*models.Transaction, *utils.ErrorResponse) {
-	baseUrl := GetBaseReferer(c)
-	stripe.Key = cfg.StripeSecretKey
-	price := coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
-	productName := fmt.Sprintf("%s coins", fmt.Sprint(coin.Amount))
-	params := &stripe.CheckoutSessionParams{
-		SuccessURL: stripe.String(baseUrl + cfg.StripeCheckoutSuccessUrlPath),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{
-			{
-				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-					Currency: stripe.String(string(stripe.CurrencyUSD)),
-					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-						Name: &productName,
-					},
-					TaxBehavior: stripe.String(string(stripe.PriceTaxBehaviorExclusive)),
-					UnitAmount:  stripe.Int64(price),
-				},
-				Quantity: stripe.Int64(quantity),
-			},
-		},
-		Mode:          stripe.String(string(stripe.CheckoutSessionModePayment)),
-		CustomerEmail: &user.Email,
-	}
-	s, err := session.New(params)
-	if err != nil {
-		errD := utils.RequestErr(utils.ERR_SERVER_ERROR, "Something went wrong")
-		return nil, &errD
+func CreatePaymentIntent(db *gorm.DB, user models.User, plan *models.SubscriptionPlan, paymentToken *string, coin *models.Coin, quantity int) (*models.Transaction, *utils.ErrorResponse) {
+    stripe.Key = cfg.StripeSecretKey
+	var price int64
+	if coin != nil {
+		price = coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
+	} else {
+		price = plan.Amount.Mul(decimal.NewFromFloat(100)).IntPart()
 	}
 
-	// Create Transaction Object
-	transaction := models.Transaction{Reference: s.ID, UserID: user.ID, CoinID: coin.ID, PaymentType: choices.PTYPE_STRIPE, Quantity: quantity, CheckoutURL: s.URL}
-	db.Create(&transaction)
-	transaction.Coin = coin
-	return &transaction, nil
+    // Base PaymentIntent parameters
+    params := &stripe.PaymentIntentParams{
+        Amount:   stripe.Int64(price),
+        Currency: stripe.String(string(stripe.CurrencyUSD)),
+    }
+
+    // Determine payment method type based on token presence
+    if paymentToken != nil {
+        // Google Pay (Token provided)
+        params.PaymentMethodData = &stripe.PaymentIntentPaymentMethodDataParams{
+            Type: stripe.String("card"),
+            Card: &stripe.PaymentMethodCardParams{
+                Token: stripe.String(*paymentToken), // Tokenized card
+            },
+        }
+        params.ConfirmationMethod = stripe.String(string(stripe.PaymentIntentConfirmationMethodManual))
+        params.Confirm = stripe.Bool(true)
+    } else {
+        // Card, Cashapp, etc (No token provided)
+        params.PaymentMethodTypes = stripe.StringSlice([]string{"card", "cashapp"})
+    }
+
+    // Create the Payment Intent
+    intent, err := paymentintent.New(params)
+    if err != nil {
+        errD := utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to create Payment Intent")
+        return nil, &errD
+    }
+
+    // Create Transaction Object
+    transaction := models.Transaction{
+        Reference: intent.ID,
+        UserID: user.ID,
+		Quantity: quantity,
+		ClientSecret: intent.ClientSecret,
+    }
+	if coin != nil {
+		transaction.CoinID = &coin.ID
+		transaction.PaymentType = choices.PTYPE_STRIPE
+		transaction.PaymentPurpose = choices.PP_COINS
+	} else {
+		transaction.SubscriptionPlanID = &plan.ID
+		transaction.PaymentType = choices.PTYPE_GPAY
+		transaction.PaymentPurpose = choices.PP_SUB
+	}
+    db.Create(&transaction)
+    transaction.SubscriptionPlan = plan
+    transaction.Coin = coin
+    return &transaction, nil
 }
 
 func IsValidPaymentStatus(s string) bool {
@@ -125,8 +151,16 @@ func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {
 
 func IsAmongUserType(target string) bool {
     switch target {
-    case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_WRITER):
+    case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_AUTHOR):
         return true
     }
     return false
+}
+
+func GetQueryValue (c *fiber.Ctx, key string) *string {
+	value := c.Query(key, "")
+	if value == "" {
+		return nil
+	}
+	return &value
 }

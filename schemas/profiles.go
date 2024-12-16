@@ -20,7 +20,7 @@ type FollowerData struct {
 func (dto FollowerData) FromModel(user models.User) FollowerData {
 	dto.Name = user.FullName()
 	dto.Username = user.Username
-	dto.Avatar = user.AvatarUrl()
+	dto.Avatar = &user.Avatar
 	dto.AccountType = user.AccountType
 	dto.FollowersCount = user.FollowersCount()
 	dto.StoriesCount = user.BooksCount()
@@ -59,7 +59,7 @@ func (u UserProfile) Init(user models.User) UserProfile {
 		LastName:     user.LastName,
 		Username:     user.Username,
 		Email:        user.Email,
-		Avatar:       user.AvatarUrl(),
+		Avatar:       &user.Avatar,
 		Bio:          user.Bio,
 		AccountType:  user.AccountType,
 		Followers:    followers,
@@ -81,8 +81,7 @@ type UpdateUserProfileSchema struct {
 }
 
 type UpdateUserRoleSchema struct {
-	AccountType string `json:"acc_type" validate:"min=6,max=7" example:"WRITER"` 
-	Username *string `json:"username,omitempty" validate:"min=3,max=1000" example:"john-doe"` 
+	AccountType choices.AccType `json:"account_type" validate:"account_type_validator" example:"WRITER"`
 }
 
 type UpdatePasswordSchema struct {
@@ -120,7 +119,7 @@ func (n NotificationSchema) Init(notification models.Notification, showReceiver 
 		n.Book = &NotificationBookSchema{
 			Title:      notification.Book.Title,
 			Slug:       notification.Book.Slug,
-			CoverImage: notification.Book.CoverImageUrl(),
+			CoverImage: notification.Book.CoverImage,
 		}
 	}
 	n.ReviewID = notification.ReviewID

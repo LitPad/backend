@@ -28,7 +28,6 @@ func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 	dec.DisallowUnknownFields()
 
 	err := dec.Decode(&dst)
-
 	msg := "Invalid Entry"
 	fieldErrors := make(map[string]string)
 	status_code := 422

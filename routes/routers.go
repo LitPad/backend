@@ -84,27 +84,49 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	giftsRouter.Get("/sent", endpoint.AuthorMiddleware, endpoint.GetAllSentGifts)
 	giftsRouter.Get("/sent/:id/claim", endpoint.AuthorMiddleware, endpoint.ClaimGift)
 
-	// Wallet Routes (4)
+	// Wallet Routes (7)
 	walletRouter := api.Group("/wallet")
 	walletRouter.Get("/coins", endpoint.AvailableCoins)
 	walletRouter.Post("/coins", endpoint.AuthMiddleware, endpoint.BuyCoins)
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
+	walletRouter.Get("/plans", endpoint.GetSubscriptionPlans)
+	walletRouter.Put("/plans", endpoint.AdminMiddleware, endpoint.UpdateSubscriptionPlan)
+	walletRouter.Post("/subscription", endpoint.AuthMiddleware, endpoint.BookSubscription)
 
 	// ICP Wallet Routes
 	icpWalletRouter := walletRouter.Group("/icp")
 	icpWalletRouter.Post("/",  endpoint.CreateICPWallet)
 	icpWalletRouter.Get("/:username/balance", endpoint.GetICPWalletBalance)
 
-	// Admin Routes (2)
+	// ADMIN ROUTES (7)
 	adminRouter := api.Group("/admin")
-	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
-	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
-	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
-	adminRouter.Put("/users/user", endpoint.AdminMiddleware,endpoint.AdminUpdateUser)
+	// Admin Users
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
-	adminRouter.Get("/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
+	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
+	adminRouter.Put("/users/:username", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
+	adminRouter.Get("/users/:username/toggle-activation", endpoint.AdminMiddleware, endpoint.ToggleUserActivation)
 
+	// Admin Books (2)
+	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)
+	adminRouter.Get("/books/by-username/:username", endpoint.AdminMiddleware, endpoint.AdminGetAuthorBooks)
+	adminRouter.Get("/books/book-detail/:slug", endpoint.AdminMiddleware, endpoint.AdminGetBookDetails)
+	adminRouter.Get("/books/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
+	adminRouter.Post("/books/genres", endpoint.AdminMiddleware, endpoint.AdminAddBookGenre)
+	adminRouter.Post("/books/tags", endpoint.AdminMiddleware, endpoint.AdminAddBookTag)
+	adminRouter.Put("/books/genres/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookGenre)
+	adminRouter.Put("/books/tags/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookTag)
+	adminRouter.Delete("/books/genres/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookGenre)
+	adminRouter.Delete("/books/tags/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookTag)
+
+	// Admin Waitlist (1)
+	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
+
+	// Admin Payments (1)
+	adminRouter.Get("/payments/transactions", endpoint.AdminMiddleware, endpoint.AdminGetTransactions)
+	// --------------------------------------------------------------------------------
+
+	// Waitlist Routes (1)
 	api.Post("/waitlist", endpoint.AddToWaitlist)
 
 	// Register Sockets (1)

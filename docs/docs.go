@@ -36,7 +36,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Books"
                 ],
                 "summary": "List Books with Pagination",
                 "parameters": [
@@ -51,6 +51,30 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Title of the book to filter by",
                         "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "First name, last name or username of the book author to filter by",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by highest ratings",
+                        "name": "rating",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Genre slug",
+                        "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Tag slug",
+                        "name": "tag_slug",
                         "in": "query"
                     }
                 ],
@@ -70,7 +94,125 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/contracts": {
+        "/admin/books/book-detail/{slug}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows an admin to view details of a book",
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "View Book Details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page (for reviews pagination)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookDetailResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/by-username/{username}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of a particular author books with support for pagination and optional filtering based on book title.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "List Author Books with Pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of the author",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Title of the book to filter by",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by highest ratings",
+                        "name": "rating",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Genre slug",
+                        "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Tag slug",
+                        "name": "tag_slug",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of books",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BooksResponseSchema"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/contracts": {
             "get": {
                 "security": [
                     {
@@ -85,7 +227,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Books"
                 ],
                 "summary": "List Book Contracts with Pagination",
                 "parameters": [
@@ -131,6 +273,373 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/books/genres": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new genre to the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Add Genre",
+                "parameters": [
+                    {
+                        "description": "Genre",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GenreAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Genre Added Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/genres/{slug}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a genre.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Update Genre",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Genre slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Genre",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.GenreAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Genre Updated Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a genre.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Delete Genre",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Genre slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Genre Deleted Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/tags": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new tag to the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Add Tag",
+                "parameters": [
+                    {
+                        "description": "Tag",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Tag added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/tags/{slug}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a tag to the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Update Tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Tag",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a tag from the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Delete Tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tag delete successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/payments/transactions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of current transactions with support for pagination and optional filtering based on username.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Payments"
+                ],
+                "summary": "Latest Transactions with Pagination",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username to filter by",
+                        "name": "username",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of transactions",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TransactionsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -146,7 +655,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Users"
                 ],
                 "summary": "List Users with Pagination",
                 "parameters": [
@@ -191,7 +700,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/users/user": {
+        "/admin/users/{username}": {
             "put": {
                 "security": [
                     {
@@ -206,10 +715,18 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "Admin | Users"
                 ],
                 "summary": "Update User Role",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "default": "username",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "User role update data",
                         "name": "data",
@@ -227,6 +744,56 @@ const docTemplate = `{
                             "$ref": "#/definitions/schemas.UserProfileResponseSchema"
                         }
                     },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{username}/toggle-activation": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Allows the admin to deactivate/reactivate a user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Users"
+                ],
+                "summary": "Reactivate/Deactivate User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "username",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
                     "400": {
                         "description": "Invalid request data",
                         "schema": {
@@ -2521,10 +3088,118 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/schemas.CreateICPWallet"
+                            
+        "/wallet/plans": {
+            "get": {
+                "description": "Retrieves a list of available subscription plans.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "List Available Subscription Plans",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of plans",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlansResponseSchema"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows an admin to change the amount of a plan",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Update A Plan Amount",
+                "parameters": [
+                    {
+                        "description": "Plan data",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
                         }
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlanResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallet/subscription": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to create a subscription for books",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Subscribe",
+                "parameters": [
+                    {
+                        "description": "Payment object",
+                        "name": "subscription",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.CreateSubscriptionSchema"
+
+                        }
+                    }
+                ],
+                "responses": {
+
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.PaymentResponseSchema"
+                        }
+                    },
+
                     "400": {
                         "description": "Bad Request",
                         "schema": {
@@ -2680,6 +3355,17 @@ const docTemplate = `{
                 "NT_VOTE"
             ]
         },
+        "choices.PaymentPurpose": {
+            "type": "string",
+            "enum": [
+                "COINS",
+                "SUBSCRIPTION"
+            ],
+            "x-enum-varnames": [
+                "PP_COINS",
+                "PP_SUB"
+            ]
+        },
         "choices.PaymentStatus": {
             "type": "string",
             "enum": [
@@ -2723,6 +3409,17 @@ const docTemplate = `{
                 "RC_3",
                 "RC_4",
                 "RC_5"
+            ]
+        },
+        "choices.SubscriptionTypeChoice": {
+            "type": "string",
+            "enum": [
+                "MONTHLY",
+                "ANNUAL"
+            ],
+            "x-enum-varnames": [
+                "ST_MONTHLY",
+                "ST_ANNUAL"
             ]
         },
         "models.SiteDetail": {
@@ -2792,15 +3489,18 @@ const docTemplate = `{
             ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "johndoe@example.com"
                 },
                 "genre_slug": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "werewolf"
                 },
                 "name": {
                     "type": "string",
                     "maxLength": 1000,
-                    "minLength": 3
+                    "minLength": 3,
+                    "example": "John Doe"
                 }
             }
         },
@@ -3004,7 +3704,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "coin_id",
-                "payment_type",
                 "quantity"
             ],
             "properties": {
@@ -3012,15 +3711,8 @@ const docTemplate = `{
                     "type": "string",
                     "example": "19e8bd22-fab1-4bb4-ba82-77c41bea6b99"
                 },
-                "payment_type": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/choices.PaymentType"
-                        }
-                    ],
-                    "example": "STRIPE"
-                },
                 "quantity": {
+                    "description": "PaymentType choices.PaymentType ` + "`" + `json:\"payment_type\" validate:\"required,payment_type_validator\" example:\"STRIPE\"` + "`" + ` // This should be stripe by default",
                     "type": "integer",
                     "example": 2
                 }
@@ -3295,6 +3987,7 @@ const docTemplate = `{
                 }
             }
         },
+
         "schemas.CreateICPWallet": {
             "type": "object",
             "required": [
@@ -3305,6 +3998,19 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 1000,
                     "example": "john-doe"
+
+        "schemas.CreateSubscriptionSchema": {
+            "type": "object",
+            "required": [
+                "payment_method_token",
+                "subtype"
+            ],
+            "properties": {
+                "payment_method_token": {
+                    "type": "string"
+                },
+                "subtype": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 }
             }
         },
@@ -3341,6 +4047,23 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "schemas.GenreAddSchema": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "tag_slugs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -4016,6 +4739,56 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.SubscriptionPlanResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.SubscriptionPlanSchema": {
+            "type": "object",
+            "required": [
+                "amount",
+                "subtype"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "subtype": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
+        "schemas.SubscriptionPlansResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.TagSchema": {
             "type": "object",
             "properties": {
@@ -4023,6 +4796,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.TagsAddSchema": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }
@@ -4110,7 +4894,7 @@ const docTemplate = `{
                     "type": "number",
                     "example": 30.35
                 },
-                "checkout_url": {
+                "client_secret": {
                     "type": "string"
                 },
                 "coins": {
@@ -4120,6 +4904,17 @@ const docTemplate = `{
                 "coins_total": {
                     "type": "integer",
                     "example": 30
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "payment_purpose": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.PaymentPurpose"
+                        }
+                    ],
+                    "example": "SUBSCRIPTION"
                 },
                 "payment_status": {
                     "$ref": "#/definitions/choices.PaymentStatus"
@@ -4137,6 +4932,9 @@ const docTemplate = `{
                     "example": 10
                 },
                 "reference": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -4216,17 +5014,13 @@ const docTemplate = `{
         "schemas.UpdateUserRoleSchema": {
             "type": "object",
             "properties": {
-                "acc_type": {
-                    "type": "string",
-                    "maxLength": 7,
-                    "minLength": 6,
+                "account_type": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/choices.AccType"
+                        }
+                    ],
                     "example": "WRITER"
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 3,
-                    "example": "john-doe"
                 }
             }
         },

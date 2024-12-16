@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -53,4 +54,8 @@ func GetRandomInt(size int) int {
 
 	// Generate a random integer within the range [min, max]
 	return rand.Intn(max-min+1) + min
+}
+
+func Title(s string) string {
+    return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
 }

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/LitPad/backend/models/choices"
@@ -13,8 +12,9 @@ import (
 
 type Tag struct {
 	BaseModel
-	Name string `gorm:"unique"`
-	Slug string `gorm:"unique"`
+	Name   string  `gorm:"unique"`
+	Slug   string  `gorm:"unique"`
+	Genres []Genre `gorm:"many2many:genre_tags;"`
 }
 
 func (tag *Tag) BeforeSave(tx *gorm.DB) (err error) {
@@ -26,7 +26,7 @@ type Genre struct {
 	BaseModel
 	Name string `gorm:"unique"`
 	Slug string `gorm:"unique"`
-	Tags []Tag  `json:"tags" gorm:"many2many:genre_tags;"`
+	Tags []Tag  `gorm:"many2many:genre_tags;"`
 }
 
 func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
@@ -37,14 +37,14 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 type Book struct {
 	BaseModel
 	AuthorID      uuid.UUID
-	Author        User   `gorm:"foreignKey:AuthorID;constraint:OnDelete:CASCADE;<-:false"`
+	Author        User   `gorm:"foreignKey:AuthorID;constraint:OnDelete:SET NULL;<-:false"`
 	Title         string `gorm:"type: varchar(255)"`
 	Slug          string `gorm:"unique"`
 	Blurb         string `gorm:"type: varchar(255)"`
 	AgeDiscretion choices.AgeType
 
 	GenreID    uuid.UUID `json:"genre_id"`
-	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
+	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 	Tags       []Tag     `gorm:"many2many:book_tags;<-:false"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`
@@ -53,6 +53,7 @@ type Book struct {
 	Views     string   `gorm:"type:varchar(10000000)"`
 	Reviews   []Review `gorm:"<-:false"`
 	Votes     []Vote   `gorm:"<-:false"`
+	AvgRating float64
 
 	// BOOK CONTRACT
 	FullName             string `gorm:"type: varchar(1000)"`
@@ -79,28 +80,6 @@ type Book struct {
 	ChapterPrice         int
 	FullPurchaseMode     bool                         `gorm:"default:false"`
 	ContractStatus       choices.ContractStatusChoice `gorm:"default:PENDING"`
-}
-
-func (b Book) CoverImageUrl() string {
-	return fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.BookCoverImagesBucket, b.CoverImage)
-}
-
-func (b Book) IDFrontImageUrl() *string {
-	imageText := b.IDFrontImage
-	if imageText != "" {
-		image := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.IDFrontImagesBucket, imageText)
-		return &image
-	}
-	return nil
-}
-
-func (b Book) IDBackImageUrl() *string {
-	imageText := b.IDBackImage
-	if imageText != "" {
-		image := fmt.Sprintf("%s/%s/%s", cfg.S3EndpointUrl, cfg.IDBackImagesBucket, imageText)
-		return &image
-	}
-	return nil
 }
 
 func (b Book) ViewsCount() int {
@@ -150,7 +129,6 @@ func (b *Book) GenerateUniqueSlug(tx *gorm.DB) string {
 func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
 	slug := b.GenerateUniqueSlug(tx)
 	b.Slug = slug
-	b.CoverImage = slug
 	return
 }
 

@@ -29,9 +29,9 @@ type Config struct {
 	MailSenderPassword           string `mapstructure:"MAIL_SENDER_PASSWORD"`
 	MailSenderHost               string `mapstructure:"MAIL_SENDER_HOST"`
 	MailSenderPort               int    `mapstructure:"MAIL_SENDER_PORT"`
-	MailApiKey                   string    `mapstructure:"MAIL_API_KEY"`
-	BrevoListID                  string    `mapstructure:"BREVO_LIST_ID"`
-	BrevoContactsUrl             string    `mapstructure:"BREVO_CONTACTS_URL"`
+	MailApiKey                   string `mapstructure:"MAIL_API_KEY"`
+	BrevoListID                  int    `mapstructure:"BREVO_LIST_ID"`
+	BrevoContactsUrl             string `mapstructure:"BREVO_CONTACTS_URL"`
 	CORSAllowedOrigins           string `mapstructure:"CORS_ALLOWED_ORIGINS"`
 	CORSAllowCredentials         bool   `mapstructure:"CORS_ALLOW_CREDENTIALS"`
 	GoogleClientID               string `mapstructure:"GOOGLE_CLIENT_ID"`
@@ -53,8 +53,13 @@ type Config struct {
 	IDFrontImagesBucket          string `mapstructure:"ID_FRONT_IMAGES_BUCKET"`
 	IDBackImagesBucket           string `mapstructure:"ID_BACK_IMAGES_BUCKET"`
 	WalletSecret string `mapstructure:"LITPAD_WALLET_SECRET"`
-
 	PGAdminPassword string `mapstructure:"PGADMIN_PASSWORD"`
+	ICPPrivateKey                string `mapstructure:"ICP_PRIVATE_KEY"`
+	ICPPublicKey                 string `mapstructure:"ICP_PUBLIC_KEY"`
+	PGAdminPassword              string `mapstructure:"PGADMIN_PASSWORD"`
+	CloudinaryCloudName          string `mapstructure:"CLOUDINARY_CLOUD_NAME"`
+	CloudinaryApiKey             string `mapstructure:"CLOUDINARY_API_KEY"`
+	CloudinaryApiSecret          string `mapstructure:"CLOUDINARY_API_SECRET"`
 }
 
 func GetConfig() (config Config) {

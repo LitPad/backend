@@ -8,9 +8,9 @@ import (
 )
 
 type AddToWaitlist struct {
-	Name string `json:"name" validate:"required,min=3,max=1000"`
-	Email string `json:"email" validate:"required,email"`
-	GenreSlug string `json:"genre_slug" validate:"required"`
+	Name string `json:"name" validate:"required,min=3,max=1000" example:"John Doe"`
+	Email string `json:"email" validate:"required,email" example:"johndoe@example.com"`
+	GenreSlug string `json:"genre_slug" validate:"required" example:"werewolf"`
 }
 
 type WaitlistResponse struct {
