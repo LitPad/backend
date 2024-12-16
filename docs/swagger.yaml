@@ -506,6 +506,15 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.CreateICPWallet:
+    properties:
+      username:
+        example: john-doe
+        maxLength: 1000
+        type: string
+    required:
+    - username
+    type: object
   schemas.EmailRequestSchema:
     properties:
       email:
@@ -2901,6 +2910,24 @@ paths:
       security:
       - BearerAuth: []
       summary: Buy Coins
+      tags:
+      - Wallet
+  /wallet/icp:
+    post:
+      description: '`This endpoint creates a new ICP wallet`'
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateICPWallet'
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Create a new ICP wallet
       tags:
       - Wallet
   /wallet/transactions:

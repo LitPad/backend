@@ -90,3 +90,7 @@ type TransactionsResponseSchema struct {
 	ResponseSchema
 	Data TransactionsResponseDataSchema `json:"data"`
 }
+
+type CreateICPWallet struct{
+	Username       string `json:"username" validate:"required,max=1000" example:"john-doe"`
+}

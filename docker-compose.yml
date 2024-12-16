@@ -31,6 +31,8 @@ services:
     depends_on:
       - db
     command: air ./main.go -b 0.0.0.0
+    networks:
+      - shared_network
 
   pgadmin:
     container_name: pgadmin
@@ -47,3 +49,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  shared_network:
+    driver: bridge

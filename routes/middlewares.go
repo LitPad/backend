@@ -3,10 +3,12 @@ package routes
 import (
 	"strings"
 
+	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -85,6 +87,35 @@ func (ep Endpoint) AdminMiddleware(c *fiber.Ctx) error {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_ADMINS_ONLY, "For Admin only!"))
 	}
 	c.Locals("user", user)
+	return c.Next()
+}
+
+func (ep Endpoint) WalletAccessMiddleware(c *fiber.Ctx) error {
+
+	conf := config.GetConfig()
+
+	token := c.Get("Access")
+
+	if len(token) < 1{
+		return c.Status(403).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Forbidden"))
+	}
+
+	if !strings.HasPrefix(token, "Litpad "){
+		return c.Status(403).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Forbidden"))
+	}
+
+	parsedToken, err := jwt.Parse(token[7:], func(t *jwt.Token) (interface{}, error) {
+		return []byte(conf.WalletSecret), nil
+	})
+
+	if err != nil{
+		c.Status(500).JSON(utils.ERR_SERVER_ERROR)
+	}
+
+	if !parsedToken.Valid{
+		c.Status(403).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Forbidden"))
+	}
+
 	return c.Next()
 }
 

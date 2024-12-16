@@ -2506,6 +2506,34 @@ const docTemplate = `{
                 }
             }
         },
+        "/wallet/icp": {
+            "post": {
+                "description": "` + "`" + `This endpoint creates a new ICP wallet` + "`" + `",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Create a new ICP wallet",
+                "parameters": [
+                    {
+                        "description": "User data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.CreateICPWallet"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/transactions": {
             "get": {
                 "security": [
@@ -3264,6 +3292,19 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.CreateICPWallet": {
+            "type": "object",
+            "required": [
+                "username"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "john-doe"
                 }
             }
         },
