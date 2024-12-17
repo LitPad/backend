@@ -206,3 +206,17 @@ func (s SubscriptionTypeChoice) IsValid() bool {
 	}
 	return false
 }
+
+type SubscriptionStatusChoice string
+
+const (
+	SS_ACTIVE SubscriptionStatusChoice = "ACTIVE"
+	SS_EXPIRED SubscriptionStatusChoice = "EXPIRED"
+)
+func (s SubscriptionStatusChoice) IsValid() bool {
+	switch s {
+	case SS_ACTIVE, SS_EXPIRED:
+		return true
+	}
+	return false
+}

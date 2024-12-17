@@ -1,6 +1,8 @@
 package managers
 
 import (
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
@@ -49,6 +51,24 @@ func (u UserManager) GetWriterByUsername(db *gorm.DB, username string) *models.U
 		return nil
 	}
 	return &user
+}
+
+func (u UserManager) GetSubscribers(db *gorm.DB, subscriptionType *choices.SubscriptionTypeChoice, subscriptionStatus *choices.SubscriptionStatusChoice) []models.User {
+	subscribers := []models.User{}
+	query := db.Where("subscription_expiry IS NOT NULL")
+	if subscriptionType != nil {
+		query = query.Where("current_plan = ?", subscriptionType)
+	}
+	if subscriptionStatus != nil {
+		currentTime := time.Now()
+		if *subscriptionStatus == choices.SS_ACTIVE {
+			query = query.Where("subscription_expiry > ?", currentTime)
+		} else {
+			query = query.Where("subscription_expiry < ?", currentTime)
+		}
+	}
+	query.Find(&subscribers)
+	return subscribers
 }
 
 type NotificationManager struct{}

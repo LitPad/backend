@@ -148,6 +148,7 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 						subExpiry = time.Now().AddDate(0, 12, 0)
 					}
 					user.SubscriptionExpiry = &subExpiry
+					user.CurrentPlan = &subPlan.SubType
 					transaction.PaymentStatus = choices.PSSUCCEEDED
 					go senders.SendEmail(&transaction.User, "payment-succeeded", nil, nil, emailD)
 				}

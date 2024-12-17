@@ -10,7 +10,6 @@ type Endpoint struct {
 	DB *gorm.DB
 }
 
-
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	endpoint := Endpoint{DB: db}
 
@@ -96,7 +95,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	// ICP Wallet Routes
 	icpWalletRouter := walletRouter.Group("/icp")
-	icpWalletRouter.Post("/",  endpoint.CreateICPWallet)
+	icpWalletRouter.Post("/", endpoint.CreateICPWallet)
 	icpWalletRouter.Get("/:username/balance", endpoint.GetICPWalletBalance)
 
 	// ADMIN ROUTES (7)
@@ -106,6 +105,9 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
 	adminRouter.Put("/users/:username", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
 	adminRouter.Get("/users/:username/toggle-activation", endpoint.AdminMiddleware, endpoint.ToggleUserActivation)
+
+	// Admin Users
+	adminRouter.Get("/subscribers", endpoint.AdminMiddleware, endpoint.AdminGetSubscribers)
 
 	// Admin Books (2)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)

@@ -28,17 +28,18 @@ func (dto FollowerData) FromModel(user models.User) FollowerData {
 }
 
 type UserProfile struct {
-	FirstName    string          `json:"first_name"`
-	LastName     string          `json:"last_name"`
-	Username     string          `json:"username"`
-	Email        string          `json:"email"`
-	Avatar       *string         `json:"avatar"`
-	Bio          *string         `json:"bio"`
-	AccountType  choices.AccType `json:"account_type"`
-	StoriesCount int             `json:"stories_count"`
-	Followers    []FollowerData  `json:"followers"`
-	Followings   []FollowerData  `json:"followings"`
-	CreatedAt    time.Time       `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	FirstName    string                         `json:"first_name"`
+	LastName     string                         `json:"last_name"`
+	Username     string                         `json:"username"`
+	Email        string                         `json:"email"`
+	Avatar       *string                        `json:"avatar"`
+	Bio          *string                        `json:"bio"`
+	AccountType  choices.AccType                `json:"account_type"`
+	StoriesCount int                            `json:"stories_count"`
+	Followers    []FollowerData                 `json:"followers"`
+	Followings   []FollowerData                 `json:"followings"`
+	CreatedAt    time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	CurrentPlan  *choices.SubscriptionTypeChoice `json:"current_plan"`
 }
 
 func (u UserProfile) Init(user models.User) UserProfile {
@@ -66,6 +67,7 @@ func (u UserProfile) Init(user models.User) UserProfile {
 		Followings:   followings,
 		StoriesCount: user.BooksCount(),
 		CreatedAt:    user.CreatedAt,
+		CurrentPlan:  user.CurrentPlan,
 	}
 	return u
 }

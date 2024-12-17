@@ -1122,6 +1122,8 @@ definitions:
       created_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
+      current_plan:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
         type: string
       first_name:
@@ -1260,6 +1262,8 @@ definitions:
       created_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
+      current_plan:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
         type: string
       first_name:
@@ -1765,6 +1769,52 @@ paths:
       summary: Latest Transactions with Pagination
       tags:
       - Admin | Payments
+  /admin/subscribers:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of subscribers with support for pagination and
+        optional filtering based on user subscription type or status.
+      parameters:
+      - description: Subscription Type to filter by
+        enum:
+        - MONTHLY
+        - ANNUAL
+        in: query
+        name: sub_type
+        type: string
+      - description: Subscription Status to filter by
+        enum:
+        - ACTIVE
+        - EXPIRED
+        in: query
+        name: sub_status
+        type: string
+      - default: 1
+        description: Current page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of user subs
+          schema:
+            $ref: '#/definitions/schemas.UserProfilesResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Subscribers with Pagination
+      tags:
+      - Admin | Subscribers
   /admin/users:
     get:
       consumes:

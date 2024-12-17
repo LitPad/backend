@@ -640,6 +640,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/subscribers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of subscribers with support for pagination and optional filtering based on user subscription type or status.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Subscribers"
+                ],
+                "summary": "List Subscribers with Pagination",
+                "parameters": [
+                    {
+                        "enum": [
+                            "MONTHLY",
+                            "ANNUAL"
+                        ],
+                        "type": "string",
+                        "description": "Subscription Type to filter by",
+                        "name": "sub_type",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ACTIVE",
+                            "EXPIRED"
+                        ],
+                        "type": "string",
+                        "description": "Subscription Status to filter by",
+                        "name": "sub_status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of user subs",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserProfilesResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -4892,6 +4961,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
+                "current_plan": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                },
                 "email": {
                     "type": "string"
                 },
@@ -5096,6 +5168,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "current_plan": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 },
                 "email": {
                     "type": "string"

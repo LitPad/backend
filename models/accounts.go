@@ -13,29 +13,31 @@ import (
 
 type User struct {
 	BaseModel
-	FirstName          string          `gorm:"type: varchar(255);not null"`
-	LastName           string          `gorm:"type: varchar(255);not null"`
-	Username           string          `gorm:"type: varchar(1000);not null;unique;"`
-	Email              string          `gorm:"not null;unique;"`
-	Password           string          `gorm:"not null"`
-	IsEmailVerified    bool            `gorm:"default:false"`
-	IsSuperuser        bool            `gorm:"default:false"`
-	IsStaff            bool            `gorm:"default:false"`
-	IsActive           bool            `gorm:"default:true"`
-	TermsAgreement     bool            `gorm:"default:false"`
-	Avatar             string          `gorm:"type:varchar(1000);null;"`
-	Access             *string         `gorm:"type:varchar(1000);null;"`
-	Refresh            *string         `gorm:"type:varchar(1000);null;"`
-	SocialLogin        bool            `gorm:"default:false"`
-	Bio                *string         `gorm:"type:varchar(1000);null;"`
-	AccountType        choices.AccType `gorm:"type:varchar(100); default:READER"`
-	Followings         []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
-	Followers          []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
-	Coins              int             `gorm:"default:0"`
-	Lanterns           int             `gorm:"default:0"`
-	LikeNotification   bool            `gorm:"default:false"`
-	ReplyNotification  bool            `gorm:"default:false"`
-	SubscriptionExpiry *time.Time      `gorm:"null"`
+	FirstName         string          `gorm:"type: varchar(255);not null"`
+	LastName          string          `gorm:"type: varchar(255);not null"`
+	Username          string          `gorm:"type: varchar(1000);not null;unique;"`
+	Email             string          `gorm:"not null;unique;"`
+	Password          string          `gorm:"not null"`
+	IsEmailVerified   bool            `gorm:"default:false"`
+	IsSuperuser       bool            `gorm:"default:false"`
+	IsStaff           bool            `gorm:"default:false"`
+	IsActive          bool            `gorm:"default:true"`
+	TermsAgreement    bool            `gorm:"default:false"`
+	Avatar            string          `gorm:"type:varchar(1000);null;"`
+	Access            *string         `gorm:"type:varchar(1000);null;"`
+	Refresh           *string         `gorm:"type:varchar(1000);null;"`
+	SocialLogin       bool            `gorm:"default:false"`
+	Bio               *string         `gorm:"type:varchar(1000);null;"`
+	AccountType       choices.AccType `gorm:"type:varchar(100); default:READER"`
+	Followings        []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Follower;References:ID;joinReferences:Following"`
+	Followers         []User          `gorm:"many2many:user_followers;foreignKey:ID;joinForeignKey:Following;References:ID;joinReferences:Follower"`
+	Coins             int             `gorm:"default:0"`
+	Lanterns          int             `gorm:"default:0"`
+	LikeNotification  bool            `gorm:"default:false"`
+	ReplyNotification bool            `gorm:"default:false"`
+
+	CurrentPlan        *choices.SubscriptionTypeChoice `gorm:"null"`
+	SubscriptionExpiry *time.Time                      `gorm:"null"`
 
 	// Back referenced
 	Books []Book `gorm:"foreignKey:AuthorID"`
