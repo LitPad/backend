@@ -3088,7 +3088,45 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/schemas.CreateICPWallet"
-                            
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallet/icp/{username}/balance": {
+            "get": {
+                "description": "This endpoint returns user ICP wallet balance",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Get user ICP wallet balance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of user",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/plans": {
             "get": {
                 "description": "Retrieves a list of available subscription plans.",
@@ -3187,19 +3225,16 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/schemas.CreateSubscriptionSchema"
-
                         }
                     }
                 ],
                 "responses": {
-
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.PaymentResponseSchema"
                         }
                     },
-
                     "400": {
                         "description": "Bad Request",
                         "schema": {
@@ -3258,11 +3293,11 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "READER",
-                "WRITER"
+                "AUTHOR"
             ],
             "x-enum-varnames": [
                 "ACCTYPE_READER",
-                "ACCTYPE_WRITER"
+                "ACCTYPE_AUTHOR"
             ]
         },
         "choices.AgeType": {
@@ -3529,6 +3564,9 @@ const docTemplate = `{
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
                 },
+                "avg_rating": {
+                    "type": "number"
+                },
                 "blurb": {
                     "type": "string"
                 },
@@ -3608,6 +3646,9 @@ const docTemplate = `{
                 },
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "avg_rating": {
+                    "type": "number"
                 },
                 "blurb": {
                     "type": "string"
@@ -3987,7 +4028,6 @@ const docTemplate = `{
                 }
             }
         },
-
         "schemas.CreateICPWallet": {
             "type": "object",
             "required": [
@@ -3998,7 +4038,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 1000,
                     "example": "john-doe"
-
+                }
+            }
+        },
         "schemas.CreateSubscriptionSchema": {
             "type": "object",
             "required": [
