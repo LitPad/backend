@@ -15,6 +15,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - shared_network
   api:
     restart: always
     build:
@@ -46,6 +48,8 @@ services:
       - "5050:80"
     depends_on:
       - db
+    networks:
+      - shared_network
 
 volumes:
   postgres_data:
