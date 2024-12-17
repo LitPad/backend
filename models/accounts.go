@@ -38,6 +38,7 @@ type User struct {
 
 	CurrentPlan        *choices.SubscriptionTypeChoice `gorm:"null"`
 	SubscriptionExpiry *time.Time                      `gorm:"null"`
+	ReminderSent       bool                            `gorm:"default:false"`
 
 	// Back referenced
 	Books []Book `gorm:"foreignKey:AuthorID"`
