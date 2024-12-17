@@ -52,11 +52,10 @@ type Config struct {
 	UserImagesBucket             string `mapstructure:"USER_IMAGES_BUCKET"`
 	IDFrontImagesBucket          string `mapstructure:"ID_FRONT_IMAGES_BUCKET"`
 	IDBackImagesBucket           string `mapstructure:"ID_BACK_IMAGES_BUCKET"`
-	WalletSecret string `mapstructure:"LITPAD_WALLET_SECRET"`
-	PGAdminPassword string `mapstructure:"PGADMIN_PASSWORD"`
+	WalletSecret                 string `mapstructure:"LITPAD_WALLET_SECRET"`
+	PGAdminPassword              string `mapstructure:"PGADMIN_PASSWORD"`
 	ICPPrivateKey                string `mapstructure:"ICP_PRIVATE_KEY"`
 	ICPPublicKey                 string `mapstructure:"ICP_PUBLIC_KEY"`
-	PGAdminPassword              string `mapstructure:"PGADMIN_PASSWORD"`
 	CloudinaryCloudName          string `mapstructure:"CLOUDINARY_CLOUD_NAME"`
 	CloudinaryApiKey             string `mapstructure:"CLOUDINARY_API_KEY"`
 	CloudinaryApiSecret          string `mapstructure:"CLOUDINARY_API_SECRET"`
