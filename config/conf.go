@@ -42,7 +42,6 @@ type Config struct {
 	PasswordResetPath            string `mapstructure:"PASSWORD_RESET_PATH"`
 	StripePublicKey              string `mapstructure:"STRIPE_PUBLIC_KEY"`
 	StripeSecretKey              string `mapstructure:"STRIPE_SECRET_KEY"`
-	StripeCheckoutSuccessUrlPath string `mapstructure:"STRIPE_CHECKOUT_SUCCESS_URL_PATH"`
 	StripeWebhookSecret          string `mapstructure:"STRIPE_WEBHOOK_SECRET"`
 	SocketSecret                 string `mapstructure:"SOCKET_SECRET"`
 	S3AccessKey                  string `mapstructure:"S3_ACCESS_KEY"`
