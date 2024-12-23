@@ -13,14 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Checkout code
     - name: Checkout code
       uses: actions/checkout@v2
 
+    # Install dependencies
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y sshpass expect rsync
+        sudo apt-get install -y sshpass rsync
 
+    # Setup SSH with passphrase
     - name: Setup SSH passphrase
       env:
         SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
@@ -31,21 +34,14 @@ jobs:
         echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
         echo "SSH key added"
 
+    # Verify SSH connection
     - name: Verify SSH Connection
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
 
-    - name: Install rsync on VPS
-      env:
-        VPS_IP: ${{ secrets.VPS_IP }}
-      run: |
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
-          sudo apt-get update
-          sudo apt-get install -y rsync
-        EOF
-
+    # Copy files to VPS
     - name: Copy files to VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
@@ -53,13 +49,72 @@ jobs:
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
         echo "Files copied to VPS"
 
-    - name: SSH and run Docker Compose
+    # SSH and deploy with Docker
+    - name: SSH and Deploy Docker
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
           cd /backend
-          docker-compose down
-          docker-compose up -d --build --remove-orphans
-          echo "Docker Compose executed"
+
+          # Backup the current running container
+          if docker ps -q -f name=backend; then
+            docker tag backend:latest backend:backup || echo "Failed to tag existing image"
+          fi
+
+          # Try to build and deploy the new Docker container
+          if ! docker-compose down || ! docker-compose up -d --build --remove-orphans; then
+            echo "Deployment failed. Rolling back..."
+            docker-compose down
+            if docker images | grep -q 'backend:backup'; then
+              docker tag backend:backup backend:latest
+              docker-compose up -d
+              echo "Rollback to the previous version was successful."
+            else
+              echo "No backup available for rollback. Exiting..."
+              exit 1
+            fi
+          fi
+
+          echo "Deployment successful"
         EOF
+
+    # Notify Slack - Success
+    - name: Notify Slack - Success
+      if: success()
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        method: chat.postMessage
+        token: ${{ secrets.SLACK_BOT_TOKEN }}
+        payload: |
+          channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          text: "✅ Backend Deployment to VPS succeeded! 🚀"
+          attachments:
+            - color: "36a64f"
+              fields:
+                - title: "Status"
+                  short: true
+                  value: "Success"
+                - title: "Deployment Details"
+                  short: true
+                  value: "The latest code was successfully deployed to the VPS."
+
+    # Notify Slack - Failure
+    - name: Notify Slack - Failure
+      if: failure()
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        method: chat.postMessage
+        token: ${{ secrets.SLACK_BOT_TOKEN }}
+        payload: |
+          channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          text: "❌ Backend Deployment to VPS failed! 😞"
+          attachments:
+            - color: "ff0000"
+              fields:
+                - title: "Status"
+                  short: true
+                  value: "Failed"
+                - title: "Error"
+                  short: true
+                  value: "The deployment process encountered an issue. Check the logs for details."

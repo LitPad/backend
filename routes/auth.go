@@ -54,7 +54,7 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 	db.Take(&token, token)
 	db.Save(&token) // Create or save
 	url := GetBaseReferer(c)
-	go senders.SendEmail(user, "activate", &token.TokenString, &url, nil)
+	go senders.SendEmail(user, senders.ET_ACTIVATE, &token.TokenString, &url, nil)
 
 	response := schemas.RegisterResponseSchema{
 		ResponseSchema: ResponseMessage("Registration successful"),
@@ -99,7 +99,7 @@ func (ep Endpoint) VerifyEmail(c *fiber.Ctx) error {
 	db.Delete(&token)
 
 	// Send Welcome Email
-	go senders.SendEmail(&user, "welcome", nil, nil, nil)
+	go senders.SendEmail(&user, senders.ET_WELCOME, nil, nil, nil)
 	return c.Status(200).JSON(ResponseMessage("Account verification successful"))
 }
 
@@ -135,7 +135,7 @@ func (ep Endpoint) ResendVerificationEmail(c *fiber.Ctx) error {
 	db.Take(&token, token)
 	db.Save(&token) // Create or save
 	url := GetBaseReferer(c)
-	go senders.SendEmail(&user, "activate", &token.TokenString, &url, nil)
+	go senders.SendEmail(&user, senders.ET_ACTIVATE, &token.TokenString, &url, nil)
 	return c.Status(200).JSON(ResponseMessage("Verification email sent"))
 }
 
@@ -168,7 +168,7 @@ func (ep Endpoint) SendPasswordResetOtp(c *fiber.Ctx) error {
 	db.Take(&token, token)
 	db.Save(&token) // Create or save
 	url := GetBaseReferer(c)
-	go senders.SendEmail(&user, "reset", &token.TokenString, &url, nil)
+	go senders.SendEmail(&user, senders.ET_RESET, &token.TokenString, &url, nil)
 
 	return c.Status(200).JSON(ResponseMessage("Password reset link sent"))
 }
@@ -233,7 +233,7 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 	db.Delete(&token)
 
 	// Send Email
-	go senders.SendEmail(&user, "reset-success", nil, nil, nil)
+	go senders.SendEmail(&user, senders.ET_RESET_SUCC, nil, nil, nil)
 
 	return c.Status(200).JSON(ResponseMessage("Password reset successful"))
 }

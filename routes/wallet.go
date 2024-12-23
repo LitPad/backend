@@ -141,7 +141,7 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 				expectedAmount := subPlan.Amount.Mul(decimal.NewFromFloat(100)).IntPart() // Convert to cents
 				if intent.AmountReceived < expectedAmount {
 					transaction.PaymentStatus = choices.PSFAILED
-					go senders.SendEmail(&transaction.User, "payment-failed", nil, nil, emailD)
+					go senders.SendEmail(&transaction.User, senders.ET_PAYMENT_FAIL, nil, nil, emailD)
 				} else {
 					subExpiry := time.Now().AddDate(0, 1, 0)
 					if transaction.SubscriptionPlan.SubType == choices.ST_ANNUAL {
@@ -150,7 +150,7 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 					user.SubscriptionExpiry = &subExpiry
 					user.CurrentPlan = &subPlan.SubType
 					transaction.PaymentStatus = choices.PSSUCCEEDED
-					go senders.SendEmail(&transaction.User, "payment-succeeded", nil, nil, emailD)
+					go senders.SendEmail(&transaction.User, senders.ET_PAYMENT_SUCC, nil, nil, emailD)
 				}
 			} else {
 				coin := transaction.Coin
@@ -158,12 +158,12 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 				expectedAmount := coin.Price.Mul(decimal.NewFromFloat(100)).IntPart() // Convert to cents
 				if intent.AmountReceived < expectedAmount {
 					transaction.PaymentStatus = choices.PSFAILED
-					go senders.SendEmail(&transaction.User, "payment-failed", nil, nil, emailD)
+					go senders.SendEmail(&transaction.User, senders.ET_PAYMENT_FAIL, nil, nil, emailD)
 				} else {
 					coinsTotal := transaction.CoinsTotal()
 					user.Coins = user.Coins + *coinsTotal
 					transaction.PaymentStatus = choices.PSSUCCEEDED
-					go senders.SendEmail(&transaction.User, "payment-succeeded", nil, nil, emailD)
+					go senders.SendEmail(&transaction.User, senders.ET_PAYMENT_SUCC, nil, nil, emailD)
 				}
 			}
 			db.Save(&user)
@@ -190,7 +190,7 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 				amount = plan.Amount
 			}
 			emailD := map[string]interface{}{"amount": amount}
-			go senders.SendEmail(&transaction.User, "payment-failed", nil, nil, emailD)
+			go senders.SendEmail(&transaction.User, senders.ET_PAYMENT_FAIL, nil, nil, emailD)
 		}
 	case "payment_intent.canceled":
 		var intent stripe.PaymentIntent
@@ -213,7 +213,7 @@ func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
 				amount = plan.Amount
 			}
 			emailD := map[string]interface{}{"amount": amount}
-			go senders.SendEmail(&transaction.User, "payment-canceled", nil, nil, emailD)
+			go senders.SendEmail(&transaction.User, senders.ET_PAYMENT_CANCEL, nil, nil, emailD)
 		}
 	default:
 		log.Printf("Unhandled event type: %s\n", event.Type)

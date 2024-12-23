@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
@@ -19,7 +20,21 @@ import (
 
 var cfg = config.GetConfig()
 
-func sortEmail(emailType string, tokenString *string, url *string, paymentData map[string]interface{}) map[string]interface{} {
+type EmailTypeChoice string
+
+const (
+	ET_ACTIVATE  EmailTypeChoice = "activate"
+	ET_WELCOME EmailTypeChoice = "welcome"
+	ET_RESET     EmailTypeChoice = "reset"
+	ET_RESET_SUCC EmailTypeChoice = "reset-success"
+	ET_PAYMENT_SUCC EmailTypeChoice = "payment-succeeded"
+	ET_PAYMENT_FAIL EmailTypeChoice = "payment-failed"
+	ET_PAYMENT_CANCEL EmailTypeChoice = "payment-canceled"
+	ET_SUBSCRIPTION_EXPIRING EmailTypeChoice = "subscription-expiring"
+	ET_SUBSCRIPTION_EXPIRED EmailTypeChoice = "subscription-expired"
+)
+
+func sortEmail(emailType EmailTypeChoice, tokenString *string, url *string, extraData map[string]interface{}) map[string]interface{} {
 	templateFile := "templates/welcome.html"
 	subject := "Account verified"
 	data := make(map[string]interface{})
@@ -29,7 +44,7 @@ func sortEmail(emailType string, tokenString *string, url *string, paymentData m
 
 	// Sort different templates and subject for respective email types
 	switch emailType {
-	case "activate":
+	case ET_ACTIVATE:
 		templateFile = "templates/email-activation.html"
 		subject = "Activate your account"
 		data["template_file"] = templateFile
@@ -37,7 +52,7 @@ func sortEmail(emailType string, tokenString *string, url *string, paymentData m
 		data["text"] = "Please click the button below to verify your email."
 		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.EmailVerificationPath, *tokenString)
 
-	case "reset":
+	case ET_RESET:
 		templateFile = "templates/password-reset.html"
 		subject = "Reset your password"
 		data["template_file"] = templateFile
@@ -45,34 +60,47 @@ func sortEmail(emailType string, tokenString *string, url *string, paymentData m
 		data["text"] = "Please click the button below to reset your password."
 		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.PasswordResetPath, *tokenString)
 
-	case "reset-success":
+	case ET_RESET_SUCC:
 		templateFile = "templates/password-reset-success.html"
 		subject = "Password reset successfully"
 		data["template_file"] = templateFile
 		data["subject"] = subject
 		data["text"] = "Your password was reset successfully."
-	case "payment-succeeded":
+	case ET_PAYMENT_SUCC:
 		templateFile = "templates/payment-success.html"
-		amount := paymentData["amount"].(decimal.Decimal)
+		amount := extraData["amount"].(decimal.Decimal)
 		subject = "Payment successful"
 		data["template_file"] = templateFile
 		data["subject"] = subject
 		data["text"] = fmt.Sprintf("Your payment of %s was successful.", amount) 
-	case "payment-failed":
+	case ET_PAYMENT_FAIL:
 		templateFile = "templates/payment-failed.html"
 		subject = "Payment failed"
-		amount := paymentData["amount"].(decimal.Decimal)
+		amount := extraData["amount"].(decimal.Decimal)
 		data["template_file"] = templateFile
 		data["subject"] = subject
 		data["text"] = fmt.Sprintf("Your payment of %s was unsuccessful. Please contact support", amount) 
-	case "payment-canceled":
+	case ET_PAYMENT_CANCEL:
 		templateFile = "templates/payment-canceled.html"
 		subject = "Payment canceled"
-		amount := paymentData["amount"].(decimal.Decimal)
+		amount := extraData["amount"].(decimal.Decimal)
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["text"] = "Your password was reset successfully."
 		data["text"] = fmt.Sprintf("Your payment of %s was canceled.", amount)
+	case ET_SUBSCRIPTION_EXPIRING:
+		templateFile = "templates/subscription-expiring.html"
+		subject = "Subscription close to expiry"
+		subscriptionType := strings.ToLower(extraData["subscriptionType"].(string)) 
+		data["template_file"] = templateFile
+		data["subject"] = subject
+		data["text"] = fmt.Sprintf("Your %s book subscription is about to expire.", subscriptionType)
+	case ET_SUBSCRIPTION_EXPIRED:
+		templateFile = "templates/subscription-expired.html"
+		subject = "Subscription expired"
+		subscriptionType := strings.ToLower(extraData["subscriptionType"].(string)) 
+		data["template_file"] = templateFile
+		data["subject"] = subject
+		data["text"] = fmt.Sprintf("Your %s book subscription has expired. Please renew your subscription", subscriptionType)
 	}
 	return data
 }
@@ -83,7 +111,7 @@ type EmailContext struct {
 	Text string
 }
 
-func SendEmail(user *models.User, emailType string, tokenString *string, url *string, paymentData map[string]interface{}) {
+func SendEmail(user *models.User, emailType EmailTypeChoice, tokenString *string, url *string, paymentData map[string]interface{}) {
 	if os.Getenv("ENVIRONMENT") == "TESTING" {
 		return
 	}

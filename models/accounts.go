@@ -37,7 +37,7 @@ type User struct {
 	ReplyNotification bool            `gorm:"default:false"`
 
 	CurrentPlan        *choices.SubscriptionTypeChoice `gorm:"null"`
-	SubscriptionExpiry *time.Time                      `gorm:"null"`
+	SubscriptionExpiry *time.Time                      `gorm:"index,null"`
 	ReminderSent       bool                            `gorm:"default:false"`
 
 	// Back referenced

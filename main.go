@@ -7,6 +7,7 @@ import (
 	"github.com/LitPad/backend/database"
 	_ "github.com/LitPad/backend/docs"
 	"github.com/LitPad/backend/initials"
+	"github.com/LitPad/backend/jobs"
 	"github.com/LitPad/backend/routes"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
@@ -54,5 +55,9 @@ func main() {
 	app.Use(swagger.New(swaggerCfg))
 	// Register Routes & Sockets
 	routes.SetupRoutes(app, db)
+	
+	// RUN JOBS
+	jobs.RunJobs(conf, db)
 	log.Fatal(app.Listen(":" + conf.Port))
+
 }
