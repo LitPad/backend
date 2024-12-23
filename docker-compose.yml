@@ -33,6 +33,8 @@ services:
     depends_on:
       - db
     command: air ./main.go -b 0.0.0.0
+    networks:
+      - shared_network
 
   pgadmin:
     container_name: pgadmin
