@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   db:
     restart: always
@@ -20,6 +18,13 @@ services:
     networks:
       - shared_network
 
+  redis:
+    image: redis
+    ports:
+      - "6380:6379"
+    networks:
+      - shared_network
+
   api:
     restart: "no"  # Ensures that Docker doesn't automatically restart after failure
     build:
@@ -31,10 +36,12 @@ services:
       - "8000:8000"
     environment:
       - POSTGRES_SERVER=db
+      - REDIS_URL=redis:6379
     env_file:
       - .env
     depends_on:
       - db
+      - redis
     command: air ./main.go -b 0.0.0.0
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/general/site-detail"]  # Health check endpoint
