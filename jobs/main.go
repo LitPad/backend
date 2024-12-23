@@ -54,7 +54,7 @@ func SetupWorker(db *gorm.DB, redisUrl string) {
 }
 
 func RunWithTicker(cfg config.Config, db *gorm.DB, redisClient *asynq.Client) {
-	ticker := time.NewTicker(time.Duration(cfg.ReminderCronHours) * time.Hour)
+	ticker := time.NewTicker(time.Duration(cfg.ReminderCronHours) * time.Hou)
 
 	// Run the job every 2 weeks
 	go func() {
