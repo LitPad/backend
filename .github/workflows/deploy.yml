@@ -91,7 +91,7 @@ jobs:
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
-        health_status=$(sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        health_status=$(sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no -T docker@${VPS_IP} << 'EOF'
           container_id=$(docker ps -q -f name=api)
           if [ -z "$container_id" ]; then
             echo "No container found with name 'api'."
@@ -101,6 +101,9 @@ jobs:
           fi
         EOF
         )
+        
+        echo "Health Status: $health_status"
+        
         if [[ "$health_status" != "\"healthy\"" ]]; then
           echo "API container is unhealthy! Status: $health_status"
           exit 1
