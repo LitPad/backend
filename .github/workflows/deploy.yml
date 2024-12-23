@@ -1,78 +1,127 @@
-name: Deploy API and Monitor Health
+name: Deploy to VPS
 
 on:
   push:
     branches:
       - main
 
+env:
+  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the code from the repository
-      - name: Checkout code
-        uses: actions/checkout@v2
+    # Step 1: Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      # Step 2: Set up Docker
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    # Step 2: Install Dependencies
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sshpass rsync curl
 
-      # Step 3: Install Docker Compose
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+    # Step 3: Install Docker Compose
+    - name: Install Docker Compose
+      run: |
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
 
-      # Step 4: Build and push Docker image
-      - name: Build and push Docker image
-        run: |
-          docker-compose -f docker-compose.yml build api
-          docker-compose -f docker-compose.yml up -d
+    # Step 4: Setup SSH with passphrase
+    - name: Setup SSH passphrase
+      env:
+        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        echo 'echo $SSH_PASSPHRASE' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
+        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
+        echo "SSH key added"
 
-      # Step 5: Check container health
-      - name: Check API container health
-        run: |
-          container_health=$(docker inspect --format '{{.State.Health.Status}}' myapp_api)
-          if [ "$container_health" != "healthy" ]; then
-            echo "API container is unhealthy, sending Slack notification..."
-            curl -X POST -H 'Content-type: application/json' \
-              --data '{"text":"❌ API container failed health check! Check logs."}' \
-              https://hooks.slack.com/services/your/slack/webhook
-            exit 1  # Fail the pipeline
-          else
-            echo "API container is healthy."
+    # Step 5: Verify SSH Connection
+    - name: Verify SSH Connection
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
+
+    # Step 6: Copy files to VPS
+    - name: Copy files to VPS
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
+        echo "Files copied to VPS"
+
+    # Step 7: SSH and Deploy Docker
+    - name: SSH and Deploy Docker
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+          cd /backend
+
+          # Backup the current running container
+          if docker ps -q -f name=backend; then
+            docker tag backend:latest backend:backup || echo "Failed to tag existing image"
           fi
 
-      # Step 6: Run tests or post-deployment tasks (optional)
-      - name: Run tests
-        run: |
-          # Add your testing commands here
-          echo "Tests go here."
+          # Try to build and deploy the new Docker container
+          if ! docker-compose down || ! docker-compose up -d --build --remove-orphans; then
+            echo "Deployment failed. Rolling back..."
+            docker-compose down
+            if docker images | grep -q 'backend:backup'; then
+              docker tag backend:backup backend:latest
+              docker-compose up -d
+              echo "Rollback to the previous version was successful."
+            else
+              echo "No backup available for rollback. Exiting..."
+              exit 1
+            fi
+          fi
 
-      # Step 7: Clean up
-      - name: Tear down Docker containers
-        run: |
-          docker-compose -f docker-compose.yml down
+          echo "Deployment successful"
+        EOF
 
-      # Step 8: Slack notification on success
-      - name: Notify Slack on success
-        if: success()
-        uses: slackapi/slack-github-action@v2.0.0
-        with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload: |
-            channel: ${{ secrets.SLACK_CHANNEL_ID }}
-            text: "✅ Deployment succeeded! API container is healthy."
-            attachments:
-              - color: "00FF00"
-                fields:
-                  - title: "Status"
-                    short: true
-                    value: "Success"
-                  - title: "API Health"
-                    short: true
-                    value: "Healthy"
+    # Step 8: Notify Slack - Success
+    - name: Notify Slack - Success
+      if: success()
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        method: chat.postMessage
+        token: ${{ secrets.SLACK_BOT_TOKEN }}
+        payload: |
+          channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          text: "✅ Backend Deployment to VPS succeeded! 🚀"
+          attachments:
+            - color: "36a64f"
+              fields:
+                - title: "Status"
+                  short: true
+                  value: "Success"
+                - title: "Deployment Details"
+                  short: true
+                  value: "The latest code was successfully deployed to the VPS."
 
-      # Step 9: Slack notification on failure (already covered in Step 5)
+    # Step 9: Notify Slack - Failure
+    - name: Notify Slack - Failure
+      if: failure()
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        method: chat.postMessage
+        token: ${{ secrets.SLACK_BOT_TOKEN }}
+        payload: |
+          channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          text: "❌ Backend Deployment to VPS failed! 😞"
+          attachments:
+            - color: "ff0000"
+              fields:
+                - title: "Status"
+                  short: true
+                  value: "Failed"
+                - title: "Error"
+                  short: true
+                  value: "The deployment process encountered an issue. Check the logs for details."
