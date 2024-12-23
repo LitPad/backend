@@ -86,7 +86,20 @@ jobs:
           echo "Deployment successful"
         EOF
 
-    # Step 8: Notify Slack - Success
+    # Step 8: Verify Container Health
+    - name: Verify Container Health
+      env:
+        VPS_IP: ${{ secrets.VPS_IP }}
+      run: |
+        health_status=$(sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "docker inspect --format '{{json .State.Health.Status}}' $(docker ps -q -f name=api)")
+        if [[ "$health_status" != "\"healthy\"" ]]; then
+          echo "API container is unhealthy! Status: $health_status"
+          exit 1
+        else
+          echo "API container is healthy."
+        fi
+
+    # Step 9: Notify Slack - Success
     - name: Notify Slack - Success
       if: success()
       uses: slackapi/slack-github-action@v2.0.0
@@ -106,7 +119,7 @@ jobs:
                   short: true
                   value: "The latest code was successfully deployed to the VPS."
 
-    # Step 9: Notify Slack - Failure
+    # Step 10: Notify Slack - Failure
     - name: Notify Slack - Failure
       if: failure()
       uses: slackapi/slack-github-action@v2.0.0
