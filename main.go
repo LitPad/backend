@@ -26,8 +26,6 @@ import (
 // @name Authorization
 // @description Type 'Bearer jwt_string' to correctly set the API Key
 func main() {
-	log.Fatal("Simulating failure for testing purposes")
-
 	// Load config
 	conf := config.GetConfig()
 
@@ -57,7 +55,7 @@ func main() {
 	app.Use(swagger.New(swaggerCfg))
 	// Register Routes & Sockets
 	routes.SetupRoutes(app, db)
-
+	
 	// RUN JOBS
 	jobs.RunJobs(conf, db)
 	log.Fatal(app.Listen(":" + conf.Port))

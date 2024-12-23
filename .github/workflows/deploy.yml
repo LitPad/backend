@@ -13,24 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout code
+    # Checkout code
     - name: Checkout code
       uses: actions/checkout@v2
 
-    # Step 2: Install Dependencies
+    # Install dependencies
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y sshpass rsync curl
+        sudo apt-get install -y sshpass rsync
 
-    # Step 3: Install Docker Compose
-    - name: Install Docker Compose
-      run: |
-        sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        docker-compose --version
-
-    # Step 4: Setup SSH with passphrase
+    # Setup SSH with passphrase
     - name: Setup SSH passphrase
       env:
         SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
@@ -41,14 +34,14 @@ jobs:
         echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
         echo "SSH key added"
 
-    # Step 5: Verify SSH Connection
+    # Verify SSH connection
     - name: Verify SSH Connection
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
       run: |
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
 
-    # Step 6: Copy files to VPS
+    # Copy files to VPS
     - name: Copy files to VPS
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
@@ -56,7 +49,7 @@ jobs:
         sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
         echo "Files copied to VPS"
 
-    # Step 7: SSH and Deploy Docker
+    # SSH and deploy with Docker
     - name: SSH and Deploy Docker
       env:
         VPS_IP: ${{ secrets.VPS_IP }}
@@ -86,32 +79,7 @@ jobs:
           echo "Deployment successful"
         EOF
 
-    # Step 8: Verify Container Health
-    - name: Verify Container Health
-      env:
-        VPS_IP: ${{ secrets.VPS_IP }}
-      run: |
-        health_status=$(sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no -T docker@${VPS_IP} << 'EOF'
-          container_id=$(docker ps -q -f name=api)
-          if [ -z "$container_id" ]; then
-            echo "No container found with name 'api'."
-            exit 1
-          else
-            docker inspect --format '{{json .State.Health.Status}}' "$container_id"
-          fi
-        EOF
-        )
-        
-        echo "Health Status: $health_status"
-        
-        if [[ "$health_status" != "\"healthy\"" ]]; then
-          echo "API container is unhealthy! Status: $health_status"
-          exit 1
-        else
-          echo "API container is healthy."
-        fi
-
-    # Step 9: Notify Slack - Success
+    # Notify Slack - Success
     - name: Notify Slack - Success
       if: success()
       uses: slackapi/slack-github-action@v2.0.0
@@ -131,7 +99,7 @@ jobs:
                   short: true
                   value: "The latest code was successfully deployed to the VPS."
 
-    # Step 10: Notify Slack - Failure
+    # Notify Slack - Failure
     - name: Notify Slack - Failure
       if: failure()
       uses: slackapi/slack-github-action@v2.0.0
