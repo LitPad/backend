@@ -17,12 +17,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      # Step 3: Install Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
+      # Step 4: Build and push Docker image
       - name: Build and push Docker image
         run: |
           docker-compose -f docker-compose.yml build api
           docker-compose -f docker-compose.yml up -d
 
-      # Step 3: Check container health
+      # Step 5: Check container health
       - name: Check API container health
         run: |
           container_health=$(docker inspect --format '{{.State.Health.Status}}' myapp_api)
@@ -36,18 +44,18 @@ jobs:
             echo "API container is healthy."
           fi
 
-      # Step 4: Run tests or post-deployment tasks (optional)
+      # Step 6: Run tests or post-deployment tasks (optional)
       - name: Run tests
         run: |
           # Add your testing commands here
           echo "Tests go here."
 
-      # Step 5: Clean up
+      # Step 7: Clean up
       - name: Tear down Docker containers
         run: |
           docker-compose -f docker-compose.yml down
 
-      # Step 6: Slack notification on success
+      # Step 8: Slack notification on success
       - name: Notify Slack on success
         if: success()
         uses: slackapi/slack-github-action@v2.0.0
@@ -67,4 +75,4 @@ jobs:
                     short: true
                     value: "Healthy"
 
-      # Step 7: Slack notification on failure (already covered in Step 3)
+      # Step 9: Slack notification on failure (already covered in Step 5)
