@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
@@ -31,6 +32,8 @@ func GetBaseReferer(c *fiber.Ctx) string {
 }
 
 func CreatePaymentIntent(db *gorm.DB, user models.User, plan *models.SubscriptionPlan, paymentToken *string, coin *models.Coin, quantity int) (*models.Transaction, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+	
     stripe.Key = cfg.StripeSecretKey
 	var price int64
 	if coin != nil {

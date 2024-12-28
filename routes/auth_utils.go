@@ -19,9 +19,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var cfg = config.GetConfig()
-var SECRETKEY = []byte(cfg.SecretKey)
-
 type AccessTokenPayload struct {
 	UserId uuid.UUID `json:"user_id"`
 	jwt.RegisteredClaims
@@ -33,6 +30,7 @@ type RefreshTokenPayload struct {
 }
 
 func GenerateAccessToken(userId uuid.UUID) string {
+	cfg := config.GetConfig()
 	expirationTime := time.Now().Add(time.Duration(cfg.AccessTokenExpireMinutes) * time.Minute)
 	payload := AccessTokenPayload{
 		UserId: userId,
@@ -45,7 +43,7 @@ func GenerateAccessToken(userId uuid.UUID) string {
 	// Declare the token with the algorithm used for signing, and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	// Create the JWT string
-	tokenString, err := token.SignedString(SECRETKEY)
+	tokenString, err := token.SignedString(cfg.SecretKeyByte)
 	if err != nil {
 		// If there is an error in creating the JWT return an internal server error
 		log.Fatal("Error Generating Access token: ", err)
@@ -54,6 +52,8 @@ func GenerateAccessToken(userId uuid.UUID) string {
 }
 
 func GenerateRefreshToken() string {
+	cfg := config.GetConfig()
+
 	expirationTime := time.Now().Add(time.Duration(cfg.RefreshTokenExpireMinutes) * time.Minute)
 	payload := RefreshTokenPayload{
 		Data: utils.GetRandomString(10),
@@ -66,7 +66,7 @@ func GenerateRefreshToken() string {
 	// Declare the token with the algorithm used for signing, and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	// Create the JWT string
-	tokenString, err := token.SignedString(SECRETKEY)
+	tokenString, err := token.SignedString(cfg.SecretKeyByte)
 	if err != nil {
 		// If there is an error in creating the JWT return an internal server error
 		log.Fatal("Error Generating Refresh token: ", err)
@@ -75,10 +75,12 @@ func GenerateRefreshToken() string {
 }
 
 func DecodeAccessToken(token string, db *gorm.DB) (*models.User, *string) {
+	cfg := config.GetConfig()
+
 	claims := &AccessTokenPayload{}
 
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return SECRETKEY, nil
+		return cfg.SecretKeyByte, nil
 	})
 	tokenErr := "Auth Token is Invalid or Expired!"
 	if err != nil {
@@ -97,9 +99,11 @@ func DecodeAccessToken(token string, db *gorm.DB) (*models.User, *string) {
 }
 
 func DecodeRefreshToken(token string) bool {
+	cfg := config.GetConfig()
+
 	claims := &RefreshTokenPayload{}
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return SECRETKEY, nil
+		return cfg.SecretKeyByte, nil
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
@@ -130,6 +134,8 @@ type GooglePayload struct {
 }
 
 func ConvertGoogleToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+
 	payload, err := idtoken.Validate(context.Background(), accessToken, cfg.GoogleClientID)
 	if err != nil {
 		errMsg := "Invalid Token"
@@ -153,6 +159,8 @@ type FacebookPayload struct {
 }
 
 func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+
 	res, err := fb.Get("/app", fb.Params{
 		"access_token": accessToken,
 	})
@@ -198,6 +206,8 @@ func GenerateUsername(db *gorm.DB, firstName string, lastName string, username *
 }
 
 func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+
 	user := models.User{Email: email}
 	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/database"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
@@ -48,6 +49,7 @@ func broadcastNotificationMessage(db *gorm.DB, mt int, msg []byte) {
 }
 
 func (ep Endpoint) NotificationSocket(c *websocket.Conn) {
+	cfg := config.GetConfig()
 	db := database.ConnectDb(cfg, true)
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()

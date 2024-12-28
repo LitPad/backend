@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 
@@ -17,15 +18,18 @@ import (
 var cld *cloudinary.Cloudinary
 var err error
 
-func init () {
+func initializeCloudinary () config.Config {
+	cfg := config.GetConfig()
 	// Initialize Cloudinary client
 	cld, err = cloudinary.NewFromParams(cfg.CloudinaryCloudName, cfg.CloudinaryApiKey, cfg.CloudinaryApiSecret)
 	if err != nil {
 		fmt.Println("failed to initialize Cloudinary client: %w", err)
 	}
+	return cfg
 }
 
 func UploadFile(file *multipart.FileHeader, folder string) string {
+	cfg := initializeCloudinary()
 	if cfg.Debug {
 		folder = fmt.Sprintf("test/%s", folder)
 	} else {

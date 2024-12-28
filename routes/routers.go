@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/LitPad/backend/config"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -8,10 +9,11 @@ import (
 
 type Endpoint struct {
 	DB *gorm.DB
+	Config config.Config
 }
 
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
-	endpoint := Endpoint{DB: db}
+	endpoint := Endpoint{DB: db, Config: config.GetConfig()}
 
 	// ROUTES (40)
 	api := app.Group("/api/v1")

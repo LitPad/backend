@@ -18,8 +18,6 @@ import (
 	"gopkg.in/mail.v2"
 )
 
-var cfg = config.GetConfig()
-
 type EmailTypeChoice string
 
 const (
@@ -34,7 +32,7 @@ const (
 	ET_SUBSCRIPTION_EXPIRED EmailTypeChoice = "subscription-expired"
 )
 
-func sortEmail(emailType EmailTypeChoice, tokenString *string, url *string, extraData map[string]interface{}) map[string]interface{} {
+func sortEmail(cfg config.Config, emailType EmailTypeChoice, tokenString *string, url *string, extraData map[string]interface{}) map[string]interface{} {
 	templateFile := "templates/welcome.html"
 	subject := "Account verified"
 	data := make(map[string]interface{})
@@ -116,7 +114,7 @@ func SendEmail(user *models.User, emailType EmailTypeChoice, tokenString *string
 		return
 	}
 	cfg := config.GetConfig()
-	emailData := sortEmail(emailType, tokenString, url, paymentData)
+	emailData := sortEmail(cfg, emailType, tokenString, url, paymentData)
 	templateFile := emailData["template_file"]
 	subject := emailData["subject"]
 
@@ -178,6 +176,8 @@ type ContactPayload struct {
 }
 
 func AddEmailToBrevo(name string, email string) {
+	cfg := config.GetConfig()
+
 	// Prepare the payload for Brevo API
 	payload := ContactPayload{
 		Email:       email,

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/spf13/viper"
 )
 
@@ -12,6 +14,7 @@ type Config struct {
 	RefreshTokenExpireMinutes int    `mapstructure:"REFRESH_TOKEN_EXPIRE_MINUTES"`
 	Port                      string `mapstructure:"PORT"`
 	SecretKey                 string `mapstructure:"SECRET_KEY"`
+	SecretKeyByte            []byte
 	FirstSuperuserEmail       string `mapstructure:"FIRST_SUPERUSER_EMAIL"`
 	FirstSuperUserPassword    string `mapstructure:"FIRST_SUPERUSER_PASSWORD"`
 	FirstWriterEmail          string `mapstructure:"FIRST_WRITER_EMAIL"`
@@ -63,7 +66,12 @@ type Config struct {
 }
 
 func GetConfig() (config Config) {
-	viper.AddConfigPath(".")
+	configPath := os.Getenv("CONFIG_PATH")
+    if configPath == "" {
+        configPath = "." // Default to current directory if not set
+    }
+
+	viper.AddConfigPath(configPath)
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
 
@@ -73,5 +81,6 @@ func GetConfig() (config Config) {
 		panic(err)
 	}
 	viper.Unmarshal(&config)
+	config.SecretKeyByte = []byte(config.SecretKey)
 	return
 }

@@ -42,7 +42,7 @@ func (ep Endpoint) AvailableCoins(c *fiber.Ctx) error {
 // @Router /wallet/coins [post]
 // @Security BearerAuth
 func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
-	stripe.Key = cfg.StripeSecretKey
+	stripe.Key = ep.Config.StripeSecretKey
 	db := ep.DB
 	user := RequestUser(c)
 
@@ -112,11 +112,11 @@ func (ep Endpoint) AllUserTransactions(c *fiber.Ctx) error {
 }
 
 func (ep Endpoint) VerifyPayment(c *fiber.Ctx) error {
-	stripe.Key = cfg.StripeSecretKey
+	stripe.Key = ep.Config.StripeSecretKey
 	db := ep.DB
 	transaction := models.Transaction{}
 	sig := c.Get("Stripe-Signature")
-	event, err := webhook.ConstructEvent(c.BodyRaw(), sig, cfg.StripeWebhookSecret)
+	event, err := webhook.ConstructEvent(c.BodyRaw(), sig, ep.Config.StripeWebhookSecret)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"err": err})
 	}
@@ -275,7 +275,7 @@ func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
 // @Router /wallet/subscription [post]
 // @Security BearerAuth
 func (ep Endpoint) BookSubscription(c *fiber.Ctx) error {
-	stripe.Key = cfg.StripeSecretKey
+	stripe.Key = ep.Config.StripeSecretKey
 	db := ep.DB
 	user := RequestUser(c)
 
