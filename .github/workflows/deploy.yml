@@ -17,6 +17,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    # Get Commit Details
+    - name: Get Commit Details
+      id: commit_info
+      run: |
+        echo "commit_message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+        echo "commit_author=$(git log -1 --pretty=%an)" >> $GITHUB_ENV
+
     # Install dependencies
     - name: Install Dependencies
       run: |
@@ -92,6 +99,12 @@ jobs:
           attachments:
             - color: "36a64f"
               fields:
+                - title: "Commit"
+                  short: true
+                  value: "${{ env.commit_message }}"
+                - title: "By"
+                  short: true
+                  value: "${{ env.commit_author }}"
                 - title: "Status"
                   short: true
                   value: "Success"
@@ -112,6 +125,12 @@ jobs:
           attachments:
             - color: "ff0000"
               fields:
+                - title: "Commit"
+                  short: true
+                  value: "${{ env.commit_message }}"
+                - title: "By"
+                  short: true
+                  value: "${{ env.commit_author }}"
                 - title: "Status"
                   short: true
                   value: "Failed"
