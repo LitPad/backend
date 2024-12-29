@@ -130,7 +130,7 @@ jobs:
                   value: "${{ env.commit_message }}"
                 - title: "By"
                   short: true
-                  value: "${{ env.commit_author }}"
+                  value: "${{ github.actor }}"
                 - title: "Status"
                   short: true
                   value: "Failed"
