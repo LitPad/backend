@@ -54,7 +54,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 
 	if nameContains != "" {
 		query = query.Joins("left join users on users.id = books.author_id").
-			Where("users.username ILIKE ? OR users.first_name ILIKE ? OR users.last_name ILIKE ?", "%"+nameContains+"%", "%"+nameContains+"%", "%"+nameContains+"%")
+			Where("users.username ILIKE ? OR users.name ILIKE ?", "%"+nameContains+"%", "%"+nameContains+"%")
 	}
 
 	query = query.Select("books.*, COALESCE(AVG(reviews.rating), 0) AS avg_rating").
