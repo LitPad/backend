@@ -32,7 +32,7 @@ const (
 	ET_SUBSCRIPTION_EXPIRED EmailTypeChoice = "subscription-expired"
 )
 
-func sortEmail(cfg config.Config, emailType EmailTypeChoice, tokenString *string, url *string, extraData map[string]interface{}) map[string]interface{} {
+func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenString *string, extraData map[string]interface{}) map[string]interface{} {
 	templateFile := "templates/welcome.html"
 	subject := "Account verified"
 	data := make(map[string]interface{})
@@ -47,8 +47,8 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, tokenString *string
 		subject = "Activate your account"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["text"] = "Please click the button below to verify your email."
-		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.EmailVerificationPath, *tokenString)
+		data["text"] = "Please use the code below to verify your email."
+		data["code"] = otp
 
 	case ET_RESET:
 		templateFile = "templates/password-reset.html"
@@ -56,7 +56,7 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, tokenString *string
 		data["template_file"] = templateFile
 		data["subject"] = subject
 		data["text"] = "Please click the button below to reset your password."
-		data["url"] = fmt.Sprintf("%s%s%s", *url, cfg.PasswordResetPath, *tokenString)
+		data["url"] = fmt.Sprintf("%s://reset-password?token=%s", cfg.AppScheme, *tokenString)
 
 	case ET_RESET_SUCC:
 		templateFile = "templates/password-reset-success.html"
@@ -106,21 +106,22 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, tokenString *string
 type EmailContext struct {
 	Name string
 	Url  *string
+	Code *int
 	Text string
 }
 
-func SendEmail(user *models.User, emailType EmailTypeChoice, tokenString *string, url *string, paymentData map[string]interface{}) {
+func SendEmail(user *models.User, emailType EmailTypeChoice, otp *uint, tokenString *string, paymentData map[string]interface{}) {
 	if os.Getenv("ENVIRONMENT") == "TESTING" {
 		return
 	}
 	cfg := config.GetConfig()
-	emailData := sortEmail(cfg, emailType, tokenString, url, paymentData)
+	emailData := sortEmail(cfg, emailType, otp, tokenString, paymentData)
 	templateFile := emailData["template_file"]
 	subject := emailData["subject"]
 
 	// Create a context with dynamic data
 	data := EmailContext{
-		Name: user.FirstName,
+		Name: user.Username,
 		Text: emailData["text"].(string),
 	}
 	if url, ok := emailData["url"]; ok {
@@ -164,7 +165,7 @@ func SendEmail(user *models.User, emailType EmailTypeChoice, tokenString *string
 	d := mail.NewDialer(cfg.MailSenderHost, cfg.MailSenderPort, cfg.MailSenderEmail, cfg.MailSenderPassword)
 	// Send the email
 	if err := d.DialAndSend(m); err != nil {
-		log.Fatal("Error sending email:", err)
+		log.Println("Error sending email:", err)
 	}
 }
 

@@ -6,6 +6,7 @@ const (
 	ACCTYPE_READER AccType = "READER"
 	ACCTYPE_AUTHOR AccType = "AUTHOR"
 )
+
 func (a AccType) IsValid() bool {
 	switch a {
 	case ACCTYPE_READER, ACCTYPE_AUTHOR:
@@ -21,6 +22,7 @@ const (
 	PTYPE_STRIPE PaymentType = "STRIPE"
 	PTYPE_PAYPAL PaymentType = "PAYPAL"
 )
+
 func (p PaymentType) IsValid() bool {
 	switch p {
 	case PTYPE_GPAY, PTYPE_STRIPE, PTYPE_PAYPAL:
@@ -32,9 +34,10 @@ func (p PaymentType) IsValid() bool {
 type PaymentPurpose string
 
 const (
-	PP_COINS   PaymentPurpose = "COINS"
-	PP_SUB PaymentPurpose = "SUBSCRIPTION"
+	PP_COINS PaymentPurpose = "COINS"
+	PP_SUB   PaymentPurpose = "SUBSCRIPTION"
 )
+
 func (p PaymentPurpose) IsValid() bool {
 	switch p {
 	case PP_COINS, PP_SUB:
@@ -51,6 +54,7 @@ const (
 	PSFAILED    PaymentStatus = "FAILED"
 	PSCANCELED  PaymentStatus = "CANCELED"
 )
+
 func (p PaymentStatus) IsValid() bool {
 	switch p {
 	case PSPENDING, PSSUCCEEDED, PSFAILED, PSCANCELED:
@@ -67,6 +71,7 @@ const (
 	ATYPE_SIXTEEN  AgeType = 16
 	ATYPE_EIGHTEEN AgeType = 18
 )
+
 func (a AgeType) IsValid() bool {
 	switch a {
 	case ATYPE_FOUR, ATYPE_TWELVE, ATYPE_SIXTEEN, ATYPE_EIGHTEEN:
@@ -82,6 +87,7 @@ const (
 	CS_PUBLISHED ChapterStatus = "PUBLISHED"
 	CS_TRASH     ChapterStatus = "TRASH"
 )
+
 func (c ChapterStatus) IsValid() bool {
 	switch c {
 	case CS_DRAFT, CS_PUBLISHED, CS_TRASH:
@@ -99,6 +105,7 @@ const (
 	RC_4 RatingChoice = 4
 	RC_5 RatingChoice = 5
 )
+
 func (r RatingChoice) IsValid() bool {
 	switch r {
 	case RC_1, RC_2, RC_3, RC_4, RC_5:
@@ -118,6 +125,7 @@ const (
 	NT_REVIEW        NotificationTypeChoice = "REVIEW"
 	NT_VOTE          NotificationTypeChoice = "VOTE"
 )
+
 func (n NotificationTypeChoice) IsValid() bool {
 	switch n {
 	case NT_LIKE, NT_REPLY, NT_FOLLOWING, NT_BOOK_PURCHASE, NT_GIFT, NT_REVIEW, NT_VOTE:
@@ -132,6 +140,7 @@ const (
 	NS_CREATED NotificationStatus = "CREATED"
 	NS_DELETED NotificationStatus = "DELETED"
 )
+
 func (n NotificationStatus) IsValid() bool {
 	switch n {
 	case NS_CREATED, NS_DELETED:
@@ -147,6 +156,7 @@ const (
 	CT_NON_EXCLUSIVE  ContractTypeChoice = "NON-EXCLUSIVE"
 	CT_ONLY_EXCLUSIVE ContractTypeChoice = "ONLY-EXCLUSIVE"
 )
+
 func (c ContractTypeChoice) IsValid() bool {
 	switch c {
 	case CT_EXCLUSIVE, CT_NON_EXCLUSIVE, CT_ONLY_EXCLUSIVE:
@@ -162,6 +172,7 @@ const (
 	CID_GOVERNMENT_ID   ContractIDTypeChoice = "GOVERNMENT-ID"
 	CID_PASSPORT        ContractIDTypeChoice = "PASSPORT"
 )
+
 func (c ContractIDTypeChoice) IsValid() bool {
 	switch c {
 	case CID_DRIVERS_LICENSE, CID_GOVERNMENT_ID, CID_PASSPORT:
@@ -195,8 +206,8 @@ func (c ContractStatusChoice) IsValid() bool {
 type SubscriptionTypeChoice string
 
 const (
-	ST_MONTHLY  SubscriptionTypeChoice = "MONTHLY"
-	ST_ANNUAL SubscriptionTypeChoice = "ANNUAL"
+	ST_MONTHLY SubscriptionTypeChoice = "MONTHLY"
+	ST_ANNUAL  SubscriptionTypeChoice = "ANNUAL"
 )
 
 func (s SubscriptionTypeChoice) IsValid() bool {
@@ -210,9 +221,10 @@ func (s SubscriptionTypeChoice) IsValid() bool {
 type SubscriptionStatusChoice string
 
 const (
-	SS_ACTIVE SubscriptionStatusChoice = "ACTIVE"
+	SS_ACTIVE  SubscriptionStatusChoice = "ACTIVE"
 	SS_EXPIRED SubscriptionStatusChoice = "EXPIRED"
 )
+
 func (s SubscriptionStatusChoice) IsValid() bool {
 	switch s {
 	case SS_ACTIVE, SS_EXPIRED:
@@ -220,3 +232,10 @@ func (s SubscriptionStatusChoice) IsValid() bool {
 	}
 	return false
 }
+
+type ImageFolderChoice string
+
+const (
+	IF_AVATAR ImageFolderChoice = "avatars"
+	IF_BOOKS ImageFolderChoice  = "books"
+)

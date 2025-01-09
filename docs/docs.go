@@ -1146,7 +1146,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/send-password-reset-otp": {
+        "/auth/send-password-reset-link": {
             "post": {
                 "description": "` + "`" + `This endpoint sends new password reset link to the user's email.` + "`" + `",
                 "tags": [
@@ -2961,13 +2961,34 @@ const docTemplate = `{
                 "summary": "Update User Profile",
                 "parameters": [
                     {
-                        "description": "Profile object",
-                        "name": "profile",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.UpdateUserProfileSchema"
-                        }
+                        "maxLength": 1000,
+                        "minLength": 3,
+                        "type": "string",
+                        "example": "I'm here to read good books",
+                        "name": "bio",
+                        "in": "formData"
+                    },
+                    {
+                        "maxLength": 1000,
+                        "minLength": 3,
+                        "type": "string",
+                        "example": "John Doe",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "maxLength": 1000,
+                        "minLength": 3,
+                        "type": "string",
+                        "example": "johndoe",
+                        "name": "username",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Avatar Image to upload",
+                        "name": "avatar",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -4467,10 +4488,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "first_name",
-                "last_name",
-                "password",
-                "username"
+                "password"
             ],
             "properties": {
                 "email": {
@@ -4478,29 +4496,11 @@ const docTemplate = `{
                     "minLength": 5,
                     "example": "johndoe@email.com"
                 },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "example": "John"
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "example": "Doe"
-                },
                 "password": {
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 8,
                     "example": "strongpassword"
-                },
-                "terms_agreement": {
-                    "type": "boolean"
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "example": "john-doe"
                 }
             }
         },
@@ -4789,10 +4789,16 @@ const docTemplate = `{
         "schemas.SetNewPasswordSchema": {
             "type": "object",
             "required": [
+                "email",
                 "password",
                 "token_string"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "minLength": 5,
+                    "example": "johndoe@email.com"
+                },
                 "password": {
                     "type": "string",
                     "maxLength": 50,
@@ -4967,9 +4973,6 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "first_name": {
-                    "type": "string"
-                },
                 "followers": {
                     "type": "array",
                     "items": {
@@ -4982,7 +4985,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
-                "last_name": {
+                "name": {
                     "type": "string"
                 },
                 "refresh": {
@@ -5113,18 +5116,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UpdateUserProfileSchema": {
-            "type": "object",
-            "properties": {
-                "username": {
-                    "description": "Bio\t\t\t\t*string ` + "`" + `json:\"bio\"` + "`" + `",
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 3,
-                    "example": "john-doe"
-                }
-            }
-        },
         "schemas.UpdateUserRoleSchema": {
             "type": "object",
             "properties": {
@@ -5144,7 +5135,7 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
-                "full_name": {
+                "name": {
                     "description": "For short user data",
                     "type": "string"
                 },
@@ -5175,9 +5166,6 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "first_name": {
-                    "type": "string"
-                },
                 "followers": {
                     "type": "array",
                     "items": {
@@ -5190,7 +5178,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
-                "last_name": {
+                "name": {
                     "type": "string"
                 },
                 "stories_count": {
@@ -5259,12 +5247,18 @@ const docTemplate = `{
         "schemas.VerifyEmailRequestSchema": {
             "type": "object",
             "required": [
-                "token_string"
+                "email",
+                "otp"
             ],
             "properties": {
-                "token_string": {
+                "email": {
                     "type": "string",
-                    "example": "Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"
+                    "minLength": 5,
+                    "example": "johndoe@email.com"
+                },
+                "otp": {
+                    "type": "integer",
+                    "example": 123456
                 }
             }
         },

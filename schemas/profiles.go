@@ -9,7 +9,7 @@ import (
 )
 
 type FollowerData struct {
-	Name           string          `json:"name"`
+	Name           *string         `json:"name"`
 	Username       string          `json:"username"`
 	AccountType    choices.AccType `json:"account_type"`
 	Avatar         *string         `json:"avatar"`
@@ -18,7 +18,7 @@ type FollowerData struct {
 }
 
 func (dto FollowerData) FromModel(user models.User) FollowerData {
-	dto.Name = user.FullName()
+	dto.Name = user.Name
 	dto.Username = user.Username
 	dto.Avatar = &user.Avatar
 	dto.AccountType = user.AccountType
@@ -28,17 +28,16 @@ func (dto FollowerData) FromModel(user models.User) FollowerData {
 }
 
 type UserProfile struct {
-	FirstName    string                         `json:"first_name"`
-	LastName     string                         `json:"last_name"`
-	Username     string                         `json:"username"`
-	Email        string                         `json:"email"`
-	Avatar       *string                        `json:"avatar"`
-	Bio          *string                        `json:"bio"`
-	AccountType  choices.AccType                `json:"account_type"`
-	StoriesCount int                            `json:"stories_count"`
-	Followers    []FollowerData                 `json:"followers"`
-	Followings   []FollowerData                 `json:"followings"`
-	CreatedAt    time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	Name         *string                         `json:"name"`
+	Username     string                          `json:"username"`
+	Email        string                          `json:"email"`
+	Avatar       *string                         `json:"avatar"`
+	Bio          *string                         `json:"bio"`
+	AccountType  choices.AccType                 `json:"account_type"`
+	StoriesCount int                             `json:"stories_count"`
+	Followers    []FollowerData                  `json:"followers"`
+	Followings   []FollowerData                  `json:"followings"`
+	CreatedAt    time.Time                       `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	CurrentPlan  *choices.SubscriptionTypeChoice `json:"current_plan"`
 }
 
@@ -56,8 +55,7 @@ func (u UserProfile) Init(user models.User) UserProfile {
 	}
 
 	u = UserProfile{
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
+		Name:         user.Name,
 		Username:     user.Username,
 		Email:        user.Email,
 		Avatar:       &user.Avatar,
@@ -78,8 +76,9 @@ type UserProfileResponseSchema struct {
 }
 
 type UpdateUserProfileSchema struct {
-	// Bio				*string `json:"bio"`
-	Username *string `json:"username,omitempty" validate:"min=3,max=1000" example:"john-doe"`
+	Name     *string `json:"name,omitempty" validate:"min=3,max=1000" example:"John Doe"`
+	Bio      *string `json:"bio,omitempty" validate:"min=3,max=1000" example:"I'm here to read good books"`
+	Username *string `json:"username,omitempty" validate:"min=3,max=1000" example:"johndoe"`
 }
 
 type UpdateUserRoleSchema struct {

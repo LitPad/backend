@@ -248,7 +248,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 	}
 
 	// Upload File
-	coverImage := UploadFile(file, "BOOK_COVER_IMAGES")
+	coverImage := UploadFile(file, string(choices.IF_BOOKS))
 	book := bookManager.Create(db, *author, data, genre, coverImage, tags)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
@@ -310,7 +310,7 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 	// Upload File
 	coverImage := ""
 	if file != nil {
-		coverImage = UploadFile(file, "BOOK_COVER_IMAGES")
+		coverImage = UploadFile(file, string(choices.IF_BOOKS))
 	}
 
 	updatedBook := bookManager.Update(db, *book, data, genre, coverImage, tags)
@@ -468,7 +468,7 @@ func (ep Endpoint) BuyABook(c *fiber.Ctx) error {
 	// Create and send notification in socket
 	notification := notificationManager.Create(
 		db, user, book.Author, choices.NT_BOOK_PURCHASE,
-		fmt.Sprintf("%s bought one of your books.", user.FullName()),
+		fmt.Sprintf("%s bought one of your books.", user.Username),
 		book, nil, nil, nil,
 	)
 	SendNotificationInSocket(c, notification)
@@ -516,7 +516,7 @@ func (ep Endpoint) BuyAChapter(c *fiber.Ctx) error {
 	// Create and send notification in socket
 	notification := notificationManager.Create(
 		db, user, book.Author, choices.NT_BOOK_PURCHASE,
-		fmt.Sprintf("%s bought one of your books.", user.FullName()),
+		fmt.Sprintf("%s bought one of your books.", user.Username),
 		book, nil, nil, nil,
 	)
 	SendNotificationInSocket(c, notification)
@@ -596,7 +596,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 	createdReview := reviewManager.Create(db, user, *book, data)
 
 	// Create and Send Notification in socket
-	text := fmt.Sprintf("%s reviewed your book", user.FullName())
+	text := fmt.Sprintf("%s reviewed your book", user.Username)
 	notification := notificationManager.Create(db, user, book.Author, choices.NT_REVIEW, text, book, &createdReview.ID, nil, nil)
 	SendNotificationInSocket(c, notification)
 
@@ -737,7 +737,7 @@ func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
 
 	// Create and Send Notification in socket
 	if user.ID != review.User.ID {
-		text := fmt.Sprintf("%s replied your review", user.FullName())
+		text := fmt.Sprintf("%s replied your review", user.Username)
 		notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, &review.Book, &review.ID, &reply.ID, nil)
 		SendNotificationInSocket(c, notification)
 	}
@@ -836,7 +836,7 @@ func (ep Endpoint) VoteBook(c *fiber.Ctx) error {
 	createdVote := voteManager.Create(db, user, book)
 	// Create and Send Notification in socket
 	if user.ID != createdVote.UserID {
-		text := fmt.Sprintf("%s voted your book", user.FullName())
+		text := fmt.Sprintf("%s voted your book", user.Username)
 		notification := notificationManager.Create(db, user, book.Author, choices.NT_VOTE, text, book, nil, nil, nil)
 		SendNotificationInSocket(c, notification)
 	}

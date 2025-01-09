@@ -4,12 +4,8 @@ import "github.com/LitPad/backend/models"
 
 // REQUEST BODY SCHEMAS
 type RegisterUser struct {
-	FirstName      string `json:"first_name" validate:"required,max=50" example:"John"`
-	LastName       string `json:"last_name" validate:"required,max=50" example:"Doe"`
-	Username       string `json:"username" validate:"required,max=1000" example:"john-doe"`
-	Email          string `json:"email" validate:"required,min=5,email" example:"johndoe@email.com"`
-	Password       string `json:"password" validate:"required,min=8,max=50" example:"strongpassword"`
-	TermsAgreement bool   `json:"terms_agreement" validate:"eq=true"`
+	Email    string `json:"email" validate:"required,min=5,email" example:"johndoe@email.com"`
+	Password string `json:"password" validate:"required,min=8,max=50" example:"strongpassword"`
 }
 
 type EmailRequestSchema struct {
@@ -17,25 +13,27 @@ type EmailRequestSchema struct {
 }
 
 type VerifyEmailRequestSchema struct {
-	TokenString					string					`json:"token_string" validate:"required" example:"Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"`
+	EmailRequestSchema
+	Otp uint `json:"otp" validate:"required" example:"123456"`
 }
 
 type SetNewPasswordSchema struct {
-	VerifyEmailRequestSchema
-	Password			string				`json:"password" validate:"required,min=8,max=50" example:"newstrongpassword"`
+	EmailRequestSchema
+	TokenString string `json:"token_string" validate:"required" example:"Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"`
+	Password string `json:"password" validate:"required,min=8,max=50" example:"newstrongpassword"`
 }
 
 type LoginSchema struct {
-	Email				string				`json:"email" validate:"required,email" example:"johndoe@email.com"`
-	Password			string				`json:"password" validate:"required" example:"password"`
+	Email    string `json:"email" validate:"required,email" example:"johndoe@email.com"`
+	Password string `json:"password" validate:"required" example:"password"`
 }
 
 type SocialLoginSchema struct {
-	Token				string				`json:"token" validate:"required,min=10" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
+	Token string `json:"token" validate:"required,min=10" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 }
 
 type RefreshTokenSchema struct {
-	Refresh			string					`json:"refresh" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
+	Refresh string `json:"refresh" validate:"required" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 }
 
 // RESPONSE BODY SCHEMAS
@@ -46,15 +44,16 @@ type RegisterResponseSchema struct {
 
 type TokensResponseSchema struct {
 	UserProfile
-	Access			string					`json:"access" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
-	Refresh			string					`json:"refresh" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
+	Access  string `json:"access" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
+	Refresh string `json:"refresh" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 }
 
 func (t TokensResponseSchema) Init(user models.User) TokensResponseSchema {
 	t.UserProfile = t.UserProfile.Init(user)
 	return t
 }
+
 type LoginResponseSchema struct {
 	ResponseSchema
-	Data			TokensResponseSchema		`json:"data"`
+	Data TokensResponseSchema `json:"data"`
 }

@@ -20,7 +20,6 @@ func Models() []interface{} {
 
 		// accounts
 		&models.User{},
-		&models.Token{},
 		&models.Notification{},
 
 		// book

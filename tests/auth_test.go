@@ -9,21 +9,15 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
-
-func register(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+func register(t *testing.T, app *fiber.App, baseUrl string) {
 	t.Run("Register User Successfully", func(t *testing.T) {
 		url := fmt.Sprintf("%s/register", baseUrl)
 		validEmail := "testregisteruser@email.com"
 		userData := schemas.RegisterUser{
-			FirstName:      "TestRegister",
-			LastName:       "User",
-			Username: "testregisteruser",
-			Email:          validEmail,
-			Password:       "testregisteruserpassword",
-			TermsAgreement: true,
+			Email:    validEmail,
+			Password: "testregisteruserpassword",
 		}
 		res := ProcessTestBody(t, app, url, "POST", userData)
 
@@ -43,12 +37,8 @@ func register(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		email := "testregisteruser@email.com"
 		url := fmt.Sprintf("%s/register", baseUrl)
 		userData := schemas.RegisterUser{
-			FirstName:      "TestRegister",
-			LastName:       "User",
-			Username: "testregisteruser",
-			Email:          email,
-			Password:       "testregisteruserpassword",
-			TermsAgreement: true,
+			Email:    email,
+			Password: "testregisteruserpassword",
 		}
 
 		// Verify that a user with the same email cannot be registered again
@@ -69,10 +59,10 @@ func register(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 func TestAuth(t *testing.T) {
 	app := fiber.New()
 	db := Setup(t, app)
-	BASEURL := "/api/v1/auth"
+	baseUrl := "/api/v1/auth"
 
 	// Run Auth Endpoint Tests
-	register(t, app, db, BASEURL)
+	register(t, app, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)

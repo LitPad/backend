@@ -14,7 +14,7 @@ type Config struct {
 	RefreshTokenExpireMinutes int    `mapstructure:"REFRESH_TOKEN_EXPIRE_MINUTES"`
 	Port                      string `mapstructure:"PORT"`
 	SecretKey                 string `mapstructure:"SECRET_KEY"`
-	SecretKeyByte            []byte
+	SecretKeyByte             []byte
 	FirstSuperuserEmail       string `mapstructure:"FIRST_SUPERUSER_EMAIL"`
 	FirstSuperUserPassword    string `mapstructure:"FIRST_SUPERUSER_PASSWORD"`
 	FirstWriterEmail          string `mapstructure:"FIRST_WRITER_EMAIL"`
@@ -62,14 +62,15 @@ type Config struct {
 	CloudinaryApiKey          string `mapstructure:"CLOUDINARY_API_KEY"`
 	CloudinaryApiSecret       string `mapstructure:"CLOUDINARY_API_SECRET"`
 	RedisUrl                  string `mapstructure:"REDIS_URL"`
-	ReminderCronHours         uint `mapstructure:"REMINDER_CRON_HOURS"`
+	ReminderCronHours         uint   `mapstructure:"REMINDER_CRON_HOURS"`
+	AppScheme                 string `mapstructure:"APP_SCHEME"`
 }
 
 func GetConfig() (config Config) {
 	configPath := os.Getenv("CONFIG_PATH")
-    if configPath == "" {
-        configPath = "." // Default to current directory if not set
-    }
+	if configPath == "" {
+		configPath = "." // Default to current directory if not set
+	}
 
 	viper.AddConfigPath(configPath)
 	viper.SetConfigName(".env")

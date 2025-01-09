@@ -781,31 +781,14 @@ definitions:
         example: johndoe@email.com
         minLength: 5
         type: string
-      first_name:
-        example: John
-        maxLength: 50
-        type: string
-      last_name:
-        example: Doe
-        maxLength: 50
-        type: string
       password:
         example: strongpassword
         maxLength: 50
         minLength: 8
         type: string
-      terms_agreement:
-        type: boolean
-      username:
-        example: john-doe
-        maxLength: 1000
-        type: string
     required:
     - email
-    - first_name
-    - last_name
     - password
-    - username
     type: object
   schemas.RepliesResponseDataSchema:
     properties:
@@ -1004,6 +987,10 @@ definitions:
     type: object
   schemas.SetNewPasswordSchema:
     properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
       password:
         example: newstrongpassword
         maxLength: 50
@@ -1013,6 +1000,7 @@ definitions:
         example: Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll
         type: string
     required:
+    - email
     - password
     - token_string
     type: object
@@ -1126,8 +1114,6 @@ definitions:
         $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
         type: string
-      first_name:
-        type: string
       followers:
         items:
           $ref: '#/definitions/schemas.FollowerData'
@@ -1136,7 +1122,7 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
-      last_name:
+      name:
         type: string
       refresh:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
@@ -1225,15 +1211,6 @@ definitions:
     - new_password
     - old_password
     type: object
-  schemas.UpdateUserProfileSchema:
-    properties:
-      username:
-        description: "Bio\t\t\t\t*string `json:\"bio\"`"
-        example: john-doe
-        maxLength: 1000
-        minLength: 3
-        type: string
-    type: object
   schemas.UpdateUserRoleSchema:
     properties:
       account_type:
@@ -1245,7 +1222,7 @@ definitions:
     properties:
       avatar:
         type: string
-      full_name:
+      name:
         description: For short user data
         type: string
       username:
@@ -1266,8 +1243,6 @@ definitions:
         $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
         type: string
-      first_name:
-        type: string
       followers:
         items:
           $ref: '#/definitions/schemas.FollowerData'
@@ -1276,7 +1251,7 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
-      last_name:
+      name:
         type: string
       stories_count:
         type: integer
@@ -1323,11 +1298,16 @@ definitions:
     type: object
   schemas.VerifyEmailRequestSchema:
     properties:
-      token_string:
-        example: Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll
+      email:
+        example: johndoe@email.com
+        minLength: 5
         type: string
+      otp:
+        example: 123456
+        type: integer
     required:
-    - token_string
+    - email
+    - otp
     type: object
   schemas.WaitlistResponseSchema:
     properties:
@@ -2103,7 +2083,7 @@ paths:
       summary: Resend Verification Email
       tags:
       - Auth
-  /auth/send-password-reset-otp:
+  /auth/send-password-reset-link:
     post:
       description: '`This endpoint sends new password reset link to the user''s email.`'
       parameters:
@@ -3294,12 +3274,28 @@ paths:
     patch:
       description: This endpoint updates a user's profile
       parameters:
-      - description: Profile object
-        in: body
-        name: profile
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.UpdateUserProfileSchema'
+      - example: I'm here to read good books
+        in: formData
+        maxLength: 1000
+        minLength: 3
+        name: bio
+        type: string
+      - example: John Doe
+        in: formData
+        maxLength: 1000
+        minLength: 3
+        name: name
+        type: string
+      - example: johndoe
+        in: formData
+        maxLength: 1000
+        minLength: 3
+        name: username
+        type: string
+      - description: Avatar Image to upload
+        in: formData
+        name: avatar
+        type: file
       responses:
         "200":
           description: OK

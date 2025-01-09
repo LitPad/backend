@@ -40,7 +40,7 @@ func intPow(base, exponent int) int {
 }
 
 // Generates a random integer with a specified number of digits
-func GetRandomInt(size int) int {
+func GetRandomInt(size int) uint {
 	if size <= 0 {
 		return 0
 	}
@@ -53,7 +53,7 @@ func GetRandomInt(size int) int {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// Generate a random integer within the range [min, max]
-	return rand.Intn(max-min+1) + min
+	return uint(rand.Intn(max-min+1) + min)
 }
 
 func Title(s string) string {

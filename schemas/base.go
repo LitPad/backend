@@ -22,13 +22,13 @@ type PaginatedResponseDataSchema struct {
 
 type UserDataSchema struct {
 	// For short user data
-	FullName string `json:"full_name"`
-	Username string `json:"username"`
-	Avatar   string `json:"avatar"`
+	Name     *string `json:"name"`
+	Username string  `json:"username"`
+	Avatar   string  `json:"avatar"`
 }
 
 func (u UserDataSchema) Init(user models.User) UserDataSchema {
-	u.FullName = user.FullName()
+	u.Name = user.Name
 	u.Username = user.Username
 	u.Avatar = user.Avatar
 	return u

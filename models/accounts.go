@@ -1,28 +1,34 @@
 package models
 
 import (
-	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
+	"github.com/gosimple/slug"
 	"gorm.io/gorm"
 )
 
 type User struct {
 	BaseModel
-	FirstName         string          `gorm:"type: varchar(255);not null"`
-	LastName          string          `gorm:"type: varchar(255);not null"`
-	Username          string          `gorm:"type: varchar(1000);not null;unique;"`
-	Email             string          `gorm:"not null;unique;"`
-	Password          string          `gorm:"not null"`
-	IsEmailVerified   bool            `gorm:"default:false"`
-	IsSuperuser       bool            `gorm:"default:false"`
-	IsStaff           bool            `gorm:"default:false"`
-	IsActive          bool            `gorm:"default:true"`
-	TermsAgreement    bool            `gorm:"default:false"`
+	Name            *string `gorm:"type: varchar(255);null"`
+	Username        string `gorm:"type: varchar(1000);not null;unique;"`
+	Email           string `gorm:"not null;unique;"`
+	Password        string `gorm:"not null"`
+	IsEmailVerified bool   `gorm:"default:false"`
+	IsSuperuser     bool   `gorm:"default:false"`
+	IsStaff         bool   `gorm:"default:false"`
+	IsActive        bool   `gorm:"default:true"`
+
+	Otp         *uint      `gorm:"null"`
+	OtpExpiry   *time.Time `gorm:"null"`
+	TokenString *string    `gorm:"null"`
+	TokenExpiry *time.Time `gorm:"null"`
+
 	Avatar            string          `gorm:"type:varchar(1000);null;"`
 	Access            *string         `gorm:"type:varchar(1000);null;"`
 	Refresh           *string         `gorm:"type:varchar(1000);null;"`
@@ -44,6 +50,40 @@ type User struct {
 	Books []Book `gorm:"foreignKey:AuthorID"`
 }
 
+func (u *User) GenerateOTP(db *gorm.DB) {
+	cfg := config.GetConfig()
+	// Create new otp
+	otp := utils.GetRandomInt(6)
+	u.Otp = &otp
+	expiry := time.Now().UTC().Add(time.Duration(cfg.EmailOtpExpireSeconds) * time.Second)
+	u.OtpExpiry = &expiry
+}
+
+func (u *User) GenerateToken(db *gorm.DB) {
+	cfg := config.GetConfig()
+	// Create new token
+	tokenString := utils.GetRandomString(70)
+	u.TokenString = &tokenString
+	expiry := time.Now().UTC().Add(time.Duration(cfg.EmailOtpExpireSeconds) * time.Second)
+	u.TokenExpiry = &expiry
+}
+
+func (u User) CheckTokenExpiration() bool {
+	cfg := config.GetConfig()
+	currentTime := time.Now().UTC()
+	diff := int64(currentTime.Sub(*u.TokenExpiry).Seconds())
+	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds
+	return diff > emailExpirySecondsTimeout
+}
+
+func (u User) CheckOtpExpiration() bool {
+	cfg := config.GetConfig()
+	currentTime := time.Now().UTC()
+	diff := int64(currentTime.Sub(*u.OtpExpiry).Seconds())
+	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds
+	return diff > emailExpirySecondsTimeout
+}
+
 func (user User) SubscriptionExpired() bool {
 	if user.SubscriptionExpiry == nil {
 		return true
@@ -63,44 +103,34 @@ func (user User) FollowingsCount() int {
 	return len(user.Followings)
 }
 
-func (user User) FullName() string {
-	return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
-}
-
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
+	user.Username = user.GenerateUsername(tx, user.Email, nil)
+	user.GenerateOTP(tx)
 	user.Password = utils.HashPassword(user.Password)
 	return
 }
 
-type Token struct {
-	BaseModel
-	UserId      uuid.UUID `gorm:"unique"`
-	User        User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE"`
-	TokenString string
-}
+func (user *User) GenerateUsername(db *gorm.DB, email string, username *string) string {
+	emailSubstr := strings.Split(email, "@")[0]
 
-func (token *Token) BeforeSave(tx *gorm.DB) (err error) {
-	token.TokenString = token.GenerateRandomToken(tx)
-	return
-}
-
-func (token Token) GenerateRandomToken(db *gorm.DB) string {
-	// Create new
-	tokenStr := utils.GetRandomString(100)
-	tokenData := Token{TokenString: tokenStr}
-	db.Take(&tokenData, tokenData)
-	if tokenData.ID != uuid.Nil {
-		return token.GenerateRandomToken(db)
+	uniqueUsername := slug.Make(emailSubstr)
+	if username != nil {
+		uniqueUsername = *username
 	}
-	return tokenStr
-}
 
-func (obj Token) CheckExpiration() bool {
-	cfg := config.GetConfig()
-	currentTime := time.Now().UTC()
-	diff := int64(currentTime.Sub(obj.UpdatedAt).Seconds())
-	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds
-	return diff > emailExpirySecondsTimeout
+	// Check for uniqueness and adjust if necessary
+	for {
+		exisitngUser := User{Username: uniqueUsername}
+		db.Take(&exisitngUser, exisitngUser)
+		if exisitngUser.ID == uuid.Nil {
+			// Username is unique
+			break
+		}
+		// Append a random string to make it unique
+		randomStr := strconv.FormatUint(uint64(utils.GetRandomInt(7)), 10)
+		uniqueUsername = slug.Make(emailSubstr) + randomStr
+	}
+	return uniqueUsername
 }
 
 type Notification struct {

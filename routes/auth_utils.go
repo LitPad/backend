@@ -12,7 +12,6 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/gosimple/slug"
 	fb "github.com/huandu/facebook/v2"
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/api/idtoken"
@@ -187,35 +186,13 @@ func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorRes
 	return &data, nil
 }
 
-func GenerateUsername(db *gorm.DB, firstName string, lastName string, username *string) string {
-	uniqueUsername := slug.Make(firstName + " " + lastName)
-	if username != nil {
-		uniqueUsername = *username
-	}
-	user := models.User{Username: uniqueUsername}
-	db.Take(&user, user)
-	if user.ID != uuid.Nil {
-		// username is already taken
-		// Make it unique by attaching a random string
-		// to it and repeat the function
-		randomStr := utils.GetRandomString(6)
-		uniqueUsername = uniqueUsername + "-" + randomStr
-		return GenerateUsername(db, firstName, lastName, &uniqueUsername)
-	}
-	return uniqueUsername
-}
-
 func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *utils.ErrorResponse) {
 	cfg := config.GetConfig()
 
 	user := models.User{Email: email}
 	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil {
-		name := strings.Split(name, " ")
-		firstName := name[0]
-		lastName := name[1]
-		username := GenerateUsername(db, firstName, lastName, nil)
-		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: *avatar, SocialLogin: true}
+		user = models.User{Name: &name, Email: email, IsEmailVerified: true, Password: cfg.SocialsPassword, Avatar: *avatar, SocialLogin: true}
 		db.Create(&user)
 	} else {
 		if !user.SocialLogin {
