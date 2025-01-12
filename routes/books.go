@@ -3,7 +3,6 @@ package routes
 import (
 	"fmt"
 
-	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
@@ -12,17 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	userManager          = managers.UserManager{}
-	bookManager          = managers.BookManager{}
-	chapterManager       = managers.ChapterManager{}
-	boughtChapterManager = managers.BoughtChapterManager{}
-	tagManager           = managers.TagManager{}
-	genreManager         = managers.GenreManager{}
-	reviewManager        = managers.ReviewManager{}
-	replyManager         = managers.ReplyManager{}
-	voteManager          = managers.VoteManager{}
-)
 
 // @Summary View Available Book Tags
 // @Description This endpoint views available book tags

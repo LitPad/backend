@@ -239,3 +239,19 @@ const (
 	IF_AVATAR ImageFolderChoice = "avatars"
 	IF_BOOKS ImageFolderChoice  = "books"
 )
+
+type UserGrowthChoice int64
+
+const (
+	UG_7 UserGrowthChoice = 7
+	UG_30 UserGrowthChoice = 30
+	UG_365 UserGrowthChoice = 365
+)
+
+func (u UserGrowthChoice) IsValid() bool {
+	switch u {
+	case UG_7, UG_30, UG_365:
+		return true
+	}
+	return false
+}

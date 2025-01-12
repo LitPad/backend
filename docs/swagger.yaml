@@ -303,6 +303,17 @@ definitions:
       word_count:
         type: integer
     type: object
+  schemas.BookWithStats:
+    properties:
+      avg_rating:
+        type: number
+      id:
+        type: integer
+      title:
+        type: string
+      votes_count:
+        type: integer
+    type: object
   schemas.BooksResponseDataSchema:
     properties:
       books:
@@ -544,6 +555,36 @@ definitions:
     required:
     - payment_method_token
     - subtype
+    type: object
+  schemas.DashboardResponseDataSchema:
+    properties:
+      active_subscribers:
+        type: integer
+      books:
+        items:
+          $ref: '#/definitions/schemas.BookWithStats'
+        type: array
+      subscription_revenue:
+        type: number
+      total_users:
+        type: integer
+      user_growth_data:
+        items:
+          $ref: '#/definitions/schemas.UserGrowthData'
+        type: array
+      user_subscription_plan_percentages:
+        $ref: '#/definitions/schemas.SubscriptionPlansAndPercentages'
+    type: object
+  schemas.DashboardResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.DashboardResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
     type: object
   schemas.EmailRequestSchema:
     properties:
@@ -1056,6 +1097,15 @@ definitions:
     - amount
     - subtype
     type: object
+  schemas.SubscriptionPlansAndPercentages:
+    properties:
+      annual:
+        type: number
+      free_tier:
+        type: number
+      monthly:
+        type: number
+    type: object
   schemas.SubscriptionPlansResponseSchema:
     properties:
       data:
@@ -1228,6 +1278,15 @@ definitions:
       username:
         type: string
     type: object
+  schemas.UserGrowthData:
+    properties:
+      count:
+        description: Number of new users
+        type: integer
+      period:
+        description: e.g., "Jan 2025", "Week 1", etc.
+        type: string
+    type: object
   schemas.UserProfile:
     properties:
       account_type:
@@ -1348,6 +1407,40 @@ info:
   title: LITPAD API
   version: "1.0"
 paths:
+  /admin:
+    get:
+      consumes:
+      - application/json
+      description: '`Retrieves minimal book data, counts and other metrics`'
+      parameters:
+      - description: User Growth to filter by in days
+        enum:
+        - 7
+        - 30
+        - 365
+        in: query
+        name: user_growth_filter
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved admin dashboard data
+          schema:
+            $ref: '#/definitions/schemas.DashboardResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Admin Dashboard
+      tags:
+      - Admin
   /admin/books:
     get:
       consumes:
@@ -1364,8 +1457,7 @@ paths:
         in: query
         name: title
         type: string
-      - description: First name, last name or username of the book author to filter
-          by
+      - description: name or username of the book author to filter by
         in: query
         name: name
         type: string

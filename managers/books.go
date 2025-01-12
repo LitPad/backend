@@ -80,6 +80,34 @@ func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.E
 	return &book, nil
 }
 
+func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.BookWithStats {
+	var books []schemas.BookWithStats
+
+	db.Model(&b.Model).
+		Select(`
+			books.slug, 
+			books.title, 
+			books.cover_image, 
+			users.username AS author_name, 
+			COALESCE(AVG(reviews.rating), 0) AS avg_rating, 
+			COUNT(votes.id) AS votes_count, 
+			genres.name AS genre_name, 
+			genres.slug AS genre_slug
+		`).
+		Joins("LEFT JOIN users ON users.id = books.author_id"). // Adjust `author_id` if necessary
+		Joins("LEFT JOIN reviews ON reviews.book_id = books.id").
+		Joins("LEFT JOIN votes ON votes.book_id = books.id").
+		Joins("LEFT JOIN genres ON genres.id = books.genre_id"). // Adjust `genre_id` if necessary
+		Group("books.slug, books.title, books.cover_image, users.username, genres.name, genres.slug").
+		Order("avg_rating DESC, votes_count DESC").
+		Limit(10).
+		Scan(&books)
+
+	return books
+}
+
+
+
 func (b BookManager) GetBookContracts(db *gorm.DB, name *string, contractStatus *choices.ContractStatusChoice) []models.Book {
 	books := []models.Book{}
 	q := db.Not("full_name = ?", "")

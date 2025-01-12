@@ -1,17 +1,22 @@
 package managers
 
 import (
+	"fmt"
+	"math"
 	"time"
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
+	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type UserManager struct{}
+type UserManager struct{
+	Model models.User
+}
 
 func (u UserManager) GetAll(db *gorm.DB, accountType *choices.AccType, staff *bool) []models.User {
 	users := []models.User{}
@@ -24,6 +29,18 @@ func (u UserManager) GetAll(db *gorm.DB, accountType *choices.AccType, staff *bo
 	}
 	query.Scopes(scopes.FollowerFollowingBooksPreloaderScope).Order("created_at DESC").Find(&users)
 	return users
+}
+
+func (u UserManager) GetCount(db *gorm.DB) int64 {
+	var count int64
+	db.Model(u.Model).Count(&count)
+	return count
+}
+
+func (u UserManager) GetActiveSubscribersCount(db *gorm.DB) int64 {
+	var count int64
+	db.Model(u.Model).Where("subscription_expiry IS NOT NULL AND subscription_expiry > ?", time.Now()).Count(&count)
+	return count
 }
 
 func (u UserManager) GetByUsername(db *gorm.DB, username string) *models.User {
@@ -70,6 +87,81 @@ func (u UserManager) GetSubscribers(db *gorm.DB, subscriptionType *choices.Subsc
 	query.Find(&subscribers)
 	return subscribers
 }
+
+func (u UserManager) GetUserPlanPercentages(db *gorm.DB) schemas.SubscriptionPlansAndPercentages {
+    type Result struct {
+        Category string
+        Count    int64
+    }
+
+    var results []Result
+    var totalUsers int64
+
+    // Count the total users
+    db.Model(&u.Model).Count(&totalUsers)
+
+    // Count users by category (freeTier, monthly, annual)
+    db.Model(&u.Model).
+        Select(`CASE 
+                    WHEN current_plan IS NULL THEN 'freeTier' 
+                    WHEN current_plan = ? THEN 'monthly' 
+                    WHEN current_plan = ? THEN 'annual' 
+                END as category, COUNT(*) as count`, 
+                choices.ST_MONTHLY, 
+                choices.ST_ANNUAL).
+        Group("category").
+        Scan(&results)
+
+    // Calculate percentages
+    percentages := map[string]float64{
+        "freeTier": 0,
+        "monthly":  0,
+        "annual":   0,
+    }
+
+    for _, result := range results {
+        if totalUsers > 0 {
+			percentages[result.Category] = math.Round((float64(result.Count) / float64(totalUsers)) * 100) // to 1 dp
+        }
+    }
+	percentagesData := schemas.SubscriptionPlansAndPercentages{
+		FreeTier: percentages["freeTier"],
+		Monthly: percentages["monthly"],
+		Annual: percentages["annual"],
+	}
+    return percentagesData
+}
+
+func (u UserManager) GetUserGrowthData(db *gorm.DB, choice choices.UserGrowthChoice) []schemas.UserGrowthData {
+    var results []schemas.UserGrowthData
+    var startDate time.Time
+    var groupBy string
+
+    // Calculate start date and grouping based on UserGrowthChoice
+    now := time.Now()
+    switch choice {
+    case choices.UG_7:
+        startDate = now.AddDate(0, 0, -7)
+        groupBy = "DATE(created_at)" // Group by date
+    case choices.UG_30:
+        startDate = now.AddDate(0, 0, -30)
+        groupBy = "DATE(created_at)" // Group by date
+    case choices.UG_365:
+        startDate = now.AddDate(0, 0, -365)
+        groupBy = "DATE(created_at)" // Group by year-month
+    }
+
+    // Query the database
+    db.Model(&u.Model).
+        Select(fmt.Sprintf("%s AS period, COUNT(*) AS count", groupBy)).
+        Where("created_at >= ?", startDate).
+        Group(groupBy).
+        Order("period ASC").
+        Scan(&results)
+    return results
+}
+
+
 
 type NotificationManager struct{}
 

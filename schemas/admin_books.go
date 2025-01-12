@@ -53,10 +53,21 @@ type ContractsResponseSchema struct {
 }
 
 type GenreAddSchema struct {
-	Name string `json:"name" validate:"required"`
+	Name     string   `json:"name" validate:"required"`
 	TagSlugs []string `json:"tag_slugs"`
 }
 
 type TagsAddSchema struct {
 	Name string `json:"name" validate:"required"`
+}
+
+type BookWithStats struct {
+	Slug       string  `json:"slug"`
+	Title      string  `json:"title"`
+	CoverImage string  `json:"cover_image"`
+	AuthorName string  `json:"author_name"`
+	AvgRating  float64 `json:"avg_rating"`
+	VotesCount int     `json:"votes_count"`
+	GenreName  string  `json:"genre_name"`
+	GenreSlug  string  `json:"genre_slug"`
 }

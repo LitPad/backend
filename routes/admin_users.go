@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var truthy = true
 // @Summary List Users with Pagination
 // @Description Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.
 // @Tags Admin | Users

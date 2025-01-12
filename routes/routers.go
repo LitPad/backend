@@ -102,6 +102,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	// ADMIN ROUTES (7)
 	adminRouter := api.Group("/admin")
+	adminRouter.Get("/", endpoint.AdminMiddleware, endpoint.AdminDashboard)
+
 	// Admin Users
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)

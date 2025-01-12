@@ -21,6 +21,59 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `Retrieves minimal book data, counts and other metrics` + "`" + `",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Admin Dashboard",
+                "parameters": [
+                    {
+                        "enum": [
+                            7,
+                            30,
+                            365
+                        ],
+                        "type": "integer",
+                        "description": "User Growth to filter by in days",
+                        "name": "user_growth_filter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved admin dashboard data",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.DashboardResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/books": {
             "get": {
                 "security": [
@@ -55,7 +108,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "First name, last name or username of the book author to filter by",
+                        "description": "name or username of the book author to filter by",
                         "name": "name",
                         "in": "query"
                     },
@@ -3792,6 +3845,23 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BookWithStats": {
+            "type": "object",
+            "properties": {
+                "avg_rating": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "votes_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "schemas.BooksResponseDataSchema": {
             "type": "object",
             "properties": {
@@ -4143,6 +4213,51 @@ const docTemplate = `{
                 },
                 "subtype": {
                     "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
+        "schemas.DashboardResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "active_subscribers": {
+                    "type": "integer"
+                },
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.BookWithStats"
+                    }
+                },
+                "subscription_revenue": {
+                    "type": "number"
+                },
+                "total_users": {
+                    "type": "integer"
+                },
+                "user_growth_data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.UserGrowthData"
+                    }
+                },
+                "user_subscription_plan_percentages": {
+                    "$ref": "#/definitions/schemas.SubscriptionPlansAndPercentages"
+                }
+            }
+        },
+        "schemas.DashboardResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.DashboardResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -4887,6 +5002,20 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.SubscriptionPlansAndPercentages": {
+            "type": "object",
+            "properties": {
+                "annual": {
+                    "type": "number"
+                },
+                "free_tier": {
+                    "type": "number"
+                },
+                "monthly": {
+                    "type": "number"
+                }
+            }
+        },
         "schemas.SubscriptionPlansResponseSchema": {
             "type": "object",
             "properties": {
@@ -5140,6 +5269,19 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.UserGrowthData": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Number of new users",
+                    "type": "integer"
+                },
+                "period": {
+                    "description": "e.g., \"Jan 2025\", \"Week 1\", etc.",
                     "type": "string"
                 }
             }

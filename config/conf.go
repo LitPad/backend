@@ -17,8 +17,8 @@ type Config struct {
 	SecretKeyByte             []byte
 	FirstSuperuserEmail       string `mapstructure:"FIRST_SUPERUSER_EMAIL"`
 	FirstSuperUserPassword    string `mapstructure:"FIRST_SUPERUSER_PASSWORD"`
-	FirstWriterEmail          string `mapstructure:"FIRST_WRITER_EMAIL"`
-	FirstWriterPassword       string `mapstructure:"FIRST_WRITER_PASSWORD"`
+	FirstAuthorEmail          string `mapstructure:"FIRST_AUTHOR_EMAIL"`
+	FirstAuthorPassword       string `mapstructure:"FIRST_AUTHOR_PASSWORD"`
 	FirstReaderEmail          string `mapstructure:"FIRST_READER_EMAIL"`
 	FirstReaderPassword       string `mapstructure:"FIRST_READER_PASSWORD"`
 	PostgresUser              string `mapstructure:"POSTGRES_USER"`
