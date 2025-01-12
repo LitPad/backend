@@ -68,20 +68,14 @@ func (u *User) GenerateToken(db *gorm.DB) {
 	u.TokenExpiry = &expiry
 }
 
-func (u User) CheckTokenExpiration() bool {
-	cfg := config.GetConfig()
-	currentTime := time.Now().UTC()
-	diff := int64(currentTime.Sub(*u.TokenExpiry).Seconds())
-	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds
-	return diff > emailExpirySecondsTimeout
+func (u User) IsTokenExpired() bool {
+	if u.TokenExpiry == nil { return true }
+	return time.Now().UTC().After((*u.TokenExpiry).UTC())
 }
 
-func (u User) CheckOtpExpiration() bool {
-	cfg := config.GetConfig()
-	currentTime := time.Now().UTC()
-	diff := int64(currentTime.Sub(*u.OtpExpiry).Seconds())
-	emailExpirySecondsTimeout := cfg.EmailOtpExpireSeconds
-	return diff > emailExpirySecondsTimeout
+func (u User) IsOtpExpired() bool {
+	if u.OtpExpiry == nil { return true }
+	return time.Now().UTC().After((*u.OtpExpiry).UTC())
 }
 
 func (user User) SubscriptionExpired() bool {

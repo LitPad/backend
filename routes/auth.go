@@ -72,11 +72,11 @@ func (ep Endpoint) VerifyEmail(c *fiber.Ctx) error {
 	user := models.User{Email: data.Email, Otp: &data.Otp}
 	db.Take(&user, user)
 	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Invalid Email or OTP"))
 	}
 
-	if user.CheckOtpExpiration() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
+	if user.IsOtpExpired() {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired OTP"))
 	}
 	// Update User
 	if user.IsEmailVerified {
@@ -176,7 +176,7 @@ func (ep Endpoint) VerifyPasswordResetToken(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
 	}
 
-	if user.CheckTokenExpiration() {
+	if user.IsTokenExpired() {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
 	}
 	return c.Status(200).JSON(ResponseMessage("Token verified successfully"))
@@ -206,7 +206,7 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
 	}
 
-	if user.CheckTokenExpiration() {
+	if user.IsTokenExpired() {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
 	}
 
