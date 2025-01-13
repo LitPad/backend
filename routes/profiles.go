@@ -46,36 +46,52 @@ func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 // @Summary Update User Profile
 // @Description This endpoint updates a user's profile
 // @Tags Profiles
-// @Param profile body schemas.UpdateUserProfileSchema true "Profile object"
+// @Param profile formData schemas.UpdateUserProfileSchema true "Profile object"
+// @Param avatar formData file false "Avatar Image to upload"
 // @Success 200 {object} schemas.UserProfileResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /profiles/update [patch]
 // @Security BearerAuth
 func (ep Endpoint) UpdateProfile(c *fiber.Ctx) error {
 	db := ep.DB
-	savedUser := RequestUser(c)
+	user := RequestUser(c)
 	data := schemas.UpdateUserProfileSchema{}
-	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+	if errCode, errData := ValidateFormRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
 
 	username := *data.Username
 	if data.Username != nil {
-		searchUser := models.User{Username: username}
-		db.Not(models.User{BaseModel: models.BaseModel{ID: savedUser.ID}}).Take(&searchUser, searchUser)
-		if searchUser.ID != uuid.Nil {
-			data := map[string]string{"username": "Username is already taken"}
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid Entry", data))
+		existingUser := models.User{Username: username}
+		db.Not(models.User{BaseModel: models.BaseModel{ID: user.ID}}).Take(&existingUser, existingUser)
+		if existingUser.ID != uuid.Nil {
+			return c.Status(400).JSON(utils.ValidationErr("username", "Username is already taken"))
 		}
-		savedUser.Username = username
+		user.Username = username
+	}
+	if data.Name != nil {
+		user.Name = data.Name
+	}
+	if data.Bio != nil {
+		user.Bio = data.Bio
 	}
 
-	// current design supports update of username only hence the code looking like this
-	db.Save(&savedUser)
+	// Check and validate image
+	file, err := ValidateImage(c, "avatar", false)
+	if err != nil {
+		return c.Status(422).JSON(err)
+	}
+	// Upload File
+	if file != nil {
+		avatar := UploadFile(file, string(choices.IF_AVATAR))
+		user.Avatar = avatar
+	}
+
+	db.Save(&user)
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: ResponseMessage("User details updated successfully"),
-		Data:           schemas.UserProfile{}.Init(*savedUser),
+		Data:           schemas.UserProfile{}.Init(*user),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -184,8 +200,8 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 	} else {
 		// Create notification and send in socket
 		notification := notificationManager.Create(
-			db, user, toFollowUser, choices.NT_FOLLOWING, 
-			fmt.Sprintf("%s started following you.", user.FullName()),
+			db, user, toFollowUser, choices.NT_FOLLOWING,
+			fmt.Sprintf("%s started following you.", user.Username),
 			nil, nil, nil, nil,
 		)
 		SendNotificationInSocket(c, notification)
@@ -238,13 +254,13 @@ func (ep Endpoint) ReadNotification(c *fiber.Ctx) error {
 	user := RequestUser(c)
 	notificationID := data.ID
 	markAllAsRead := data.MarkAllAsRead
-	
+
 	respMessage := "Notifications read"
 	if markAllAsRead {
-        // Mark all notifications as read
+		// Mark all notifications as read
 		notificationManager.MarkAsRead(db, user)
 	} else if notificationID != nil {
-        // Mark single notification as read
+		// Mark single notification as read
 		err := notificationManager.ReadOne(db, user, *notificationID)
 		if err != nil {
 			return c.Status(404).JSON(err)

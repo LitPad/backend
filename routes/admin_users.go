@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var truthy = true
 // @Summary List Users with Pagination
 // @Description Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.
 // @Tags Admin | Users
@@ -34,7 +33,9 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 	if acctType == "" {
 		accountType = nil
 	} else {
-		if !IsAmongUserType(acctType) {
+		accountType = (*choices.AccType)(&acctType)
+		accountType.IsValid()
+		if !accountType.IsValid() {
 			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid account type"))
 		}
 		if acctType == "ADMIN" {

@@ -20,7 +20,6 @@ func Models() []interface{} {
 
 		// accounts
 		&models.User{},
-		&models.Token{},
 		&models.Notification{},
 
 		// book
@@ -69,12 +68,16 @@ func DropTables(db *gorm.DB) {
 
 func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s"
+	dbName := cfg.PostgresDB
+	if os.Getenv("ENVIRONMENT") == "TESTING" {
+		dbName = cfg.TestPostgresDB
+	}
 	dsn := fmt.Sprintf(
 		dsnTemplate,
 		cfg.PostgresServer,
 		cfg.PostgresUser,
 		cfg.PostgresPassword,
-		cfg.PostgresDB,
+		dbName,
 		cfg.PostgresPort,
 		"UTC",
 	)
@@ -90,6 +93,8 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	log.Println("Connected to the database successfully")
 	if len(loggedOpts) == 0 {
 		db.Logger = logger.Default.LogMode(logger.Info)
+	} else {
+		db.Logger = logger.Default.LogMode(logger.Silent)
 	}
 	log.Println("Running Migrations")
 

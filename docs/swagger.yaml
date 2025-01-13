@@ -5,11 +5,11 @@ definitions:
   choices.AccType:
     enum:
     - READER
-    - WRITER
+    - AUTHOR
     type: string
     x-enum-varnames:
     - ACCTYPE_READER
-    - ACCTYPE_WRITER
+    - ACCTYPE_AUTHOR
   choices.AgeType:
     enum:
     - 4
@@ -210,6 +210,8 @@ definitions:
         $ref: '#/definitions/choices.AgeType'
       author:
         $ref: '#/definitions/schemas.UserDataSchema'
+      avg_rating:
+        type: number
       blurb:
         type: string
       chapter_price:
@@ -264,6 +266,8 @@ definitions:
         $ref: '#/definitions/choices.AgeType'
       author:
         $ref: '#/definitions/schemas.UserDataSchema'
+      avg_rating:
+        type: number
       blurb:
         type: string
       chapter_price:
@@ -297,6 +301,17 @@ definitions:
       votes:
         type: integer
       word_count:
+        type: integer
+    type: object
+  schemas.BookWithStats:
+    properties:
+      avg_rating:
+        type: number
+      id:
+        type: integer
+      title:
+        type: string
+      votes_count:
         type: integer
     type: object
   schemas.BooksResponseDataSchema:
@@ -530,6 +545,7 @@ definitions:
         type: string
     required:
     - username
+    type: object
   schemas.CreateSubscriptionSchema:
     properties:
       payment_method_token:
@@ -539,6 +555,36 @@ definitions:
     required:
     - payment_method_token
     - subtype
+    type: object
+  schemas.DashboardResponseDataSchema:
+    properties:
+      active_subscribers:
+        type: integer
+      books:
+        items:
+          $ref: '#/definitions/schemas.BookWithStats'
+        type: array
+      subscription_revenue:
+        type: number
+      total_users:
+        type: integer
+      user_growth_data:
+        items:
+          $ref: '#/definitions/schemas.UserGrowthData'
+        type: array
+      user_subscription_plan_percentages:
+        $ref: '#/definitions/schemas.SubscriptionPlansAndPercentages'
+    type: object
+  schemas.DashboardResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.DashboardResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
     type: object
   schemas.EmailRequestSchema:
     properties:
@@ -776,31 +822,14 @@ definitions:
         example: johndoe@email.com
         minLength: 5
         type: string
-      first_name:
-        example: John
-        maxLength: 50
-        type: string
-      last_name:
-        example: Doe
-        maxLength: 50
-        type: string
       password:
         example: strongpassword
         maxLength: 50
         minLength: 8
         type: string
-      terms_agreement:
-        type: boolean
-      username:
-        example: john-doe
-        maxLength: 1000
-        type: string
     required:
     - email
-    - first_name
-    - last_name
     - password
-    - username
     type: object
   schemas.RepliesResponseDataSchema:
     properties:
@@ -999,6 +1028,10 @@ definitions:
     type: object
   schemas.SetNewPasswordSchema:
     properties:
+      email:
+        example: johndoe@email.com
+        minLength: 5
+        type: string
       password:
         example: newstrongpassword
         maxLength: 50
@@ -1008,6 +1041,7 @@ definitions:
         example: Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll
         type: string
     required:
+    - email
     - password
     - token_string
     type: object
@@ -1063,6 +1097,15 @@ definitions:
     - amount
     - subtype
     type: object
+  schemas.SubscriptionPlansAndPercentages:
+    properties:
+      annual:
+        type: number
+      free_tier:
+        type: number
+      monthly:
+        type: number
+    type: object
   schemas.SubscriptionPlansResponseSchema:
     properties:
       data:
@@ -1117,9 +1160,9 @@ definitions:
       created_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
+      current_plan:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
-        type: string
-      first_name:
         type: string
       followers:
         items:
@@ -1129,7 +1172,7 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
-      last_name:
+      name:
         type: string
       refresh:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
@@ -1218,15 +1261,6 @@ definitions:
     - new_password
     - old_password
     type: object
-  schemas.UpdateUserProfileSchema:
-    properties:
-      username:
-        description: "Bio\t\t\t\t*string `json:\"bio\"`"
-        example: john-doe
-        maxLength: 1000
-        minLength: 3
-        type: string
-    type: object
   schemas.UpdateUserRoleSchema:
     properties:
       account_type:
@@ -1238,10 +1272,19 @@ definitions:
     properties:
       avatar:
         type: string
-      full_name:
+      name:
         description: For short user data
         type: string
       username:
+        type: string
+    type: object
+  schemas.UserGrowthData:
+    properties:
+      count:
+        description: Number of new users
+        type: integer
+      period:
+        description: e.g., "Jan 2025", "Week 1", etc.
         type: string
     type: object
   schemas.UserProfile:
@@ -1255,9 +1298,9 @@ definitions:
       created_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
+      current_plan:
+        $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
-        type: string
-      first_name:
         type: string
       followers:
         items:
@@ -1267,7 +1310,7 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
-      last_name:
+      name:
         type: string
       stories_count:
         type: integer
@@ -1314,11 +1357,16 @@ definitions:
     type: object
   schemas.VerifyEmailRequestSchema:
     properties:
-      token_string:
-        example: Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll
+      email:
+        example: johndoe@email.com
+        minLength: 5
         type: string
+      otp:
+        example: 123456
+        type: integer
     required:
-    - token_string
+    - email
+    - otp
     type: object
   schemas.WaitlistResponseSchema:
     properties:
@@ -1359,6 +1407,40 @@ info:
   title: LITPAD API
   version: "1.0"
 paths:
+  /admin:
+    get:
+      consumes:
+      - application/json
+      description: '`Retrieves minimal book data, counts and other metrics`'
+      parameters:
+      - description: User Growth to filter by in days
+        enum:
+        - 7
+        - 30
+        - 365
+        in: query
+        name: user_growth_filter
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved admin dashboard data
+          schema:
+            $ref: '#/definitions/schemas.DashboardResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Admin Dashboard
+      tags:
+      - Admin
   /admin/books:
     get:
       consumes:
@@ -1375,8 +1457,7 @@ paths:
         in: query
         name: title
         type: string
-      - description: First name, last name or username of the book author to filter
-          by
+      - description: name or username of the book author to filter by
         in: query
         name: name
         type: string
@@ -1760,6 +1841,52 @@ paths:
       summary: Latest Transactions with Pagination
       tags:
       - Admin | Payments
+  /admin/subscribers:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of subscribers with support for pagination and
+        optional filtering based on user subscription type or status.
+      parameters:
+      - description: Subscription Type to filter by
+        enum:
+        - MONTHLY
+        - ANNUAL
+        in: query
+        name: sub_type
+        type: string
+      - description: Subscription Status to filter by
+        enum:
+        - ACTIVE
+        - EXPIRED
+        in: query
+        name: sub_status
+        type: string
+      - default: 1
+        description: Current page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved list of user subs
+          schema:
+            $ref: '#/definitions/schemas.UserProfilesResponseSchema'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Subscribers with Pagination
+      tags:
+      - Admin | Subscribers
   /admin/users:
     get:
       consumes:
@@ -2048,7 +2175,7 @@ paths:
       summary: Resend Verification Email
       tags:
       - Auth
-  /auth/send-password-reset-otp:
+  /auth/send-password-reset-link:
     post:
       description: '`This endpoint sends new password reset link to the user''s email.`'
       parameters:
@@ -3239,12 +3366,28 @@ paths:
     patch:
       description: This endpoint updates a user's profile
       parameters:
-      - description: Profile object
-        in: body
-        name: profile
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.UpdateUserProfileSchema'
+      - example: I'm here to read good books
+        in: formData
+        maxLength: 1000
+        minLength: 3
+        name: bio
+        type: string
+      - example: John Doe
+        in: formData
+        maxLength: 1000
+        minLength: 3
+        name: name
+        type: string
+      - example: johndoe
+        in: formData
+        maxLength: 1000
+        minLength: 3
+        name: username
+        type: string
+      - description: Avatar Image to upload
+        in: formData
+        name: avatar
+        type: file
       responses:
         "200":
           description: OK
@@ -3368,6 +3511,30 @@ paths:
         schema:
           $ref: '#/definitions/schemas.CreateICPWallet'
       responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Create a new ICP wallet
+      tags:
+      - Wallet
+  /wallet/icp/{username}/balance:
+    get:
+      description: This endpoint returns user ICP wallet balance
+      parameters:
+      - description: Username of user
+        in: path
+        name: username
+        required: true
+        type: string
+      responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get user ICP wallet balance
+      tags:
+      - Wallet
   /wallet/plans:
     get:
       consumes:
@@ -3437,7 +3604,6 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
-      summary: Create a new ICP wallet
       security:
       - BearerAuth: []
       summary: Subscribe

@@ -204,7 +204,7 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 // @Produce json
 // @Param page query int false "Current Page" default(1)
 // @Param title query string false "Title of the book to filter by"
-// @Param name query string false "First name, last name or username of the book author to filter by"
+// @Param name query string false "name or username of the book author to filter by"
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"

@@ -8,6 +8,7 @@ import (
 
 	"os"
 
+	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	webs "github.com/fasthttp/websocket"
@@ -54,6 +55,7 @@ func ReturnError(c *websocket.Conn, errType string, message string, code int, da
 }
 
 func ValidateAuth(db *gorm.DB, token string) (*models.User, *string, *string) {
+	cfg := config.GetConfig()
 	var (
 		errMsg *string
 		secret *string
@@ -76,6 +78,8 @@ func ValidateAuth(db *gorm.DB, token string) (*models.User, *string, *string) {
 }
 
 func SendNotificationInSocket(fiberCtx *fiber.Ctx, notification models.Notification, statusOpts ...choices.NotificationStatus) error {
+	cfg := config.GetConfig()
+	
 	if os.Getenv("ENVIRONMENT") == "TESTING" {
 		return nil
 	}

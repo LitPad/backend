@@ -14,7 +14,7 @@ up:
 down:
 	docker-compose down
 
-show-logs:
+logs:
 	docker-compose logs
 	
 test:

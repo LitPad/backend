@@ -21,6 +21,59 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `Retrieves minimal book data, counts and other metrics` + "`" + `",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Admin Dashboard",
+                "parameters": [
+                    {
+                        "enum": [
+                            7,
+                            30,
+                            365
+                        ],
+                        "type": "integer",
+                        "description": "User Growth to filter by in days",
+                        "name": "user_growth_filter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved admin dashboard data",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.DashboardResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/books": {
             "get": {
                 "security": [
@@ -55,7 +108,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "First name, last name or username of the book author to filter by",
+                        "description": "name or username of the book author to filter by",
                         "name": "name",
                         "in": "query"
                     },
@@ -640,6 +693,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/subscribers": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of subscribers with support for pagination and optional filtering based on user subscription type or status.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Subscribers"
+                ],
+                "summary": "List Subscribers with Pagination",
+                "parameters": [
+                    {
+                        "enum": [
+                            "MONTHLY",
+                            "ANNUAL"
+                        ],
+                        "type": "string",
+                        "description": "Subscription Type to filter by",
+                        "name": "sub_type",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ACTIVE",
+                            "EXPIRED"
+                        ],
+                        "type": "string",
+                        "description": "Subscription Status to filter by",
+                        "name": "sub_status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of user subs",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserProfilesResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users": {
             "get": {
                 "security": [
@@ -1077,7 +1199,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/send-password-reset-otp": {
+        "/auth/send-password-reset-link": {
             "post": {
                 "description": "` + "`" + `This endpoint sends new password reset link to the user's email.` + "`" + `",
                 "tags": [
@@ -2892,13 +3014,34 @@ const docTemplate = `{
                 "summary": "Update User Profile",
                 "parameters": [
                     {
-                        "description": "Profile object",
-                        "name": "profile",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.UpdateUserProfileSchema"
-                        }
+                        "maxLength": 1000,
+                        "minLength": 3,
+                        "type": "string",
+                        "example": "I'm here to read good books",
+                        "name": "bio",
+                        "in": "formData"
+                    },
+                    {
+                        "maxLength": 1000,
+                        "minLength": 3,
+                        "type": "string",
+                        "example": "John Doe",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "maxLength": 1000,
+                        "minLength": 3,
+                        "type": "string",
+                        "example": "johndoe",
+                        "name": "username",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Avatar Image to upload",
+                        "name": "avatar",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -3088,7 +3231,45 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/schemas.CreateICPWallet"
-                            
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/wallet/icp/{username}/balance": {
+            "get": {
+                "description": "This endpoint returns user ICP wallet balance",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Get user ICP wallet balance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of user",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/plans": {
             "get": {
                 "description": "Retrieves a list of available subscription plans.",
@@ -3187,19 +3368,16 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/schemas.CreateSubscriptionSchema"
-
                         }
                     }
                 ],
                 "responses": {
-
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.PaymentResponseSchema"
                         }
                     },
-
                     "400": {
                         "description": "Bad Request",
                         "schema": {
@@ -3258,11 +3436,11 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "READER",
-                "WRITER"
+                "AUTHOR"
             ],
             "x-enum-varnames": [
                 "ACCTYPE_READER",
-                "ACCTYPE_WRITER"
+                "ACCTYPE_AUTHOR"
             ]
         },
         "choices.AgeType": {
@@ -3529,6 +3707,9 @@ const docTemplate = `{
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
                 },
+                "avg_rating": {
+                    "type": "number"
+                },
                 "blurb": {
                     "type": "string"
                 },
@@ -3609,6 +3790,9 @@ const docTemplate = `{
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
                 },
+                "avg_rating": {
+                    "type": "number"
+                },
                 "blurb": {
                     "type": "string"
                 },
@@ -3657,6 +3841,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "word_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "schemas.BookWithStats": {
+            "type": "object",
+            "properties": {
+                "avg_rating": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "votes_count": {
                     "type": "integer"
                 }
             }
@@ -3987,7 +4188,6 @@ const docTemplate = `{
                 }
             }
         },
-
         "schemas.CreateICPWallet": {
             "type": "object",
             "required": [
@@ -3998,7 +4198,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 1000,
                     "example": "john-doe"
-
+                }
+            }
+        },
         "schemas.CreateSubscriptionSchema": {
             "type": "object",
             "required": [
@@ -4011,6 +4213,51 @@ const docTemplate = `{
                 },
                 "subtype": {
                     "$ref": "#/definitions/choices.SubscriptionTypeChoice"
+                }
+            }
+        },
+        "schemas.DashboardResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "active_subscribers": {
+                    "type": "integer"
+                },
+                "books": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.BookWithStats"
+                    }
+                },
+                "subscription_revenue": {
+                    "type": "number"
+                },
+                "total_users": {
+                    "type": "integer"
+                },
+                "user_growth_data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.UserGrowthData"
+                    }
+                },
+                "user_subscription_plan_percentages": {
+                    "$ref": "#/definitions/schemas.SubscriptionPlansAndPercentages"
+                }
+            }
+        },
+        "schemas.DashboardResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.DashboardResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },
@@ -4356,10 +4603,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "first_name",
-                "last_name",
-                "password",
-                "username"
+                "password"
             ],
             "properties": {
                 "email": {
@@ -4367,29 +4611,11 @@ const docTemplate = `{
                     "minLength": 5,
                     "example": "johndoe@email.com"
                 },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "example": "John"
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "example": "Doe"
-                },
                 "password": {
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 8,
                     "example": "strongpassword"
-                },
-                "terms_agreement": {
-                    "type": "boolean"
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "example": "john-doe"
                 }
             }
         },
@@ -4678,10 +4904,16 @@ const docTemplate = `{
         "schemas.SetNewPasswordSchema": {
             "type": "object",
             "required": [
+                "email",
                 "password",
                 "token_string"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "minLength": 5,
+                    "example": "johndoe@email.com"
+                },
                 "password": {
                     "type": "string",
                     "maxLength": 50,
@@ -4770,6 +5002,20 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.SubscriptionPlansAndPercentages": {
+            "type": "object",
+            "properties": {
+                "annual": {
+                    "type": "number"
+                },
+                "free_tier": {
+                    "type": "number"
+                },
+                "monthly": {
+                    "type": "number"
+                }
+            }
+        },
         "schemas.SubscriptionPlansResponseSchema": {
             "type": "object",
             "properties": {
@@ -4850,10 +5096,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
-                "email": {
-                    "type": "string"
+                "current_plan": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 },
-                "first_name": {
+                "email": {
                     "type": "string"
                 },
                 "followers": {
@@ -4868,7 +5114,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
-                "last_name": {
+                "name": {
                     "type": "string"
                 },
                 "refresh": {
@@ -4999,18 +5245,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.UpdateUserProfileSchema": {
-            "type": "object",
-            "properties": {
-                "username": {
-                    "description": "Bio\t\t\t\t*string ` + "`" + `json:\"bio\"` + "`" + `",
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 3,
-                    "example": "john-doe"
-                }
-            }
-        },
         "schemas.UpdateUserRoleSchema": {
             "type": "object",
             "properties": {
@@ -5030,11 +5264,24 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
-                "full_name": {
+                "name": {
                     "description": "For short user data",
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.UserGrowthData": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Number of new users",
+                    "type": "integer"
+                },
+                "period": {
+                    "description": "e.g., \"Jan 2025\", \"Week 1\", etc.",
                     "type": "string"
                 }
             }
@@ -5055,10 +5302,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
-                "email": {
-                    "type": "string"
+                "current_plan": {
+                    "$ref": "#/definitions/choices.SubscriptionTypeChoice"
                 },
-                "first_name": {
+                "email": {
                     "type": "string"
                 },
                 "followers": {
@@ -5073,7 +5320,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
-                "last_name": {
+                "name": {
                     "type": "string"
                 },
                 "stories_count": {
@@ -5142,12 +5389,18 @@ const docTemplate = `{
         "schemas.VerifyEmailRequestSchema": {
             "type": "object",
             "required": [
-                "token_string"
+                "email",
+                "otp"
             ],
             "properties": {
-                "token_string": {
+                "email": {
                     "type": "string",
-                    "example": "Z2ZBYWjwXGXtCin3QnnABCHVfys6bcGPH49GrJEMtFIDQcU9TVL1AURNItZoBcTowOOeQMHofbp6WTxpYPlucdUEImQNWzMtH0ll"
+                    "minLength": 5,
+                    "example": "johndoe@email.com"
+                },
+                "otp": {
+                    "type": "integer",
+                    "example": 123456
                 }
             }
         },

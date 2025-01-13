@@ -27,34 +27,23 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	user := utils.ConvertStructData(data, models.User{}).(*models.User)
+	existingUser := models.User{}
 	// Validate email uniqueness
-	db.Take(&user, models.User{Email: user.Email})
-	if user.ID != uuid.Nil {
+	db.Take(&existingUser, models.User{Email: data.Email})
+	if existingUser.ID != uuid.Nil {
 		data := map[string]string{
 			"email": "Email already taken!",
 		}
 		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
 	}
 
-	// Validate username uniqueness
-	db.Take(&user, models.User{Username: user.Username})
-	if user.ID != uuid.Nil {
-		data := map[string]string{
-			"username": "Username already taken!",
-		}
-		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
-	}
+	user := models.User{Email: data.Email, Password: data.Password}
 
 	// Create User
-	db.Create(&user)
+	db.Save(&user)
 
 	// Send Email
-	token := models.Token{UserId: user.ID}
-	db.Take(&token, token)
-	db.Save(&token) // Create or save
-	url := GetBaseReferer(c)
-	go senders.SendEmail(user, "activate", &token.TokenString, &url, nil)
+	go senders.SendEmail(&user, senders.ET_ACTIVATE, user.Otp, nil, nil)
 
 	response := schemas.RegisterResponseSchema{
 		ResponseSchema: ResponseMessage("Registration successful"),
@@ -80,26 +69,26 @@ func (ep Endpoint) VerifyEmail(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	token := models.Token{TokenString: data.TokenString}
-	db.Joins("User").Take(&token, token)
-	if token.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
+	user := models.User{Email: data.Email, Otp: &data.Otp}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_OTP, "Invalid Email or OTP"))
 	}
 
-	if token.CheckExpiration() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
+	if user.IsOtpExpired() {
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_OTP, "Expired OTP"))
 	}
 	// Update User
-	user := token.User
 	if user.IsEmailVerified {
 		return c.Status(200).JSON(ResponseMessage("Email already verified"))
 	}
 	user.IsEmailVerified = true
+	user.Otp = nil
+	user.OtpExpiry = nil
 	db.Save(&user)
-	db.Delete(&token)
 
 	// Send Welcome Email
-	go senders.SendEmail(&user, "welcome", nil, nil, nil)
+	go senders.SendEmail(&user, senders.ET_WELCOME, nil, nil, nil)
 	return c.Status(200).JSON(ResponseMessage("Account verification successful"))
 }
 
@@ -131,11 +120,9 @@ func (ep Endpoint) ResendVerificationEmail(c *fiber.Ctx) error {
 	}
 
 	// Send Email
-	token := models.Token{UserId: user.ID}
-	db.Take(&token, token)
-	db.Save(&token) // Create or save
-	url := GetBaseReferer(c)
-	go senders.SendEmail(&user, "activate", &token.TokenString, &url, nil)
+	user.GenerateOTP(db)
+	db.Save(&user)
+	go senders.SendEmail(&user, senders.ET_ACTIVATE, user.Otp, nil, nil)
 	return c.Status(200).JSON(ResponseMessage("Verification email sent"))
 }
 
@@ -146,8 +133,8 @@ func (ep Endpoint) ResendVerificationEmail(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.ResponseSchema
 // @Failure 422 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /auth/send-password-reset-otp [post]
-func (ep Endpoint) SendPasswordResetOtp(c *fiber.Ctx) error {
+// @Router /auth/send-password-reset-link [post]
+func (ep Endpoint) SendPasswordResetLink(c *fiber.Ctx) error {
 	db := ep.DB
 
 	data := schemas.EmailRequestSchema{}
@@ -164,12 +151,9 @@ func (ep Endpoint) SendPasswordResetOtp(c *fiber.Ctx) error {
 	}
 
 	// Send Email
-	token := models.Token{UserId: user.ID}
-	db.Take(&token, token)
-	db.Save(&token) // Create or save
-	url := GetBaseReferer(c)
-	go senders.SendEmail(&user, "reset", &token.TokenString, &url, nil)
-
+	user.GenerateToken(db)
+	db.Save(&user)
+	go senders.SendEmail(&user, senders.ET_RESET, nil, user.TokenString, nil)
 	return c.Status(200).JSON(ResponseMessage("Password reset link sent"))
 }
 
@@ -186,13 +170,13 @@ func (ep Endpoint) VerifyPasswordResetToken(c *fiber.Ctx) error {
 
 	tokenStr := c.Params("token_string")
 
-	token := models.Token{TokenString: tokenStr}
-	db.Joins("User").Take(&token, token)
-	if token.ID == uuid.Nil {
+	user := models.User{TokenString: &tokenStr}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
 	}
 
-	if token.CheckExpiration() {
+	if user.IsTokenExpired() {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
 	}
 	return c.Status(200).JSON(ResponseMessage("Token verified successfully"))
@@ -216,25 +200,24 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	token := models.Token{TokenString: data.TokenString}
-	db.Joins("User").Take(&token, token)
-	if token.ID == uuid.Nil {
+	user := models.User{TokenString: &data.TokenString}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
 		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
 	}
 
-	if token.CheckExpiration() {
+	if user.IsTokenExpired() {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_EXPIRED_TOKEN, "Expired Token"))
 	}
 
-	user := token.User
 	// Set Password
 	user.Password = utils.HashPassword(data.Password)
+	user.TokenString = nil
+	user.TokenExpiry = nil
 	db.Save(&user)
-	db.Delete(&token)
 
 	// Send Email
-	go senders.SendEmail(&user, "reset-success", nil, nil, nil)
-
+	go senders.SendEmail(&user, senders.ET_RESET_SUCC, nil, nil, nil)
 	return c.Status(200).JSON(ResponseMessage("Password reset successful"))
 }
 

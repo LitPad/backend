@@ -1,8 +1,8 @@
 package initials
 
 import (
-	"math/rand"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/LitPad/backend/config"
@@ -13,9 +13,9 @@ import (
 )
 
 func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
+	name := "Test Admin"
 	user := models.User{
-		FirstName:       "Test",
-		LastName:        "Admin",
+		Name:            &name,
 		Username:        "test-admin",
 		Email:           cfg.FirstSuperuserEmail,
 		Password:        cfg.FirstSuperUserPassword,
@@ -28,13 +28,13 @@ func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
 }
 
 func createWriter(db *gorm.DB, cfg config.Config) models.User {
+	name := "Test Author"
 	user := models.User{
-		FirstName:       "Test",
-		LastName:        "Author",
+		Name:            &name,
 		Username:        "test-author",
 		AccountType:     choices.ACCTYPE_AUTHOR,
-		Email:           cfg.FirstWriterEmail,
-		Password:        cfg.FirstWriterPassword,
+		Email:           cfg.FirstAuthorEmail,
+		Password:        cfg.FirstAuthorPassword,
 		IsEmailVerified: true,
 	}
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
@@ -43,9 +43,9 @@ func createWriter(db *gorm.DB, cfg config.Config) models.User {
 }
 
 func createReader(db *gorm.DB, cfg config.Config) models.User {
+	name := "Test Reader"
 	user := models.User{
-		FirstName:       "Test",
-		LastName:        "Reader",
+		Name:            &name,
 		Username:        "test-reader",
 		Email:           cfg.FirstReaderEmail,
 		Password:        cfg.FirstReaderPassword,

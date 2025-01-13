@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/LitPad/backend/config"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -8,11 +9,11 @@ import (
 
 type Endpoint struct {
 	DB *gorm.DB
+	Config config.Config
 }
 
-
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
-	endpoint := Endpoint{DB: db}
+	endpoint := Endpoint{DB: db, Config: config.GetConfig()}
 
 	// ROUTES (40)
 	api := app.Group("/api/v1")
@@ -30,7 +31,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	authRouter.Post("/register", endpoint.Register)
 	authRouter.Post("/verify-email", endpoint.VerifyEmail)
 	authRouter.Post("/resend-verification-email", endpoint.ResendVerificationEmail)
-	authRouter.Post("/send-password-reset-otp", endpoint.SendPasswordResetOtp)
+	authRouter.Post("/send-password-reset-link", endpoint.SendPasswordResetLink)
 	authRouter.Get("/verify-password-reset-token/:token_string", endpoint.VerifyPasswordResetToken)
 	authRouter.Post("/set-new-password", endpoint.SetNewPassword)
 	authRouter.Post("/login", endpoint.Login)
@@ -96,17 +97,22 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	// ICP Wallet Routes
 	icpWalletRouter := walletRouter.Group("/icp")
-	icpWalletRouter.Post("/",  endpoint.CreateICPWallet)
+	icpWalletRouter.Post("/", endpoint.CreateICPWallet)
 	icpWalletRouter.Get("/:username/balance", endpoint.GetICPWalletBalance)
 	icpWalletRouter.Get("/gifts/:username/:gift_slug/send", endpoint.AuthMiddleware , endpoint.SendGiftViaICPWallet)
 
 	// ADMIN ROUTES (7)
 	adminRouter := api.Group("/admin")
+	adminRouter.Get("/", endpoint.AdminMiddleware, endpoint.AdminDashboard)
+
 	// Admin Users
 	adminRouter.Put("/", endpoint.AdminMiddleware, endpoint.UpdateProfile)
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
 	adminRouter.Put("/users/:username", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
 	adminRouter.Get("/users/:username/toggle-activation", endpoint.AdminMiddleware, endpoint.ToggleUserActivation)
+
+	// Admin Users
+	adminRouter.Get("/subscribers", endpoint.AdminMiddleware, endpoint.AdminGetSubscribers)
 
 	// Admin Books (2)
 	adminRouter.Get("/books", endpoint.AdminMiddleware, endpoint.AdminGetBooks)

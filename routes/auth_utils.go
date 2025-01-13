@@ -12,15 +12,11 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/gosimple/slug"
 	fb "github.com/huandu/facebook/v2"
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
 )
-
-var cfg = config.GetConfig()
-var SECRETKEY = []byte(cfg.SecretKey)
 
 type AccessTokenPayload struct {
 	UserId uuid.UUID `json:"user_id"`
@@ -33,6 +29,7 @@ type RefreshTokenPayload struct {
 }
 
 func GenerateAccessToken(userId uuid.UUID) string {
+	cfg := config.GetConfig()
 	expirationTime := time.Now().Add(time.Duration(cfg.AccessTokenExpireMinutes) * time.Minute)
 	payload := AccessTokenPayload{
 		UserId: userId,
@@ -45,7 +42,7 @@ func GenerateAccessToken(userId uuid.UUID) string {
 	// Declare the token with the algorithm used for signing, and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	// Create the JWT string
-	tokenString, err := token.SignedString(SECRETKEY)
+	tokenString, err := token.SignedString(cfg.SecretKeyByte)
 	if err != nil {
 		// If there is an error in creating the JWT return an internal server error
 		log.Fatal("Error Generating Access token: ", err)
@@ -54,6 +51,8 @@ func GenerateAccessToken(userId uuid.UUID) string {
 }
 
 func GenerateRefreshToken() string {
+	cfg := config.GetConfig()
+
 	expirationTime := time.Now().Add(time.Duration(cfg.RefreshTokenExpireMinutes) * time.Minute)
 	payload := RefreshTokenPayload{
 		Data: utils.GetRandomString(10),
@@ -66,7 +65,7 @@ func GenerateRefreshToken() string {
 	// Declare the token with the algorithm used for signing, and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	// Create the JWT string
-	tokenString, err := token.SignedString(SECRETKEY)
+	tokenString, err := token.SignedString(cfg.SecretKeyByte)
 	if err != nil {
 		// If there is an error in creating the JWT return an internal server error
 		log.Fatal("Error Generating Refresh token: ", err)
@@ -75,10 +74,12 @@ func GenerateRefreshToken() string {
 }
 
 func DecodeAccessToken(token string, db *gorm.DB) (*models.User, *string) {
+	cfg := config.GetConfig()
+
 	claims := &AccessTokenPayload{}
 
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return SECRETKEY, nil
+		return cfg.SecretKeyByte, nil
 	})
 	tokenErr := "Auth Token is Invalid or Expired!"
 	if err != nil {
@@ -97,9 +98,11 @@ func DecodeAccessToken(token string, db *gorm.DB) (*models.User, *string) {
 }
 
 func DecodeRefreshToken(token string) bool {
+	cfg := config.GetConfig()
+
 	claims := &RefreshTokenPayload{}
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return SECRETKEY, nil
+		return cfg.SecretKeyByte, nil
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
@@ -130,6 +133,8 @@ type GooglePayload struct {
 }
 
 func ConvertGoogleToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+
 	payload, err := idtoken.Validate(context.Background(), accessToken, cfg.GoogleClientID)
 	if err != nil {
 		errMsg := "Invalid Token"
@@ -153,6 +158,8 @@ type FacebookPayload struct {
 }
 
 func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+
 	res, err := fb.Get("/app", fb.Params{
 		"access_token": accessToken,
 	})
@@ -179,33 +186,13 @@ func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorRes
 	return &data, nil
 }
 
-func GenerateUsername(db *gorm.DB, firstName string, lastName string, username *string) string {
-	uniqueUsername := slug.Make(firstName + " " + lastName)
-	if username != nil {
-		uniqueUsername = *username
-	}
-	user := models.User{Username: uniqueUsername}
-	db.Take(&user, user)
-	if user.ID != uuid.Nil {
-		// username is already taken
-		// Make it unique by attaching a random string
-		// to it and repeat the function
-		randomStr := utils.GetRandomString(6)
-		uniqueUsername = uniqueUsername + "-" + randomStr
-		return GenerateUsername(db, firstName, lastName, &uniqueUsername)
-	}
-	return uniqueUsername
-}
-
 func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *utils.ErrorResponse) {
+	cfg := config.GetConfig()
+
 	user := models.User{Email: email}
 	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil {
-		name := strings.Split(name, " ")
-		firstName := name[0]
-		lastName := name[1]
-		username := GenerateUsername(db, firstName, lastName, nil)
-		user = models.User{FirstName: firstName, LastName: lastName, Username: username, Email: email, IsEmailVerified: true, Password: utils.HashPassword(cfg.SocialsPassword), TermsAgreement: true, Avatar: *avatar, SocialLogin: true}
+		user = models.User{Name: &name, Email: email, IsEmailVerified: true, Password: cfg.SocialsPassword, Avatar: *avatar, SocialLogin: true}
 		db.Create(&user)
 	} else {
 		if !user.SocialLogin {
