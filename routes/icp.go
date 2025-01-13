@@ -130,7 +130,7 @@ func(ep Endpoint) GetICPWalletBalance(c *fiber.Ctx) error {
 // @Param gift_slug path string true "Slug of the gift being sent"
 // @Success 200 {object} schemas.SentGiftResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /icp/gifts/{username}/{gift_slug}/send/ [get]
+// @Router /wallet/icp/gifts/{username}/{gift_slug}/send/ [get]
 // @Security BearerAuth
 func (ep Endpoint) SendGiftViaICPWallet(c *fiber.Ctx) error {
 	db := ep.DB
