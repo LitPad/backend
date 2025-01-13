@@ -75,3 +75,17 @@ type SentGiftResponseSchema struct {
 	ResponseSchema
 	Data SentGiftSchema `json:"data"`
 }
+
+type ICPWalletResponseSchema struct {
+	PublicKey string `json:"public_key"`
+	Balance float64 `json:"balance"`
+	AccountID string `json:"account_id"`
+}
+
+type ICPTransferResponseSchema struct {
+	Amount string `json:"amount"`
+	From string `json:"from"`
+	To string `json:"to"`
+	Time string `json:"time"`
+	ID string `json:"_id"`
+}
