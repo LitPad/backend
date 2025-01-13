@@ -191,7 +191,7 @@ func (ep Endpoint) SendGiftViaICPWallet(c *fiber.Ctx) error {
 
 	notification := notificationManager.Create(
 		db, user, *writer, choices.NT_GIFT, fmt.Sprintf("%s sent you a gift.",
-		user.FullName()),
+		user.Username),
 		nil, nil, nil, &sentGift.ID,
 	)
 
