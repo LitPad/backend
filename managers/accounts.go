@@ -43,7 +43,7 @@ func (u UserManager) GetReaderByUsername(db *gorm.DB, username string) *models.U
 }
 
 func (u UserManager) GetWriterByUsername(db *gorm.DB, username string) *models.User {
-	user := models.User{Username: username, AccountType: choices.ACCTYPE_WRITER}
+	user := models.User{Username: username, AccountType: choices.ACCTYPE_AUTHOR}
 	db.Scopes(scopes.VerifiedUserScope).Take(&user, user)
 	if user.ID == uuid.Nil {
 		return nil

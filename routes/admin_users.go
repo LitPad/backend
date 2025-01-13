@@ -1,17 +1,21 @@
 package routes
 
 import (
+	"fmt"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 var truthy = true
 // @Summary List Users with Pagination
 // @Description Retrieves a list of user profiles with support for pagination and optional filtering based on user account type.
-// @Tags Admin
+// @Tags Admin | Users
 // @Accept json
 // @Produce json
 // @Param account_type query string false "Type of user to filter by" Enums(READER, WRITER, ADMIN)
@@ -47,7 +51,6 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 	users = paginatedUsers.([]models.User)
-
 	response := schemas.UserProfilesResponseSchema{
 		ResponseSchema: ResponseMessage("Profiles fetched successfully"),
 		Data: schemas.UserProfilesResponseDataSchema{
@@ -60,40 +63,31 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 
 // @Summary Update User Role
 // @Description Updates the account type of a specified user.
-// @Tags Admin
+// @Tags Admin | Users
 // @Accept json
 // @Produce json
+// @Param username path string true "Username" default(username)
 // @Param data body schemas.UpdateUserRoleSchema true "User role update data"
 // @Success 200 {object} schemas.UserProfileResponseSchema "Successfully updated user details"
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 404 {object} utils.ErrorResponse "User not found"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /admin/users/user [put]
+// @Router /admin/users/{username} [put]
 // @Security BearerAuth
 func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 	db := ep.DB
 	data := schemas.UpdateUserRoleSchema{}
-
-	if errCode, errData := ValidateRequest(c, &data);
-
-	errData != nil{
+	errCode, errData := ValidateRequest(c, &data);
+	if errData != nil{
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	account_type := choices.AccType(data.AccountType)
-
-	var user models.User
-
-	if data.Username != nil{
-		
-		result := db.Where("username = ?", data.Username).First(&user)
-		if result.Error != nil{
-			return c.Status(404).JSON(utils.RequestErr(utils.ERR_NOT_FOUND, "User Not Found"))
-		}
-
-		user.AccountType = account_type
+	user := models.User{Username: c.Params("username")}
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
+	if user.ID == uuid.Nil{
+		return c.Status(404).JSON(utils.NotFoundErr("User Not Found"))
 	}
-
+	user.AccountType = data.AccountType
 	db.Save(&user)
 
 	response := schemas.UserProfileResponseSchema{
@@ -101,6 +95,36 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 		Data: schemas.UserProfile{}.Init(user),
 	}
 	return c.Status(200).JSON(response)
+}
+
+// @Summary Reactivate/Deactivate User
+// @Description Allows the admin to deactivate/reactivate a user.
+// @Tags Admin | Users
+// @Param username path string true "Username" default(username)
+// @Accept json
+// @Produce json
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 404 {object} utils.ErrorResponse "User not found"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/users/{username}/toggle-activation [get]
+// @Security BearerAuth
+func (ep Endpoint) ToggleUserActivation(c *fiber.Ctx) error {
+	db := ep.DB
+	username := c.Params("username")
+	user := models.User{Username: username}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
+		return c.Status(404).JSON(utils.NotFoundErr("User with that username not found"))
+	}
+	responseMessageSubstring := "deactivated"
+	if user.IsActive {
+		user.IsActive = false
+	} else {
+		responseMessageSubstring = "reactivated"
+		user.IsActive = true
+	}
+	db.Save(&user)
+	return c.Status(200).JSON(ResponseMessage(fmt.Sprintf("User %s successfully", responseMessageSubstring)))
 }
 
 func (ep Endpoint) AdminGetWaitlist(c *fiber.Ctx)error{

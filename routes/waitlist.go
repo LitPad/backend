@@ -5,8 +5,10 @@ import (
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/schemas"
+	"github.com/LitPad/backend/senders"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // @Summary Add to Waitlist
@@ -45,20 +47,14 @@ func (ep Endpoint) AddToWaitlist(c *fiber.Ctx) error {
 
 	db.Take(&waitlist, models.Waitlist{Email: waitlist.Email})
 
-
 	var existingWaitlist models.Waitlist
 
-	if err := db.Where("email = ?", waitlist.Email).First(&existingWaitlist).Error; err == nil {
-		response := schemas.WaitlistResponseSchema{
-		ResponseSchema: ResponseMessage("Added to waitlist successfully"),
-	}
-		return c.Status(200).JSON(response)
+	db.Where("email = ?", waitlist.Email).First(&existingWaitlist)
+	if existingWaitlist.ID == uuid.Nil {
+		db.Create(&waitlist)
 	}
 
-	if err := db.Create(&waitlist).Error; err != nil {
-		return c.Status(500).JSON(utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to add to waitlist"))
-	}
-
+	go senders.AddEmailToBrevo(waitlist.Name, waitlist.Email)
 	response := schemas.WaitlistResponseSchema{
 		ResponseSchema: ResponseMessage("Added to waitlist successfully"),
 	}
