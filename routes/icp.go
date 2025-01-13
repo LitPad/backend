@@ -122,6 +122,16 @@ func(ep Endpoint) GetICPWalletBalance(c *fiber.Ctx) error {
 	return c.Status(201).JSON(decodedResponse)
 }
 
+
+// @Summary Send Gift Via ICP
+// @Description This endpoint allows a user to send a gift via ICP
+// @Tags Waller
+// @Param username path string true "Username of the writer"
+// @Param gift_slug path string true "Slug of the gift being sent"
+// @Success 200 {object} schemas.SentGiftResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /icp/gifts/{username}/{gift_slug}/send/ [get]
+// @Security BearerAuth
 func (ep Endpoint) SendGiftViaICPWallet(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
