@@ -200,10 +200,10 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	user := models.User{TokenString: &data.TokenString}
+	user := models.User{Email: data.Email, TokenString: &data.TokenString}
 	db.Take(&user, user)
 	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Email or Token"))
 	}
 
 	if user.IsTokenExpired() {

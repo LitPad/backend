@@ -2,7 +2,6 @@ package tests
 
 import (
 	"fmt"
-	"log"
 	"testing"
 	"time"
 
@@ -84,7 +83,6 @@ func verifyEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		otpExpiry := time.Now().UTC().Add(-900 * time.Second)
 		user.OtpExpiry = &otpExpiry
 		db.Save(&user)
-		log.Println("EXPIRY: ", user.OtpExpiry)
 
 		url := fmt.Sprintf("%s/verify-email", baseUrl)
 		verificationData := schemas.VerifyEmailRequestSchema{
@@ -172,6 +170,153 @@ func resendVerificationEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl 
 	})
 }
 
+func sendPasswordResetLink(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	t.Run("Reject email sending due to invalid email", func(t *testing.T) {
+		url := fmt.Sprintf("%s/send-password-reset-link", baseUrl)
+		emailRequestData := schemas.EmailRequestSchema{
+			Email: "invalid@example.com",
+		}
+		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+
+		// Assert Status code
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Incorrect Email", body["message"])
+	})
+
+	t.Run("Accept link sending due to valid email", func(t *testing.T) {
+		user := TestUser(db)
+		url := fmt.Sprintf("%s/send-password-reset-link", baseUrl)
+		emailRequestData := schemas.EmailRequestSchema{Email: user.Email}
+		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Password reset link sent", body["message"])
+	})
+}
+
+func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	t.Run("Reject verification due to invalid token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/verify-password-reset-token/invalid-token-string", baseUrl)
+		res := ProcessTestGet(app, url)
+
+		// Assert Status code
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Invalid Token", body["message"])
+	})
+
+	t.Run("Reject verification due to expired token", func(t *testing.T) {
+		user := TestVerifiedUser(db)
+		user.GenerateToken(db)
+		tokenExpiry := time.Now().UTC().Add(-900 * time.Second)
+		user.TokenExpiry = &tokenExpiry
+		db.Save(&user)
+
+		url := fmt.Sprintf("%s/verify-password-reset-token/%s", baseUrl, *user.TokenString)
+		res := ProcessTestGet(app, url)
+
+		// Assert Status code
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Expired Token", body["message"])
+	})
+
+	t.Run("Accept verification due to valid token", func(t *testing.T) {
+		user := TestUser(db)
+		user.GenerateToken(db)
+		db.Save(&user)
+
+		url := fmt.Sprintf("%s/verify-password-reset-token/%s", baseUrl, *user.TokenString)
+		res := ProcessTestGet(app, url)
+
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Token verified successfully", body["message"])
+	})
+}
+
+func setNewPassword(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	t.Run("Reject password reset due to invalid email or token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/set-new-password", baseUrl)
+		passwordResetData := schemas.SetNewPasswordSchema{
+			EmailRequestSchema: schemas.EmailRequestSchema{Email: "invalid@example.com"},
+			TokenString: "invalidtoken", Password: "newpassword",
+		}
+		res := ProcessTestBody(t, app, url, "POST", passwordResetData)
+
+		// Assert Status code
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Invalid Email or Token", body["message"])
+	})
+
+	t.Run("Reject password reset due to expired token", func(t *testing.T) {
+		user := TestVerifiedUser(db)
+		user.GenerateToken(db)
+		tokenExpiry := time.Now().UTC().Add(-900 * time.Second)
+		user.TokenExpiry = &tokenExpiry
+		db.Save(&user)
+
+		url := fmt.Sprintf("%s/set-new-password", baseUrl)
+		passwordResetData := schemas.SetNewPasswordSchema{
+			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
+			TokenString: *user.TokenString, Password: "newpassword",
+		}
+		res := ProcessTestBody(t, app, url, "POST", passwordResetData)
+
+		// Assert Status code
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Expired Token", body["message"])
+	})
+
+	t.Run("Accept password reset due to valid email and token", func(t *testing.T) {
+		user := TestUser(db)
+		user.GenerateToken(db)
+		db.Save(&user)
+
+		url := fmt.Sprintf("%s/set-new-password", baseUrl)
+		passwordResetData := schemas.SetNewPasswordSchema{
+			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
+			TokenString: *user.TokenString, Password: "newpassword",
+		}
+		res := ProcessTestBody(t, app, url, "POST", passwordResetData)
+
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Password reset successful", body["message"])
+	})
+}
+
 func TestAuth(t *testing.T) {
 	app := fiber.New()
 	db := Setup(t, app)
@@ -181,6 +326,10 @@ func TestAuth(t *testing.T) {
 	register(t, app, baseUrl)
 	resendVerificationEmail(t, app, db, baseUrl)
 	verifyEmail(t, app, db, baseUrl)
+	sendPasswordResetLink(t, app, db, baseUrl)
+	verifyPasswordResetToken(t, app, db, baseUrl)
+	setNewPassword(t, app, db, baseUrl)
+
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)

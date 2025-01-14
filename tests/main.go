@@ -69,6 +69,12 @@ func ParseResponseBody(t *testing.T, b io.ReadCloser) interface{} {
 	return responseBody
 }
 
+func ProcessTestGet(app *fiber.App, url string) *http.Response {
+	req := httptest.NewRequest("GET", url, nil)
+	res, _ := app.Test(req)
+	return res
+}
+
 func ProcessTestBody(t *testing.T, app *fiber.App, url string, method string, body interface{}, access ...string) *http.Response {
 	// Marshal the test data to JSON
 	requestBytes, err := json.Marshal(body)
