@@ -118,11 +118,11 @@ func createSubscriptionPlans(db *gorm.DB) {
 	if len(plans) < 1 {
 		monthlyAmount, _ := decimal.NewFromString("12.99")
 		annualAmount, _ := decimal.NewFromString("131.88")
-		plans = []models.SubscriptionPlan{
-			models.SubscriptionPlan{Amount: monthlyAmount, SubType: choices.ST_MONTHLY},
-			models.SubscriptionPlan{Amount: annualAmount, SubType: choices.ST_ANNUAL},
+		plansToCreate := []*models.SubscriptionPlan{
+			{Amount: monthlyAmount, SubType: choices.ST_MONTHLY},
+			{Amount: annualAmount, SubType: choices.ST_ANNUAL},
 		}
-		db.Create(&plans)
+		db.Create(&plansToCreate)
 	}
 }
 

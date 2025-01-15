@@ -317,6 +317,62 @@ func setNewPassword(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 }
 
+func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	t.Run("Reject login due to invalid credentials", func(t *testing.T) {
+		url := fmt.Sprintf("%s/login", baseUrl)
+		loginData := schemas.LoginSchema{
+			Email: "invalid@example.com",
+			Password: "invalidpassword",
+		}
+		res := ProcessTestBody(t, app, url, "POST", loginData)
+
+		// Assert Status code
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Invalid Credentials", body["message"])
+	})
+
+	t.Run("Reject login due to unverified email", func(t *testing.T) {
+		user := TestUnVerifiedUser(db)
+		url := fmt.Sprintf("%s/login", baseUrl)
+		loginData := schemas.LoginSchema{
+			Email: user.Email,
+			Password: "testpassword",
+		}
+		res := ProcessTestBody(t, app, url, "POST", loginData)
+
+		// Assert Status code
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Verify your email first", body["message"])
+	})
+
+	t.Run("Accept login due to valid credentials", func(t *testing.T) {
+		user := TestVerifiedUser(db)
+
+		url := fmt.Sprintf("%s/login", baseUrl)
+		loginData := schemas.LoginSchema{
+			Email: user.Email,
+			Password: "testpassword",
+		}
+		res := ProcessTestBody(t, app, url, "POST", loginData)
+
+		// Assert Status code
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Login successful", body["message"])
+	})
+}
+
 func TestAuth(t *testing.T) {
 	app := fiber.New()
 	db := Setup(t, app)
@@ -329,7 +385,7 @@ func TestAuth(t *testing.T) {
 	sendPasswordResetLink(t, app, db, baseUrl)
 	verifyPasswordResetToken(t, app, db, baseUrl)
 	setNewPassword(t, app, db, baseUrl)
-
+	login(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)

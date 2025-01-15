@@ -16,6 +16,15 @@ func TestUser(db *gorm.DB) models.User {
 	return user
 }
 
+func TestUnVerifiedUser(db *gorm.DB) models.User {
+	user := models.User{
+		Email:          "testunverifieduser@example.com",
+		Password:       "testpassword",
+	}
+	db.FirstOrCreate(&user, models.User{Email: user.Email})
+	return user
+}
+
 func TestVerifiedUser(db *gorm.DB) models.User {
 	user := models.User{
 		Email:           "testverifieduser@example.com",

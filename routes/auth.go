@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"log"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/schemas"
@@ -41,7 +43,6 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 
 	// Create User
 	db.Save(&user)
-
 	// Send Email
 	go senders.SendEmail(&user, senders.ET_ACTIVATE, user.Otp, nil, nil)
 
@@ -241,6 +242,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 
 	user := models.User{Email: data.Email}
 	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
+	log.Println("WAAA: ", user)
 	if user.ID == uuid.Nil || !utils.CheckPasswordHash(data.Password, user.Password) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_CREDENTIALS, "Invalid Credentials"))
 	}

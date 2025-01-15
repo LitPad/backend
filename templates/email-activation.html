@@ -185,21 +185,11 @@
                                                             style="cursor:auto;color:#737F8D;font-family:Whitney, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;font-size:18px;line-height:24px;text-align:left;">
                                                             
                                                             <p><b>Hey {{.Name}},</b><br>
-                                                                <p></p>
-                                                                {{ .Text }}
-                                                                </p>
+                                                                <p>{{.Text}}</p><br>
+                                                                <p style="font-weight: bold; text-align: center;"><b>{{.Code}}</b></p>
+                                                            </p>
                                                         
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-
-                                                    <td style="word-break:break-word;font-size:0px;padding:10px 25px;"
-                                                        align="center">
-                                                        <table role="presentation" cellpadding="0" cellspacing="0"
-                                                            style="border-collapse:separate;" align="center" border="0">
-                                                            <p>{{ .Code }}</p>
-                                                        </table>
                                                     </td>
                                                 </tr>
                                                 <tr>
