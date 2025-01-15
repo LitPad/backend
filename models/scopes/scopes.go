@@ -13,6 +13,10 @@ func FollowerFollowingPreloaderScope(db *gorm.DB) *gorm.DB {
 	return db.Scopes(VerifiedUserScope).Preload("Followers").Preload("Followers.Followers").Preload("Followings").Preload("Followings.Followers").Preload("Followings.Books")
 }
 
+func FollowerFollowingUnVerifiedPreloaderScope(db *gorm.DB) *gorm.DB {
+	return db.Preload("Followers").Preload("Followers.Followers").Preload("Followings").Preload("Followings.Followers").Preload("Followings.Books")
+}
+
 func FollowerFollowingBooksPreloaderScope(db *gorm.DB) *gorm.DB {
 	return db.Scopes(FollowerFollowingPreloaderScope).Preload("Books").Preload("Followers.Followers").Preload("Followings").Preload("Followings.Followers").Preload("Followings.Books")
 }

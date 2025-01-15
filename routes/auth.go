@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"log"
-
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/schemas"
@@ -241,8 +239,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	}
 
 	user := models.User{Email: data.Email}
-	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
-	log.Println("WAAA: ", user)
+	db.Scopes(scopes.FollowerFollowingUnVerifiedPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil || !utils.CheckPasswordHash(data.Password, user.Password) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_CREDENTIALS, "Invalid Credentials"))
 	}

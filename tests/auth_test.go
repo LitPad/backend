@@ -336,7 +336,7 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 
 	t.Run("Reject login due to unverified email", func(t *testing.T) {
-		user := TestUnVerifiedUser(db)
+		user := TestUser(db)
 		url := fmt.Sprintf("%s/login", baseUrl)
 		loginData := schemas.LoginSchema{
 			Email: user.Email,
@@ -373,6 +373,98 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 }
 
+func googleLogin(t *testing.T, app *fiber.App, baseUrl string) {
+	t.Run("Reject google login due to invalid token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/google", baseUrl)
+		googleLoginData := schemas.SocialLoginSchema{Token: "invalid_token"}
+		res := ProcessTestBody(t, app, url, "POST", googleLoginData)
+
+		// Assert Status code
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Invalid Token", body["message"])
+	})
+}
+
+func facebookLogin(t *testing.T, app *fiber.App, baseUrl string) {
+	t.Run("Reject facebook login due to invalid token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/facebook", baseUrl)
+		facebookLoginData := schemas.SocialLoginSchema{Token: "invalid_token"}
+		res := ProcessTestBody(t, app, url, "POST", facebookLoginData)
+
+		// Assert Status code
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Token is invalid or expired", body["message"])
+	})
+}
+
+func refresh(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	t.Run("Reject Token Refresh Due To Invalid/Expired Token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/refresh", baseUrl)
+		refreshData := schemas.RefreshTokenSchema{Refresh: "invalid"}
+		res := ProcessTestBody(t, app, url, "POST", refreshData)
+
+		// Assert Status code
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Refresh token is invalid or expired", body["message"])
+	})
+
+	t.Run("Accept Token Refresh Due To Valid Refresh Token", func(t *testing.T) {
+		user := TestVerifiedUser(db)
+		token := JwtData(db, user)
+
+		url := fmt.Sprintf("%s/refresh", baseUrl)
+		refreshData := schemas.RefreshTokenSchema{Refresh: *token.Refresh}
+		res := ProcessTestBody(t, app, url, "POST", refreshData)
+
+		// Assert Status code
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Tokens refresh successful", body["message"])
+	})
+}
+
+func logout(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	t.Run("Reject Logout Due To Invalid Token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/logout", baseUrl)
+		res := ProcessTestGet(app, url, "invalid_token")
+		// Assert Status code
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Auth Token is Invalid or Expired!", body["message"])
+	})
+
+	t.Run("Accept Logout Due To Valid Token", func(t *testing.T) {
+		url := fmt.Sprintf("%s/logout", baseUrl)
+		token := AccessToken(db)
+		res := ProcessTestGet(app, url, token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Logout successful", body["message"])
+	})
+}
+
 func TestAuth(t *testing.T) {
 	app := fiber.New()
 	db := Setup(t, app)
@@ -386,6 +478,10 @@ func TestAuth(t *testing.T) {
 	verifyPasswordResetToken(t, app, db, baseUrl)
 	setNewPassword(t, app, db, baseUrl)
 	login(t, app, db, baseUrl)
+	googleLogin(t, app, baseUrl)
+	facebookLogin(t, app, baseUrl)
+	refresh(t, app, db, baseUrl)
+	logout(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)

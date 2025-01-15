@@ -8,30 +8,27 @@ import (
 
 // AUTH FIXTURES
 func TestUser(db *gorm.DB) models.User {
-	user := models.User{
-		Email:          "testuser@example.com",
-		Password:       "testpassword",
-	}
-	db.FirstOrCreate(&user, models.User{Email: user.Email})
-	return user
-}
+	email := "testuser@example.com"
+	db.Where("email = ?", email).Delete(&models.User{})
 
-func TestUnVerifiedUser(db *gorm.DB) models.User {
 	user := models.User{
-		Email:          "testunverifieduser@example.com",
+		Email:          email,
 		Password:       "testpassword",
 	}
-	db.FirstOrCreate(&user, models.User{Email: user.Email})
+	db.Create(&user)
 	return user
 }
 
 func TestVerifiedUser(db *gorm.DB) models.User {
+	email := "testverifieduser@example.com"
+	db.Where("email = ?", email).Delete(&models.User{})
+
 	user := models.User{
-		Email:           "testverifieduser@example.com",
-		Password:        "testpassword",
+		Email:          email,
+		Password:       "testpassword",
 		IsEmailVerified: true,
 	}
-	db.FirstOrCreate(&user, models.User{Email: user.Email})
+	db.Create(&user)
 	return user
 }
 
