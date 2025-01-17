@@ -18,7 +18,7 @@ var validator = utils.Validator()
 func DecodeJSONBody(c *fiber.Ctx, dst interface{}) (int, *utils.ErrorResponse) {
 	var errData *utils.ErrorResponse
 	code := 200
-	if c.Get("Content-Type") != "application/json" {
+	if !strings.Contains(c.Get("Content-Type"), "application/json") {
 		errD := utils.RequestErr(utils.ERR_INVALID_REQUEST, "Content-Type header is not application/json")
 		errData = &errD
 		return code, errData

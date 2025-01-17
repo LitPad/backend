@@ -106,7 +106,7 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 type EmailContext struct {
 	Name string
 	Url  *string
-	Code *int
+	Code *uint
 	Text string
 }
 
@@ -127,6 +127,11 @@ func SendEmail(user *models.User, emailType EmailTypeChoice, otp *uint, tokenStr
 	if url, ok := emailData["url"]; ok {
 		url := url.(string)
 		data.Url = &url
+	}
+
+	if code, ok := emailData["code"]; ok {
+		code := code.(*uint)
+		data.Code = code
 	}
 
 	// Read the HTML file content

@@ -41,7 +41,6 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 
 	// Create User
 	db.Save(&user)
-
 	// Send Email
 	go senders.SendEmail(&user, senders.ET_ACTIVATE, user.Otp, nil, nil)
 
@@ -200,10 +199,10 @@ func (ep Endpoint) SetNewPassword(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	user := models.User{TokenString: &data.TokenString}
+	user := models.User{Email: data.Email, TokenString: &data.TokenString}
 	db.Take(&user, user)
 	if user.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Token"))
+		return c.Status(404).JSON(utils.RequestErr(utils.ERR_INCORRECT_TOKEN, "Invalid Email or Token"))
 	}
 
 	if user.IsTokenExpired() {
@@ -240,7 +239,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	}
 
 	user := models.User{Email: data.Email}
-	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
+	db.Scopes(scopes.FollowerFollowingUnVerifiedPreloaderScope).Take(&user, user)
 	if user.ID == uuid.Nil || !utils.CheckPasswordHash(data.Password, user.Password) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_CREDENTIALS, "Invalid Credentials"))
 	}
