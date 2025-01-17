@@ -99,7 +99,7 @@ func(ep Endpoint) GetICPWalletBalance(c *fiber.Ctx) error {
 	token, err := generateTokenForWalletReq(conf)
 
 	if err != nil{
-		return c.Status(500).JSON(fiber.Map{"err": err})
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"err": err})
 	}
 
 	headers := map[string]string{
