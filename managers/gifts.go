@@ -63,3 +63,16 @@ func (s SentGiftManager) Create(db *gorm.DB, gift models.Gift, sender models.Use
 	db.Save(&sender)
 	return sentGift
 }
+
+func (s SentGiftManager) Process(db *gorm.DB, gift models.Gift, sender models.User, receiver models.User) models.SentGift{
+	sentGift := models.SentGift {
+		SenderID: sender.ID,
+		Sender: sender,
+		ReceiverID: receiver.ID,
+		Receiver: receiver,
+		GiftID: gift.ID, Gift: gift,
+	}
+
+	db.Create(&sentGift)
+	return sentGift
+}

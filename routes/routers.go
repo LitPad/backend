@@ -99,6 +99,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	icpWalletRouter := walletRouter.Group("/icp")
 	icpWalletRouter.Post("/", endpoint.CreateICPWallet)
 	icpWalletRouter.Get("/:username/balance", endpoint.GetICPWalletBalance)
+	icpWalletRouter.Get("/gifts/:username/:gift_slug/send", endpoint.AuthMiddleware , endpoint.SendGiftViaICPWallet)
 
 	// ADMIN ROUTES (7)
 	adminRouter := api.Group("/admin")
