@@ -35,15 +35,13 @@ func TestVerifiedUser(db *gorm.DB) models.User {
 
 func TestAuthor(db *gorm.DB) models.User {
 	email := "testauthormail@example.com"
-	db.Where("email = ?", email).Delete(&models.User{})
-
 	user := models.User{
 		Email:          email,
 		Password:       "testpassword",
 		IsEmailVerified: true,
 		AccountType: choices.ACCTYPE_AUTHOR,
 	}
-	db.Create(&user)
+	db.FirstOrCreate(&user, models.User{Email: email})
 	return user
 }
 
@@ -88,4 +86,10 @@ func BookData(db *gorm.DB, user models.User) models.Book {
 	}
 	db.Omit("Tags.*").FirstOrCreate(&book, book)
 	return book
+}
+
+func ChapterData(db *gorm.DB, book models.Book) models.Chapter {
+	chapter := models.Chapter{BookID: book.ID, Title: "Test Chapter", Text: "Stop doing that", ChapterStatus: choices.CS_PUBLISHED}
+	db.FirstOrCreate(&chapter, chapter)
+	return chapter
 }

@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/database"
@@ -102,4 +104,20 @@ func RemoveCreatedAndUpdated (body map[string]interface{}, dataType string) {
 	dataMapValue := dataMapValues[0].(map[string]interface{})
 	delete(dataMapValue, "created_at")
 	delete(dataMapValue, "updated_at")
+}
+
+func ConvertDateTime(timeObj time.Time) string {
+	roundedTime := timeObj.Round(time.Microsecond)
+	formatted := roundedTime.Format("2006-01-02T15:04:05")
+
+	// Get the microsecond part and round it
+	microseconds := roundedTime.Nanosecond() / 1000
+
+	// Append the rounded microsecond part to the formatted string
+	formatted = fmt.Sprintf("%s.%06d", formatted, microseconds)
+	formatted = strings.TrimRight(formatted, "0")
+	// Append the timezone information
+	formatted = fmt.Sprintf("%s%s", formatted, roundedTime.Format("-07:00"))
+
+	return formatted
 }

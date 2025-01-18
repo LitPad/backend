@@ -3,7 +3,6 @@ package routes
 import (
 	"context"
 	"fmt"
-	"log"
 	"mime/multipart"
 	"net/http"
 
@@ -50,7 +49,6 @@ func UploadFile(file *multipart.FileHeader, folder string) string {
 		fmt.Println("failed to upload to Cloudinary: %w", err)
 		return ""
 	}
-	log.Println("Hahalalalla")
 
 	// Return the secure URL of the uploaded file
 	return uploadResult.SecureURL

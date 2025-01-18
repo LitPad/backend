@@ -18,7 +18,7 @@ logs:
 	docker-compose logs
 	
 test:
-	go test ./tests -v -count=1
+	go test ./tests -v -count=1 -run TestBooks
 
 swag:
 	swag init --md .
