@@ -8,10 +8,6 @@ services:
       - .:/build
     ports:
       - "8000:8000"
-    environment:
-      - POSTGRES_SERVER=host.docker.internal
-      - REDIS_URL=redis:6379
-      - REDIS_URL=redis://host.docker.internal:6379
     env_file:
       - .env
     command: air ./main.go -b 0.0.0.0
