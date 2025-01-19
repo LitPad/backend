@@ -29,11 +29,7 @@ func initializeCloudinary () config.Config {
 
 func UploadFile(file *multipart.FileHeader, folder string) string {
 	cfg := initializeCloudinary()
-	if cfg.Debug {
-		folder = fmt.Sprintf("test/%s", folder)
-	} else {
-		folder = fmt.Sprintf("live/%s", folder)
-	}
+	folder = fmt.Sprintf("%s/%s", cfg.Environment, folder)
 
 	// Open the file
 	src, err := file.Open()
@@ -56,15 +52,10 @@ func UploadFile(file *multipart.FileHeader, folder string) string {
 
 func ValidateImage(c *fiber.Ctx, name string, required bool) (*multipart.FileHeader, *utils.ErrorResponse) {
 	file, err := c.FormFile(name)
-
-	data := map[string]string{
-		name: "Invalid image type",
-	}
-	errData := utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data)
+	errData := utils.ValidationErr(name, "Invalid image type")
 
 	if required && err != nil {
-		data[name] = "Image is required"
-		errData = utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data)
+		errData = utils.ValidationErr(name, "Image is required")
 		return nil, &errData
 	}
 

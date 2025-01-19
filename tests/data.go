@@ -55,8 +55,7 @@ func JwtData(db *gorm.DB, user models.User) models.User {
 	return user
 }
 
-func AccessToken(db *gorm.DB) string {
-	user := TestVerifiedUser(db)
+func AccessToken(db *gorm.DB, user models.User) string {
 	user = JwtData(db, user)
 	return *user.Access
 }
@@ -71,10 +70,8 @@ func TagData(db *gorm.DB) models.Tag {
 func GenreData(db *gorm.DB) models.Genre {
 	tag := TagData(db)
 	genre := models.Genre{Name: "Test Genre", Tags: []models.Tag{tag}}
-	result := db.Omit("Tags.*").FirstOrCreate(&genre, models.Genre{Name: "Test Genre"})
-	if result.RowsAffected == 1 {
-
-	}
+	db.Omit("Tags.*").FirstOrCreate(&genre, models.Genre{Name: "Test Genre"})
+	genre.Tags = []models.Tag{tag}
 	return genre
 }
 

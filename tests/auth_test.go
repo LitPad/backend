@@ -453,7 +453,7 @@ func logout(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 	t.Run("Accept Logout Due To Valid Token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/logout", baseUrl)
-		token := AccessToken(db)
+		token := AccessToken(db, TestVerifiedUser(db))
 		res := ProcessTestGet(app, url, token)
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)

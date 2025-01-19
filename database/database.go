@@ -69,7 +69,7 @@ func DropTables(db *gorm.DB) {
 func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	dsnTemplate := "host=%s user=%s password=%s dbname=%s port=%s TimeZone=%s"
 	dbName := cfg.PostgresDB
-	if os.Getenv("ENVIRONMENT") == "TESTING" {
+	if os.Getenv("ENVIRONMENT") == "test" {
 		dbName = cfg.TestPostgresDB
 	}
 	dsn := fmt.Sprintf(

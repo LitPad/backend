@@ -21,15 +21,15 @@ import (
 type EmailTypeChoice string
 
 const (
-	ET_ACTIVATE  EmailTypeChoice = "activate"
-	ET_WELCOME EmailTypeChoice = "welcome"
-	ET_RESET     EmailTypeChoice = "reset"
-	ET_RESET_SUCC EmailTypeChoice = "reset-success"
-	ET_PAYMENT_SUCC EmailTypeChoice = "payment-succeeded"
-	ET_PAYMENT_FAIL EmailTypeChoice = "payment-failed"
-	ET_PAYMENT_CANCEL EmailTypeChoice = "payment-canceled"
+	ET_ACTIVATE              EmailTypeChoice = "activate"
+	ET_WELCOME               EmailTypeChoice = "welcome"
+	ET_RESET                 EmailTypeChoice = "reset"
+	ET_RESET_SUCC            EmailTypeChoice = "reset-success"
+	ET_PAYMENT_SUCC          EmailTypeChoice = "payment-succeeded"
+	ET_PAYMENT_FAIL          EmailTypeChoice = "payment-failed"
+	ET_PAYMENT_CANCEL        EmailTypeChoice = "payment-canceled"
 	ET_SUBSCRIPTION_EXPIRING EmailTypeChoice = "subscription-expiring"
-	ET_SUBSCRIPTION_EXPIRED EmailTypeChoice = "subscription-expired"
+	ET_SUBSCRIPTION_EXPIRED  EmailTypeChoice = "subscription-expired"
 )
 
 func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenString *string, extraData map[string]interface{}) map[string]interface{} {
@@ -70,14 +70,14 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 		subject = "Payment successful"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["text"] = fmt.Sprintf("Your payment of %s was successful.", amount) 
+		data["text"] = fmt.Sprintf("Your payment of %s was successful.", amount)
 	case ET_PAYMENT_FAIL:
 		templateFile = "templates/payment-failed.html"
 		subject = "Payment failed"
 		amount := extraData["amount"].(decimal.Decimal)
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["text"] = fmt.Sprintf("Your payment of %s was unsuccessful. Please contact support", amount) 
+		data["text"] = fmt.Sprintf("Your payment of %s was unsuccessful. Please contact support", amount)
 	case ET_PAYMENT_CANCEL:
 		templateFile = "templates/payment-canceled.html"
 		subject = "Payment canceled"
@@ -88,14 +88,14 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 	case ET_SUBSCRIPTION_EXPIRING:
 		templateFile = "templates/subscription-expiring.html"
 		subject = "Subscription close to expiry"
-		subscriptionType := strings.ToLower(extraData["subscriptionType"].(string)) 
+		subscriptionType := strings.ToLower(extraData["subscriptionType"].(string))
 		data["template_file"] = templateFile
 		data["subject"] = subject
 		data["text"] = fmt.Sprintf("Your %s book subscription is about to expire.", subscriptionType)
 	case ET_SUBSCRIPTION_EXPIRED:
 		templateFile = "templates/subscription-expired.html"
 		subject = "Subscription expired"
-		subscriptionType := strings.ToLower(extraData["subscriptionType"].(string)) 
+		subscriptionType := strings.ToLower(extraData["subscriptionType"].(string))
 		data["template_file"] = templateFile
 		data["subject"] = subject
 		data["text"] = fmt.Sprintf("Your %s book subscription has expired. Please renew your subscription", subscriptionType)
@@ -111,7 +111,7 @@ type EmailContext struct {
 }
 
 func SendEmail(user *models.User, emailType EmailTypeChoice, otp *uint, tokenString *string, paymentData map[string]interface{}) {
-	if os.Getenv("ENVIRONMENT") == "TESTING" {
+	if os.Getenv("ENVIRONMENT") == "test" {
 		return
 	}
 	cfg := config.GetConfig()
@@ -175,10 +175,10 @@ func SendEmail(user *models.User, emailType EmailTypeChoice, otp *uint, tokenStr
 }
 
 type ContactPayload struct {
-	Email         string `json:"email"`
-	ListIds       []int  `json:"listIds"`
-	UpdateEnabled bool   `json:"updateEnabled"`
-	Attributes  map[string]string `json:"attributes"`
+	Email         string            `json:"email"`
+	ListIds       []int             `json:"listIds"`
+	UpdateEnabled bool              `json:"updateEnabled"`
+	Attributes    map[string]string `json:"attributes"`
 }
 
 func AddEmailToBrevo(name string, email string) {
@@ -186,14 +186,14 @@ func AddEmailToBrevo(name string, email string) {
 
 	// Prepare the payload for Brevo API
 	payload := ContactPayload{
-		Email:       email,
-		ListIds:     []int{cfg.BrevoListID}, // Convert string ListID to int
+		Email:         email,
+		ListIds:       []int{cfg.BrevoListID}, // Convert string ListID to int
 		UpdateEnabled: true,
 		Attributes: map[string]string{
 			"FIRSTNAME": name,
 		},
 	}
-    // Convert payload to JSON
+	// Convert payload to JSON
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		log.Println(err)
@@ -205,7 +205,7 @@ func AddEmailToBrevo(name string, email string) {
 		log.Println(err)
 	}
 
-    // Set request headers
+	// Set request headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("api-key", cfg.MailApiKey)
 

@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-
 // @Summary View Available Book Tags
 // @Description This endpoint views available book tags
 // @Tags Books
@@ -213,20 +212,14 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 	genre := models.Genre{Slug: genreSlug}
 	db.Take(&genre, genre)
 	if genre.ID == uuid.Nil {
-		data := map[string]string{
-			"genre_slug": "Invalid genre slug!",
-		}
-		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
 
 	// Validate Tags
 	tagSlugs := data.TagSlugs
 	tags, errStr := CheckTagStrings(db, tagSlugs)
 	if errStr != nil {
-		data := map[string]string{
-			"tag_slugs": *errStr,
-		}
-		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+		return c.Status(422).JSON(utils.ValidationErr("tag_slugs", *errStr))
 	}
 
 	// Check and validate image
@@ -273,20 +266,14 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 	genre := models.Genre{Slug: genreSlug}
 	db.Take(&genre, genre)
 	if genre.ID == uuid.Nil {
-		data := map[string]string{
-			"genre_slug": "Invalid genre slug!",
-		}
-		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
 
 	// Validate Tags
 	tagSlugs := data.TagSlugs
 	tags, errStr := CheckTagStrings(db, tagSlugs)
 	if errStr != nil {
-		data := map[string]string{
-			"tag_slugs": *errStr,
-		}
-		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+		return c.Status(422).JSON(utils.ValidationErr("tag_slugs", *errStr))
 	}
 
 	// Check and validate image
@@ -566,7 +553,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 	}
 
 	// Check if current user has bought at least a chapter of the book
-	if (user.SubscriptionExpired()) {
+	if user.SubscriptionExpired() {
 		chapterBought := boughtChapterManager.CheckIfAtLeastAChapterWasBought(db, user, *book)
 		if !chapterBought {
 			return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "User doesn't have active subscription and/or hasn't bought at least a chapter of the book"))
@@ -862,7 +849,7 @@ func (ep Endpoint) ConvertCoinsToLanterns(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Lanterns added successfully"))
 }
 
-// @Summary Set Contract 
+// @Summary Set Contract
 // @Description `This endpoint allows a user to create/update a contract for his/her book`
 // @Tags Books
 // @Param slug path string true "Book slug"

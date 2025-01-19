@@ -79,11 +79,11 @@ func ValidateAuth(db *gorm.DB, token string) (*models.User, *string, *string) {
 
 func SendNotificationInSocket(fiberCtx *fiber.Ctx, notification models.Notification, statusOpts ...choices.NotificationStatus) error {
 	cfg := config.GetConfig()
-	
-	if os.Getenv("ENVIRONMENT") == "TESTING" {
+
+	if os.Getenv("ENVIRONMENT") == "test" {
 		return nil
 	}
-	
+
 	// Check if page size is provided as an argument
 	status := choices.NS_CREATED
 	if len(statusOpts) > 0 {
@@ -97,7 +97,7 @@ func SendNotificationInSocket(fiberCtx *fiber.Ctx, notification models.Notificat
 	notificationData := SocketNotificationSchema{Status: status}
 	if status == choices.NS_CREATED {
 		notificationData = SocketNotificationSchema{
-			Status:             status,
+			Status: status,
 		}.Init(notification)
 	}
 
