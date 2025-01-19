@@ -1,0 +1,72 @@
+services:
+  db:
+    restart: always
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shared_network
+
+  redis:
+    image: redis
+    ports:
+      - "6380:6379"
+    networks:
+      - shared_network
+
+  api:
+    restart: "no"  # Ensures that Docker doesn't automatically restart after failure
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - .:/build
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_URL=redis:6379
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    command: air ./main.go -b 0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/general/site-detail"]  # Health check endpoint
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      timeout: 5s
+    networks:
+      - shared_network
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    env_file:
+      - .env
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    driver: bridge
