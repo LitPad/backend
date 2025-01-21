@@ -313,7 +313,7 @@ func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 	db.Delete(&book)
-	return c.Status(200).JSON(ResponseMessage("Book deleted successfuly"))
+	return c.Status(200).JSON(ResponseMessage("Book deleted successfully"))
 }
 
 // @Summary Add A Chapter to a Book

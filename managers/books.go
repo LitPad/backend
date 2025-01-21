@@ -149,7 +149,7 @@ func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug s
 	book := models.Book{AuthorID: author.ID, Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
 	if book.ID == uuid.Nil {
-		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "Writer has no book with that slug")
+		errD := utils.RequestErr(utils.ERR_NON_EXISTENT, "Author has no book with that slug")
 		return nil, &errD
 	}
 	return &book, nil

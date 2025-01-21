@@ -75,8 +75,8 @@ func ParseResponseBody(t *testing.T, b io.ReadCloser) interface{} {
 	return responseBody
 }
 
-func ProcessTestGet(app *fiber.App, url string, access ...string) *http.Response {
-	req := httptest.NewRequest("GET", url, nil)
+func ProcessTestGetOrDelete(app *fiber.App, url string, method string, access ...string) *http.Response {
+	req := httptest.NewRequest(method, url, nil)
 	if access != nil {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", access[0]))
 	}

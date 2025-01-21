@@ -206,7 +206,7 @@ func sendPasswordResetLink(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl st
 func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject verification due to invalid token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/verify-password-reset-token/invalid-token-string", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, "GET", url)
 
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
@@ -225,7 +225,7 @@ func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl
 		db.Save(&user)
 
 		url := fmt.Sprintf("%s/verify-password-reset-token/%s", baseUrl, *user.TokenString)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, "GET", url)
 
 		// Assert Status code
 		assert.Equal(t, 400, res.StatusCode)
@@ -242,7 +242,7 @@ func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl
 		db.Save(&user)
 
 		url := fmt.Sprintf("%s/verify-password-reset-token/%s", baseUrl, *user.TokenString)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, "GET", url)
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -441,7 +441,7 @@ func refresh(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 func logout(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject Logout Due To Invalid Token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/logout", baseUrl)
-		res := ProcessTestGet(app, url, "invalid_token")
+		res := ProcessTestGetOrDelete(app, url, "GET", "invalid_token")
 		// Assert Status code
 		assert.Equal(t, 401, res.StatusCode)
 
@@ -454,7 +454,7 @@ func logout(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Accept Logout Due To Valid Token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/logout", baseUrl)
 		token := AccessToken(db, TestVerifiedUser(db))
-		res := ProcessTestGet(app, url, token)
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 

@@ -17,7 +17,7 @@ func getBookTags(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Accept Book Tags Fetch", func(t *testing.T) {
 		TagData(db) // Get or create tag
 		url := fmt.Sprintf("%s/tags", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -32,7 +32,7 @@ func getBookGenres(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Accept Book Genres Fetch", func(t *testing.T) {
 		GenreData(db) // Get or create tag
 		url := fmt.Sprintf("%s/genres", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -48,7 +48,7 @@ func getBooks(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	BookData(db, user) // Get or create book
 	t.Run("Reject Books Fetch Due To Invalid Genre Slug", func(t *testing.T) {
 		url := fmt.Sprintf("%s?genre_slug=invalid-genre", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
 
@@ -59,7 +59,7 @@ func getBooks(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 
 	t.Run("Accept Books Fetch", func(t *testing.T) {
-		res := ProcessTestGet(app, baseUrl)
+		res := ProcessTestGetOrDelete(app, baseUrl, "GET")
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -73,7 +73,7 @@ func getBooks(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 func getBooksByAuthor(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject Books Fetch Due To Invalid Username", func(t *testing.T) {
 		url := fmt.Sprintf("%s/author/invalid-username", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
 
@@ -87,7 +87,7 @@ func getBooksByAuthor(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string)
 		user := TestAuthor(db)
 		BookData(db, user) // Get or create book
 		url := fmt.Sprintf("%s/author/%s", baseUrl, user.Username)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -101,7 +101,7 @@ func getBooksByAuthor(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string)
 func getBookChapters(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject Book Chapters Fetch Due To Invalid Slug", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/invalid-slug/chapters", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
 
@@ -116,7 +116,7 @@ func getBookChapters(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) 
 		book := BookData(db, user) // Get or create book
 		ChapterData(db, book)
 		url := fmt.Sprintf("%s/book/%s/chapters", baseUrl, book.Slug)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -130,7 +130,7 @@ func getBookChapters(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) 
 func getBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject Book Details Fetch Due To Invalid Slug", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/invalid-slug", baseUrl)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
 
@@ -145,7 +145,7 @@ func getBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		book := BookData(db, user) // Get or create book
 		ChapterData(db, book)
 		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
-		res := ProcessTestGet(app, url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -209,15 +209,65 @@ func createBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		tempFilePath := CreateTempImageFile(t)
 		defer os.Remove(tempFilePath)
 		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, "cover_image", tempFilePath, token)
-		t.Log("RESP: ", res)
 		// Assert Status code
 		assert.Equal(t, 201, res.StatusCode)
 
 		// Parse and assert body
 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		t.Log(body["data"])
 		assert.Equal(t, "success", body["status"])
 		assert.Equal(t, "Book created successfully", body["message"])
+	})
+}
+
+func updateBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	genre := GenreData(db)
+	bookData := schemas.BookCreateSchema{
+		Title: "Test Book Title Updated", Blurb: "Test Blurb Updated",
+		GenreSlug: genre.Slug, TagSlugs: []string{genre.Tags[0].Slug}, AgeDiscretion: choices.ATYPE_EIGHTEEN,
+	}
+	author := TestAuthor(db)
+	token := AccessToken(db, author)
+	book := BookData(db, author)
+
+	t.Run("Reject Book Update Due To Invalid Slug", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/invalid-slug", baseUrl)
+		res := ProcessMultipartTestBody(t, app, url, "PUT", bookData, "", "", token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Author has no book with that slug", body["message"])
+	})
+
+	t.Run("Accept Book Update Due To Valid Data", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
+		res := ProcessMultipartTestBody(t, app, url, "PUT", bookData, "", "", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Book updated successfully", body["message"])
+	})
+}
+
+func deleteBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	token := AccessToken(db, author)
+	book := BookData(db, author)
+
+	t.Run("Accept Book Delete Due To Valid Data", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
+		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Book deleted successfully", body["message"])
 	})
 }
 
@@ -235,6 +285,8 @@ func TestBooks(t *testing.T) {
 	getBookChapters(t, app, db, baseUrl)
 	getBook(t, app, db, baseUrl)
 	createBook(t, app, db, baseUrl)
+	updateBook(t, app, db, baseUrl)
+	deleteBook(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)
