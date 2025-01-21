@@ -29,6 +29,10 @@ func initializeCloudinary () config.Config {
 
 func UploadFile(file *multipart.FileHeader, folder string) string {
 	cfg := initializeCloudinary()
+	if cfg.Environment == "test" {
+		return "https://testfile.com"
+	}
+
 	folder = fmt.Sprintf("%s/%s", cfg.Environment, folder)
 
 	// Open the file

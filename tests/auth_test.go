@@ -21,7 +21,7 @@ func register(t *testing.T, app *fiber.App, baseUrl string) {
 			Email:    validEmail,
 			Password: "testregisteruserpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", userData)
+		res := ProcessJsonTestBody(t, app, url, "POST", userData)
 
 		// Assert Status code
 		assert.Equal(t, 201, res.StatusCode)
@@ -44,7 +44,7 @@ func register(t *testing.T, app *fiber.App, baseUrl string) {
 		}
 
 		// Verify that a user with the same email cannot be registered again
-		res := ProcessTestBody(t, app, url, "POST", userData)
+		res := ProcessJsonTestBody(t, app, url, "POST", userData)
 		assert.Equal(t, 422, res.StatusCode)
 
 		// Parse and assert body
@@ -66,7 +66,7 @@ func verifyEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
 			Otp:                111111,
 		}
-		res := ProcessTestBody(t, app, url, "POST", verificationData)
+		res := ProcessJsonTestBody(t, app, url, "POST", verificationData)
 
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
@@ -89,7 +89,7 @@ func verifyEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
 			Otp:                *user.Otp,
 		}
-		res := ProcessTestBody(t, app, url, "POST", verificationData)
+		res := ProcessJsonTestBody(t, app, url, "POST", verificationData)
 
 		// Assert Status code
 		assert.Equal(t, 400, res.StatusCode)
@@ -110,7 +110,7 @@ func verifyEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
 			Otp:                *user.Otp,
 		}
-		res := ProcessTestBody(t, app, url, "POST", verificationData)
+		res := ProcessJsonTestBody(t, app, url, "POST", verificationData)
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -128,7 +128,7 @@ func resendVerificationEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl 
 		emailRequestData := schemas.EmailRequestSchema{
 			Email: "invalid@example.com",
 		}
-		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+		res := ProcessJsonTestBody(t, app, url, "POST", emailRequestData)
 
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
@@ -143,7 +143,7 @@ func resendVerificationEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl 
 		user := TestVerifiedUser(db)
 		url := fmt.Sprintf("%s/resend-verification-email", baseUrl)
 		emailRequestData := schemas.EmailRequestSchema{Email: user.Email}
-		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+		res := ProcessJsonTestBody(t, app, url, "POST", emailRequestData)
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -158,7 +158,7 @@ func resendVerificationEmail(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl 
 		user := TestUser(db)
 		url := fmt.Sprintf("%s/resend-verification-email", baseUrl)
 		emailRequestData := schemas.EmailRequestSchema{Email: user.Email}
-		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+		res := ProcessJsonTestBody(t, app, url, "POST", emailRequestData)
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -176,7 +176,7 @@ func sendPasswordResetLink(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl st
 		emailRequestData := schemas.EmailRequestSchema{
 			Email: "invalid@example.com",
 		}
-		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+		res := ProcessJsonTestBody(t, app, url, "POST", emailRequestData)
 
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
@@ -191,7 +191,7 @@ func sendPasswordResetLink(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl st
 		user := TestUser(db)
 		url := fmt.Sprintf("%s/send-password-reset-link", baseUrl)
 		emailRequestData := schemas.EmailRequestSchema{Email: user.Email}
-		res := ProcessTestBody(t, app, url, "POST", emailRequestData)
+		res := ProcessJsonTestBody(t, app, url, "POST", emailRequestData)
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -259,9 +259,9 @@ func setNewPassword(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		url := fmt.Sprintf("%s/set-new-password", baseUrl)
 		passwordResetData := schemas.SetNewPasswordSchema{
 			EmailRequestSchema: schemas.EmailRequestSchema{Email: "invalid@example.com"},
-			TokenString: "invalidtoken", Password: "newpassword",
+			TokenString:        "invalidtoken", Password: "newpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", passwordResetData)
+		res := ProcessJsonTestBody(t, app, url, "POST", passwordResetData)
 
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
@@ -282,9 +282,9 @@ func setNewPassword(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		url := fmt.Sprintf("%s/set-new-password", baseUrl)
 		passwordResetData := schemas.SetNewPasswordSchema{
 			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
-			TokenString: *user.TokenString, Password: "newpassword",
+			TokenString:        *user.TokenString, Password: "newpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", passwordResetData)
+		res := ProcessJsonTestBody(t, app, url, "POST", passwordResetData)
 
 		// Assert Status code
 		assert.Equal(t, 400, res.StatusCode)
@@ -303,9 +303,9 @@ func setNewPassword(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		url := fmt.Sprintf("%s/set-new-password", baseUrl)
 		passwordResetData := schemas.SetNewPasswordSchema{
 			EmailRequestSchema: schemas.EmailRequestSchema{Email: user.Email},
-			TokenString: *user.TokenString, Password: "newpassword",
+			TokenString:        *user.TokenString, Password: "newpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", passwordResetData)
+		res := ProcessJsonTestBody(t, app, url, "POST", passwordResetData)
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -321,10 +321,10 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject login due to invalid credentials", func(t *testing.T) {
 		url := fmt.Sprintf("%s/login", baseUrl)
 		loginData := schemas.LoginSchema{
-			Email: "invalid@example.com",
+			Email:    "invalid@example.com",
 			Password: "invalidpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", loginData)
+		res := ProcessJsonTestBody(t, app, url, "POST", loginData)
 
 		// Assert Status code
 		assert.Equal(t, 401, res.StatusCode)
@@ -339,10 +339,10 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		user := TestUser(db)
 		url := fmt.Sprintf("%s/login", baseUrl)
 		loginData := schemas.LoginSchema{
-			Email: user.Email,
+			Email:    user.Email,
 			Password: "testpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", loginData)
+		res := ProcessJsonTestBody(t, app, url, "POST", loginData)
 
 		// Assert Status code
 		assert.Equal(t, 401, res.StatusCode)
@@ -358,10 +358,10 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 		url := fmt.Sprintf("%s/login", baseUrl)
 		loginData := schemas.LoginSchema{
-			Email: user.Email,
+			Email:    user.Email,
 			Password: "testpassword",
 		}
-		res := ProcessTestBody(t, app, url, "POST", loginData)
+		res := ProcessJsonTestBody(t, app, url, "POST", loginData)
 
 		// Assert Status code
 		assert.Equal(t, 201, res.StatusCode)
@@ -377,7 +377,7 @@ func googleLogin(t *testing.T, app *fiber.App, baseUrl string) {
 	t.Run("Reject google login due to invalid token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/google", baseUrl)
 		googleLoginData := schemas.SocialLoginSchema{Token: "invalid_token"}
-		res := ProcessTestBody(t, app, url, "POST", googleLoginData)
+		res := ProcessJsonTestBody(t, app, url, "POST", googleLoginData)
 
 		// Assert Status code
 		assert.Equal(t, 401, res.StatusCode)
@@ -393,7 +393,7 @@ func facebookLogin(t *testing.T, app *fiber.App, baseUrl string) {
 	t.Run("Reject facebook login due to invalid token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/facebook", baseUrl)
 		facebookLoginData := schemas.SocialLoginSchema{Token: "invalid_token"}
-		res := ProcessTestBody(t, app, url, "POST", facebookLoginData)
+		res := ProcessJsonTestBody(t, app, url, "POST", facebookLoginData)
 
 		// Assert Status code
 		assert.Equal(t, 401, res.StatusCode)
@@ -409,7 +409,7 @@ func refresh(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject Token Refresh Due To Invalid/Expired Token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/refresh", baseUrl)
 		refreshData := schemas.RefreshTokenSchema{Refresh: "invalid"}
-		res := ProcessTestBody(t, app, url, "POST", refreshData)
+		res := ProcessJsonTestBody(t, app, url, "POST", refreshData)
 
 		// Assert Status code
 		assert.Equal(t, 401, res.StatusCode)
@@ -426,7 +426,7 @@ func refresh(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 		url := fmt.Sprintf("%s/refresh", baseUrl)
 		refreshData := schemas.RefreshTokenSchema{Refresh: *token.Refresh}
-		res := ProcessTestBody(t, app, url, "POST", refreshData)
+		res := ProcessJsonTestBody(t, app, url, "POST", refreshData)
 
 		// Assert Status code
 		assert.Equal(t, 201, res.StatusCode)

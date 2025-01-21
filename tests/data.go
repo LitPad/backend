@@ -33,7 +33,7 @@ func TestVerifiedUser(db *gorm.DB) models.User {
 	return user
 }
 
-func TestAuthor(db *gorm.DB) models.User {
+func TestAuthor(db *gorm.DB, another ...bool) models.User {
 	email := "testauthormail@example.com"
 	user := models.User{
 		Email:          email,
@@ -41,7 +41,11 @@ func TestAuthor(db *gorm.DB) models.User {
 		IsEmailVerified: true,
 		AccountType: choices.ACCTYPE_AUTHOR,
 	}
-	db.FirstOrCreate(&user, models.User{Email: email})
+
+	if len(another) > 0 {
+		user.Email = "testanotherauthormail@example.com"
+	}
+	db.FirstOrCreate(&user, models.User{Email: user.Email})
 	return user
 }
 

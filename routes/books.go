@@ -401,7 +401,7 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "Not yours to delete"))
 	}
 	db.Delete(&chapter)
-	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfuly"))
+	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfully"))
 }
 
 // @Summary Buy An Entire Book

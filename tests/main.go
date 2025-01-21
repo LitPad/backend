@@ -84,7 +84,7 @@ func ProcessTestGetOrDelete(app *fiber.App, url string, method string, access ..
 	return res
 }
 
-func ProcessTestBody(t *testing.T, app *fiber.App, url string, method string, body interface{}, access ...string) *http.Response {
+func ProcessJsonTestBody(t *testing.T, app *fiber.App, url string, method string, body interface{}, access ...string) *http.Response {
 	// Marshal the test data to JSON
 	requestBytes, err := json.Marshal(body)
 	requestBody := bytes.NewReader(requestBytes)
@@ -102,9 +102,8 @@ func ProcessTestBody(t *testing.T, app *fiber.App, url string, method string, bo
 }
 
 func ProcessMultipartTestBody(t *testing.T, app *fiber.App, url string, method string, body interface{}, fileFieldName string, filePath string, access ...string) *http.Response {
-	var requestBody *bytes.Buffer
 	// Multipart handling
-	requestBody = &bytes.Buffer{}
+	requestBody := &bytes.Buffer{}
 	writer := multipart.NewWriter(requestBody)
 
 	// Populate multipart form fields and files from the struct

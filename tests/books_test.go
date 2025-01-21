@@ -271,6 +271,95 @@ func deleteBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 }
 
+func addChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	token := AccessToken(db, author)
+	book := BookData(db, author)
+	chapterData := schemas.ChapterCreateSchema{
+		Title: "Test Chapter Title", Text: "Test Content",
+		ChapterStatus: choices.CS_PUBLISHED,
+	}
+	t.Run("Accept Chapter Creation Due To Valid Data", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/%s/add-chapter", baseUrl, book.Slug)
+		res := ProcessJsonTestBody(t, app, url, "POST", chapterData, token)
+		// Assert Status code
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Chapter added successfully", body["message"])
+	})
+}
+
+func updateChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	token := AccessToken(db, author)
+
+	invalidOwner := TestAuthor(db, true)
+	invalidOwnerToken := AccessToken(db, invalidOwner)
+	book := BookData(db, author)
+	chapter := ChapterData(db, book)
+
+	chapterData := schemas.ChapterCreateSchema{
+		Title: "Test Chapter Title Updated", Text: "Test Content Updated",
+		ChapterStatus: choices.CS_PUBLISHED,
+	}
+
+	t.Run("Reject Chapter Update Due To Invalid Slug", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapter/invalid-slug", baseUrl)
+		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "No chapter with that slug", body["message"])
+	})
+
+	t.Run("Reject Chapter Update Due To Invalid Owner", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
+		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, invalidOwnerToken)
+		assert.Equal(t, 401, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Not yours to edit", body["message"])
+	})
+
+	t.Run("Accept Chapter Update Due To Valid Data", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
+		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Chapter updated successfully", body["message"])
+	})
+}
+
+func deleteChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	token := AccessToken(db, author)
+
+	book := BookData(db, author)
+	chapter := ChapterData(db, book)
+
+	t.Run("Accept Chapter Delete Due To Valid Slug", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
+		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Chapter deleted successfully", body["message"])
+	})
+}
 
 func TestBooks(t *testing.T) {
 	app := fiber.New()
@@ -287,6 +376,9 @@ func TestBooks(t *testing.T) {
 	createBook(t, app, db, baseUrl)
 	updateBook(t, app, db, baseUrl)
 	deleteBook(t, app, db, baseUrl)
+	addChapter(t, app, db, baseUrl)
+	updateChapter(t, app, db, baseUrl)
+	deleteChapter(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)
