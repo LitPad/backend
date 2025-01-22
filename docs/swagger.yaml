@@ -22,16 +22,6 @@ definitions:
     - ATYPE_TWELVE
     - ATYPE_SIXTEEN
     - ATYPE_EIGHTEEN
-  choices.ChapterStatus:
-    enum:
-    - DRAFT
-    - PUBLISHED
-    - TRASH
-    type: string
-    x-enum-varnames:
-    - CS_DRAFT
-    - CS_PUBLISHED
-    - CS_TRASH
   choices.ContractIDTypeChoice:
     enum:
     - DRIVERS-LICENSE
@@ -126,6 +116,14 @@ definitions:
     - RC_3
     - RC_4
     - RC_5
+  choices.ReplyType:
+    enum:
+    - REVIEW
+    - PARAGRAPH_COMMENT
+    type: string
+    x-enum-varnames:
+    - RT_REVIEW
+    - RT_PARAGRAPH_COMMENT
   choices.SubscriptionTypeChoice:
     enum:
     - MONTHLY
@@ -246,8 +244,6 @@ definitions:
         type: integer
       votes:
         type: integer
-      word_count:
-        type: integer
     type: object
   schemas.BookResponseSchema:
     properties:
@@ -300,15 +296,21 @@ definitions:
         type: integer
       votes:
         type: integer
-      word_count:
-        type: integer
     type: object
   schemas.BookWithStats:
     properties:
+      author_name:
+        type: string
       avg_rating:
         type: number
-      id:
-        type: integer
+      cover_image:
+        type: string
+      genre_name:
+        type: string
+      genre_slug:
+        type: string
+      slug:
+        type: string
       title:
         type: string
       votes_count:
@@ -357,8 +359,6 @@ definitions:
     type: object
   schemas.ChapterCreateSchema:
     properties:
-      chapter_status:
-        $ref: '#/definitions/choices.ChapterStatus'
       text:
         maxLength: 10000
         type: string
@@ -366,7 +366,6 @@ definitions:
         maxLength: 100
         type: string
     required:
-    - chapter_status
     - text
     - title
     type: object
@@ -383,18 +382,15 @@ definitions:
     type: object
   schemas.ChapterSchema:
     properties:
-      chapter_status:
-        allOf:
-        - $ref: '#/definitions/choices.ChapterStatus'
-        example: PUBLISHED
       slug:
         type: string
       text:
         type: string
       title:
         type: string
-      word_count:
-        type: integer
+      trash:
+        example: false
+        type: boolean
     type: object
   schemas.ChaptersResponseDataSchema:
     properties:
@@ -560,6 +556,8 @@ definitions:
     properties:
       active_subscribers:
         type: integer
+      avatar:
+        type: string
       books:
         items:
           $ref: '#/definitions/schemas.BookWithStats'
@@ -574,6 +572,8 @@ definitions:
         type: array
       user_subscription_plan_percentages:
         $ref: '#/definitions/schemas.SubscriptionPlansAndPercentages'
+      username:
+        type: string
     type: object
   schemas.DashboardResponseSchema:
     properties:
@@ -777,6 +777,81 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.ParagraphCommentAddSchema:
+    properties:
+      paragraph_index:
+        type: integer
+      text:
+        maxLength: 10000
+        type: string
+    required:
+    - paragraph_index
+    - text
+    type: object
+  schemas.ParagraphCommentResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.ParagraphCommentSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.ParagraphCommentSchema:
+    properties:
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      id:
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      likes_count:
+        type: integer
+      paragraph_index:
+        type: integer
+      replies_count:
+        type: integer
+      text:
+        maxLength: 10000
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      user:
+        $ref: '#/definitions/schemas.UserDataSchema'
+    required:
+    - paragraph_index
+    - text
+    type: object
+  schemas.ParagraphCommentsResponseDataSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+      replies:
+        items:
+          $ref: '#/definitions/schemas.ParagraphCommentSchema'
+        type: array
+    type: object
+  schemas.ParagraphCommentsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.ParagraphCommentsResponseDataSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.PaymentResponseSchema:
     properties:
       data:
@@ -869,13 +944,16 @@ definitions:
         example: success
         type: string
     type: object
-  schemas.ReplyReviewSchema:
+  schemas.ReplyReviewOrCommentSchema:
     properties:
       text:
         maxLength: 10000
         type: string
+      type:
+        $ref: '#/definitions/choices.ReplyType'
     required:
     - text
+    - type
     type: object
   schemas.ReplySchema:
     properties:
@@ -888,15 +966,12 @@ definitions:
       likes_count:
         type: integer
       text:
-        maxLength: 10000
         type: string
       updated_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
       user:
         $ref: '#/definitions/schemas.UserDataSchema'
-    required:
-    - text
     type: object
   schemas.ResponseSchema:
     properties:
@@ -2570,60 +2645,12 @@ paths:
       summary: Add A Chapter to a Book
       tags:
       - Books
-  /books/book/{slug}/buy:
-    get:
-      description: This endpoint allows a user to buy an entire book
-      parameters:
-      - description: Book slug
-        in: path
-        name: slug
-        required: true
-        type: string
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/schemas.BookResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Buy An Entire Book
-      tags:
-      - Books
-  /books/book/{slug}/buy-chapter:
-    get:
-      description: |-
-        `This endpoint allows a user to buy the next chapter of a book.`
-        `It happens in sequence. 1, 2, 3, 4 etc. That means if a user has bought chapter 2 before. This endpoint will buy chapter 3`
-      parameters:
-      - description: Book slug
-        in: path
-        name: slug
-        required: true
-        type: string
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/schemas.BookResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Buy A Chapter Of A Book
-      tags:
-      - Books
   /books/book/{slug}/chapters:
     get:
       description: |-
         `This endpoint views chapters of a book`
         `A Guest user will view just the first chapter`
-        `An Authenticated user will view all the chapters he has bought`
+        `An Authenticated user will view all the chapters if he's subscribed or he gets only the first chapter`
         `The owner will view all chapters of the book`
       parameters:
       - description: Get Chapter by Book Slug
@@ -2863,6 +2890,250 @@ paths:
       summary: Update A Chapter of a Book
       tags:
       - Books
+  /books/book/chapters/chapter/{slug}:
+    get:
+      description: |-
+        `This endpoint views a single chapter of a book`
+        `An inactive subscriber can only view the chapter if its the first one`
+      parameters:
+      - description: Get Chapter by Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ChapterResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Book Chapter
+      tags:
+      - Books
+    post:
+      description: '`This endpoint allows a user to add a comment in a paragraph to
+        a book chapter.`'
+      parameters:
+      - description: Chapter slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Paragraph Comment object
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ParagraphCommentAddSchema'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.ParagraphCommentResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add A Comment To A Paragraph In A Book Chapter
+      tags:
+      - Books
+  /books/book/chapters/chapter/{slug}/paragraph-comments/{index}:
+    get:
+      description: |-
+        `This endpoint view comments of a single paragraph of a chapter`
+        `An inactive subscriber can only view the paragraph comment if its the first one`
+      parameters:
+      - description: Chapter Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Paragraph Index
+        in: path
+        name: index
+        required: true
+        type: integer
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ParagraphCommentsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Comments Of A Paragraph of A Chapter
+      tags:
+      - Books
+  /books/book/chapters/chapter/paragraph-comment/{id}:
+    delete:
+      description: '`This endpoint allows a user to delete his/her paragraph comment.`'
+      parameters:
+      - description: Review id (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Paragraph Comment
+      tags:
+      - Books
+    put:
+      description: '`This endpoint allows a user to edit his/her paragraph comment.`'
+      parameters:
+      - description: Comment id (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment object
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ParagraphCommentAddSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ParagraphCommentResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Edit Paragraph Comment
+      tags:
+      - Books
+  /books/book/review-or-paragraph-comment/{id}/replies:
+    post:
+      description: '`This endpoint allows a user to reply a book review.`'
+      parameters:
+      - description: Review or Paragraph Comment id (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reply object
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ReplyReviewOrCommentSchema'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.ReplyResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reply A Review Or A Paragraph Comment
+      tags:
+      - Books
+  /books/book/review-or-paragraph-comment/replies/{id}:
+    delete:
+      description: '`This endpoint allows a user to delete his/her reply`'
+      parameters:
+      - description: Reply id (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete A Reply
+      tags:
+      - Books
+    put:
+      description: '`This endpoint allows a user to edit his/her reply`'
+      parameters:
+      - description: Reply id (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reply object
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.ReplyReviewOrCommentSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ReplyResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Edit A Reply
+      tags:
+      - Books
   /books/book/review/{id}:
     delete:
       description: '`This endpoint allows a user to delete his/her book review.`'
@@ -2950,121 +3221,6 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: Get Review Replies
-      tags:
-      - Books
-    post:
-      description: '`This endpoint allows a user to reply a book review.`'
-      parameters:
-      - description: Review id (uuid)
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Reply object
-        in: body
-        name: review
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.ReplyReviewSchema'
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/schemas.ReplyResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Reply A Review
-      tags:
-      - Books
-  /books/book/review/replies/{id}:
-    delete:
-      description: '`This endpoint allows a user to delete his/her reply`'
-      parameters:
-      - description: Reply id (uuid)
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Delete A Reply
-      tags:
-      - Books
-    put:
-      description: '`This endpoint allows a user to edit his/her reply`'
-      parameters:
-      - description: Reply id (uuid)
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Reply object
-        in: body
-        name: review
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.ReplyReviewSchema'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/schemas.ReplyResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Edit A Reply
-      tags:
-      - Books
-  /books/bought:
-    get:
-      description: This endpoint returns all books in which a user has bought at least
-        a chapter
-      parameters:
-      - default: 1
-        description: Current Page
-        in: query
-        name: page
-        type: integer
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/schemas.BooksResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: View Bought Books
       tags:
       - Books
   /books/genres:
@@ -3535,6 +3691,34 @@ paths:
       summary: Get user ICP wallet balance
       tags:
       - Wallet
+  /wallet/icp/gifts/{username}/{gift_slug}/send/:
+    get:
+      description: This endpoint allows a user to send a gift via ICP
+      parameters:
+      - description: Username of the writer
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: Slug of the gift being sent
+        in: path
+        name: gift_slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SentGiftResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send Gift Via ICP
+      tags:
+      - Waller
   /wallet/plans:
     get:
       consumes:

@@ -47,19 +47,17 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 }
 
 type ChapterSchema struct {
-	Title         string                `json:"title"`
-	Slug          string                `json:"slug"`
-	Text          string                `json:"text"`
-	ChapterStatus choices.ChapterStatus `json:"chapter_status" example:"PUBLISHED"`
-	WordCount     int                   `json:"word_count"`
+	Title string `json:"title"`
+	Slug  string `json:"slug"`
+	Text  string `json:"text"`
+	Trash bool   `json:"trash" example:"false"`
 }
 
 func (c ChapterSchema) Init(chapter models.Chapter) ChapterSchema {
 	c.Title = chapter.Title
 	c.Slug = chapter.Slug
 	c.Text = chapter.Text
-	c.ChapterStatus = chapter.ChapterStatus
-	c.WordCount = chapter.WordCount()
+	c.Trash = chapter.Trash
 	return c
 }
 
@@ -73,7 +71,6 @@ type BookSchema struct {
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterSchema        `json:"partial_view_chapter"`
-	WordCount          int                   `json:"word_count"`
 	CoverImage         string                `json:"cover_image"`
 	FullPrice          *int                  `json:"full_price"`
 	ChapterPrice       int                   `json:"chapter_price"`
@@ -101,7 +98,6 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
-	b.WordCount = book.WordCount()
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()
 	b.AvgRating = book.AvgRating
@@ -154,6 +150,63 @@ type ReviewsResponseDataSchema struct {
 type ReviewResponseSchema struct {
 	ResponseSchema
 	Data ReviewSchema `json:"data"`
+}
+
+type ParagraphCommentAddSchema struct {
+	Index int    `json:"paragraph_index" validate:"required"`
+	Text  string `json:"text" validate:"required,max=10000"`
+}
+
+type ParagraphCommentSchema struct {
+	ParagraphCommentAddSchema
+	ID           uuid.UUID      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
+	User         UserDataSchema `json:"user"`
+	LikesCount   int            `json:"likes_count"`
+	RepliesCount int            `json:"replies_count"`
+	CreatedAt    time.Time      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
+	UpdatedAt    time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
+}
+
+func (p ParagraphCommentSchema) Init(paragraphComment models.ParagraphComment) ParagraphCommentSchema {
+	p.ID = paragraphComment.ID
+	p.User = p.User.Init(paragraphComment.User)
+	p.Index = paragraphComment.Index
+	p.Text = paragraphComment.Text
+	p.LikesCount = paragraphComment.LikesCount()
+	p.RepliesCount = paragraphComment.RepliesCount()
+	p.CreatedAt = paragraphComment.CreatedAt
+	p.UpdatedAt = paragraphComment.UpdatedAt
+	return p
+}
+
+type ParagraphCommentResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []ParagraphCommentSchema `json:"items"`
+}
+
+type ParagraphCommentResponseSchema struct {
+	ResponseSchema
+	Data ParagraphCommentSchema `json:"data"`
+}
+
+type ParagraphCommentsResponseDataSchema struct {
+	PaginatedResponseDataSchema
+	Items []ParagraphCommentSchema `json:"replies"`
+}
+
+func (p ParagraphCommentsResponseDataSchema) Init(comments []models.ParagraphComment) ParagraphCommentsResponseDataSchema {
+	// Set Initial Data
+	commentItems := make([]ParagraphCommentSchema, 0)
+	for _, comment := range comments {
+		commentItems = append(commentItems, ParagraphCommentSchema{}.Init(comment))
+	}
+	p.Items = commentItems
+	return p
+}
+
+type ParagraphCommentsResponseSchema struct {
+	ResponseSchema
+	Data ParagraphCommentsResponseDataSchema `json:"data"`
 }
 
 type RepliesResponseDataSchema struct {
@@ -218,9 +271,8 @@ type BookCreateSchema struct {
 }
 
 type ChapterCreateSchema struct {
-	Title         string                `json:"title" validate:"required,max=100"`
-	Text          string                `json:"text" validate:"required,max=10000"`
-	ChapterStatus choices.ChapterStatus `json:"chapter_status" validate:"required,chapter_status_validator"`
+	Title string `json:"title" validate:"required,max=100"`
+	Text  string `json:"text" validate:"required,max=10000"`
 }
 
 type TagsResponseSchema struct {
@@ -386,14 +438,15 @@ type ChapterResponseSchema struct {
 	Data ChapterSchema `json:"data"`
 }
 
-type ReplyReviewSchema struct {
-	Text string `json:"text" validate:"required,max=10000"`
+type ReplyReviewOrCommentSchema struct {
+	Text string            `json:"text" validate:"required,max=10000"`
+	Type choices.ReplyType `json:"type" validate:"required,reply_type_validator"`
 }
 
 type ReplySchema struct {
-	ReplyReviewSchema
 	ID         uuid.UUID      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
 	User       UserDataSchema `json:"user"`
+	Text       string         `json:"text"`
 	LikesCount int            `json:"likes_count"`
 	CreatedAt  time.Time      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	UpdatedAt  time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`

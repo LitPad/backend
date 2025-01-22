@@ -90,7 +90,7 @@ func BookData(db *gorm.DB, user models.User) models.Book {
 }
 
 func ChapterData(db *gorm.DB, book models.Book) models.Chapter {
-	chapter := models.Chapter{BookID: book.ID, Title: "Test Chapter", Text: "Stop doing that", ChapterStatus: choices.CS_PUBLISHED}
+	chapter := models.Chapter{BookID: book.ID, Title: "Test Chapter", Text: "Stop doing that"}
 	db.FirstOrCreate(&chapter, chapter)
 	return chapter
 }

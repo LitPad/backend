@@ -40,12 +40,12 @@ func ContractStatusChoiceValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.ContractStatusChoice).IsValid()
 }
 
-// Validates if a chapter status value is the correct one
-func ChapterStatusValidator(fl validator.FieldLevel) bool {
-	return fl.Field().Interface().(choices.ChapterStatus).IsValid()
-}
-
 // Validates if a age discretion value is the correct one
 func AgeDiscretionValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.AgeType).IsValid()
+}
+
+// Validates if a reply type value is the correct one
+func ReplyTypeValidator(fl validator.FieldLevel) bool {
+	return fl.Field().Interface().(choices.ReplyType).IsValid()
 }

@@ -41,10 +41,10 @@ func init() {
 	customValidator.RegisterValidation("subscription_type_validator", SubscriptionTypeValidator)
 	customValidator.RegisterValidation("rating_choice_validator", RatingChoiceValidator)
 	customValidator.RegisterValidation("age_discretion_validator", AgeDiscretionValidator)
-	customValidator.RegisterValidation("chapter_status_validator", ChapterStatusValidator)
 	customValidator.RegisterValidation("contract_type_validator", ContractTypeChoiceValidator)
 	customValidator.RegisterValidation("contract_id_type_validator", ContractIDTypeChoiceValidator)
 	customValidator.RegisterValidation("contract_status_validator", ContractStatusChoiceValidator)
+	customValidator.RegisterValidation("reply_type_validator", ReplyTypeValidator)
 
 	RegisterTagName()
 }
@@ -69,10 +69,10 @@ func registerTranslations(param string) {
 	registerTranslation("subscription_type_validator", "Invalid subscription type", translator)
 	registerTranslation("rating_choice_validator", "Invalid rating choice", translator)
 	registerTranslation("age_discretion_validator", "Invalid age discretion. Choices are 4, 12, 16, 18", translator)
-	registerTranslation("chapter_status_validator", "Invalid chapter status. Choices are DRAFT, PUBLISHED, TRASH", translator)
 	registerTranslation("contract_type_validator", "Invalid contract type. Choices are EXCLUSIVE, NON-EXCLUSIVE, ONLY-EXCLUSIVE", translator)
 	registerTranslation("contract_id_type_validator", "Invalid ID type. Choices are DRIVERS-LICENSE, GOVERNMENT-ID, PASSPORT", translator)
 	registerTranslation("contract_status_validator", "Invalid status type. Choices are PENDING, APPROVED, DECLINED, UPDATED", translator)
+	registerTranslation("reply_type_validator", "Invalid reply type. Choices are REVIEW, PARAGRAPH_COMMENT", translator)
 
 	minErrMsg := fmt.Sprintf("%s characters min", param)
 	registerTranslation("min", minErrMsg, translator)

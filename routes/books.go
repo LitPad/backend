@@ -114,7 +114,7 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 // @Summary View Book Chapters
 // @Description `This endpoint views chapters of a book`
 // @Description `A Guest user will view just the first chapter`
-// @Description `An Authenticated user will view all the chapters he has bought`
+// @Description `An Authenticated user will view all the chapters if he's subscribed or he gets only the first chapter`
 // @Description `The owner will view all chapters of the book`
 // @Tags Books
 // @Param slug path string true "Get Chapter by Book Slug"
@@ -133,16 +133,10 @@ func (ep Endpoint) GetBookChapters(c *fiber.Ctx) error {
 
 	user := RequestUser(c)
 	var chapters []models.Chapter
-	// If user is authenticated, then will fetch all available chapters, else just the first chapter
-	if user.ID == uuid.Nil {
+	if (user.ID == uuid.Nil || user.SubscriptionExpired()) && len(book.Chapters) > 0 && user.ID != book.AuthorID {
 		chapters = book.Chapters[:1]
 	} else {
-		if user.ID == book.AuthorID {
-			chapters = book.Chapters
-		} else {
-			// Return bought chapters
-			chapters = boughtChapterManager.GetBoughtChapters(db, user, book)
-		}
+		chapters = book.Chapters
 	}
 	// Paginate and return chapters
 	paginatedData, paginatedChapters, err := PaginateQueryset(chapters, c, 50)
@@ -155,6 +149,75 @@ func (ep Endpoint) GetBookChapters(c *fiber.Ctx) error {
 		Data: schemas.ChaptersResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(chapters),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Book Chapter
+// @Description `This endpoint views a single chapter of a book`
+// @Description `An inactive subscriber can only view the chapter if its the first one`
+// @Tags Books
+// @Param slug path string true "Get Chapter by Slug"
+// @Success 200 {object} schemas.ChapterResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/chapters/chapter/{slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	chapter, err := chapterManager.GetBySlug(db, slug)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	chapterIsFirst := chapterManager.IsFirstChapter(db, *chapter)
+	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Renew your subscription to view this chapter"))
+	}
+	response := schemas.ChapterResponseSchema{
+		ResponseSchema: ResponseMessage("Chapter fetched successfully"),
+		Data: schemas.ChapterSchema{}.Init(*chapter),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Comments Of A Paragraph of A Chapter
+// @Description `This endpoint view comments of a single paragraph of a chapter`
+// @Description `An inactive subscriber can only view the paragraph comment if its the first one`
+// @Tags Books
+// @Param slug path string true "Chapter Slug"
+// @Param index path int true "Paragraph Index"
+// @Param page query int false "Current Page" default(1)
+// @Success 200 {object} schemas.ParagraphCommentsResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/chapters/chapter/{slug}/paragraph-comments/{index} [get]
+// @Security BearerAuth
+func (ep Endpoint) GetChapterParagraphComments(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	index, _ := c.ParamsInt("index", 1)
+	chapter, err := chapterManager.GetBySlugWithComments(db, slug, index)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	chapterIsFirst := chapterManager.IsFirstChapter(db, *chapter)
+	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Renew your subscription to view this chapter"))
+	}
+
+	// Paginate and return comments
+	paginatedData, paginatedComments, err := PaginateQueryset(chapter.Comments, c, 100)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	comments := paginatedComments.([]models.ParagraphComment)
+
+	response := schemas.ParagraphCommentsResponseSchema{
+		ResponseSchema: ResponseMessage("Chapter Comments fetched successfully"),
+		Data: schemas.ParagraphCommentsResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(comments),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -404,132 +467,6 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfully"))
 }
 
-// @Summary Buy An Entire Book
-// @Description This endpoint allows a user to buy an entire book
-// @Tags Books
-// @Param slug path string true "Book slug"
-// @Success 201 {object} schemas.BookResponseSchema
-// @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book/{slug}/buy [get]
-// @Security BearerAuth
-func (ep Endpoint) BuyABook(c *fiber.Ctx) error {
-	db := ep.DB
-	user := RequestUser(c)
-	book, err := bookManager.GetContractedBookBySlug(db, c.Params("slug"))
-	if err != nil {
-		return c.Status(404).JSON(err)
-	}
-
-	if !book.FullPurchaseMode {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy the entire book at once. Buy a chapter instead"))
-	}
-
-	if user.ID == book.AuthorID {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy your own book"))
-	}
-
-	bookAlreadyBought := boughtChapterManager.CheckAllChaptersBought(db, user, book)
-	if bookAlreadyBought {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_ALREADY_BOUGHT, "You have bought this book already"))
-	}
-
-	if *book.FullPrice > user.Coins {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins"))
-	}
-
-	// Create bought book
-	boughtBook := boughtChapterManager.BuyWholeBook(db, user, *book)
-
-	// Create and send notification in socket
-	notification := notificationManager.Create(
-		db, user, book.Author, choices.NT_BOOK_PURCHASE,
-		fmt.Sprintf("%s bought one of your books.", user.Username),
-		book, nil, nil, nil,
-	)
-	SendNotificationInSocket(c, notification)
-
-	response := schemas.BookResponseSchema{
-		ResponseSchema: ResponseMessage("Book bought successfully"),
-		Data:           schemas.BookSchema{}.Init(boughtBook),
-	}
-	return c.Status(201).JSON(response)
-}
-
-// @Summary Buy A Chapter Of A Book
-// @Description `This endpoint allows a user to buy the next chapter of a book.`
-// @Description `It happens in sequence. 1, 2, 3, 4 etc. That means if a user has bought chapter 2 before. This endpoint will buy chapter 3`
-// @Tags Books
-// @Param slug path string true "Book slug"
-// @Success 201 {object} schemas.BookResponseSchema
-// @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book/{slug}/buy-chapter [get]
-// @Security BearerAuth
-func (ep Endpoint) BuyAChapter(c *fiber.Ctx) error {
-	db := ep.DB
-	user := RequestUser(c)
-	book, err := bookManager.GetContractedBookBySlug(db, c.Params("slug"))
-	if err != nil {
-		return c.Status(404).JSON(err)
-	}
-
-	if user.ID == book.AuthorID {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "You can't buy chapter of your own book"))
-	}
-
-	bookAlreadyBought := boughtChapterManager.CheckAllChaptersBought(db, user, book)
-	if bookAlreadyBought {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_ALREADY_BOUGHT, "You have bought all the chapters of this book already"))
-	}
-
-	if book.ChapterPrice > user.Coins {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins"))
-	}
-
-	// Create bought chapter
-	boughtChapter := boughtChapterManager.BuyAChapter(db, user, book)
-
-	// Create and send notification in socket
-	notification := notificationManager.Create(
-		db, user, book.Author, choices.NT_BOOK_PURCHASE,
-		fmt.Sprintf("%s bought one of your books.", user.Username),
-		book, nil, nil, nil,
-	)
-	SendNotificationInSocket(c, notification)
-
-	response := schemas.ChapterResponseSchema{
-		ResponseSchema: ResponseMessage("Chapter bought successfully"),
-		Data:           schemas.ChapterSchema{}.Init(boughtChapter.Chapter),
-	}
-	return c.Status(201).JSON(response)
-}
-
-// @Summary View Bought Books
-// @Description This endpoint returns all books in which a user has bought at least a chapter
-// @Tags Books
-// @Param page query int false "Current Page" default(1)
-// @Success 200 {object} schemas.BooksResponseSchema
-// @Failure 400 {object} utils.ErrorResponse
-// @Router /books/bought [get]
-// @Security BearerAuth
-func (ep Endpoint) GetBoughtBooks(c *fiber.Ctx) error {
-	db := ep.DB
-	user := RequestUser(c)
-	books := boughtChapterManager.GetBoughtBooks(db, user)
-	// Paginate and return books
-	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
-	if err != nil {
-		return c.Status(400).JSON(err)
-	}
-	books = paginatedBooks.([]models.Book)
-	response := schemas.BooksResponseSchema{
-		ResponseSchema: ResponseMessage("Books fetched successfully"),
-		Data: schemas.BooksResponseDataSchema{
-			PaginatedResponseDataSchema: *paginatedData,
-		}.Init(books),
-	}
-	return c.Status(200).JSON(response)
-}
-
 // @Summary Review A Book
 // @Description `This endpoint allows a user to review a book.`
 // @Description `The author cannot review his own book.`
@@ -554,10 +491,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 
 	// Check if current user has bought at least a chapter of the book
 	if user.SubscriptionExpired() {
-		chapterBought := boughtChapterManager.CheckIfAtLeastAChapterWasBought(db, user, *book)
-		if !chapterBought {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "User doesn't have active subscription and/or hasn't bought at least a chapter of the book"))
-		}
+		return c.Status(400).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "User doesn't have active subscription"))
 	}
 	data := schemas.ReviewBookSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
@@ -680,41 +614,48 @@ func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
-// @Summary Reply A Review
+// @Summary Reply A Review Or A Paragraph Comment
 // @Description `This endpoint allows a user to reply a book review.`
 // @Tags Books
-// @Param id path string true "Review id (uuid)"
-// @Param review body schemas.ReplyReviewSchema true "Reply object"
+// @Param id path string true "Review or Paragraph Comment id (uuid)"
+// @Param review body schemas.ReplyReviewOrCommentSchema true "Reply object"
 // @Success 201 {object} schemas.ReplyResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book/review/{id}/replies [post]
+// @Router /books/book/review-or-paragraph-comment/{id}/replies [post]
 // @Security BearerAuth
-func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
+func (ep Endpoint) ReplyReviewOrParagraphComment(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
-	reviewID := c.Params("id")
-	parsedID := ParseUUID(reviewID)
+	reviewOrParagraphCommentID := c.Params("id")
+	parsedID := ParseUUID(reviewOrParagraphCommentID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
-	review := reviewManager.GetByID(db, *parsedID)
-	if review == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No review with that ID"))
-	}
-
-	data := schemas.ReplyReviewSchema{}
+	data := schemas.ReplyReviewOrCommentSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	reply := replyManager.Create(db, user, review, data)
-
-	// Create and Send Notification in socket
-	if user.ID != review.User.ID {
-		text := fmt.Sprintf("%s replied your review", user.Username)
-		notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, &review.Book, &review.ID, &reply.ID, nil)
-		SendNotificationInSocket(c, notification)
+	var reply models.Reply
+	if data.Type == choices.RT_REVIEW {
+		review := reviewManager.GetByID(db, *parsedID)
+		if review == nil {
+			return c.Status(404).JSON(utils.NotFoundErr("No review with that ID"))
+		}
+		reply = replyManager.Create(db, user, review, nil, data)
+		// Create and Send Notification in socket
+		if user.ID != review.User.ID {
+			text := fmt.Sprintf("%s replied your review", user.Username)
+			notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, &review.Book, &review.ID, &reply.ID, nil)
+			SendNotificationInSocket(c, notification)
+		}
+	} else {
+		paragraphComment := paragraphCommentManager.GetByID(db, *parsedID)
+		if paragraphComment == nil {
+			return c.Status(404).JSON(utils.NotFoundErr("No paragraph comment with that ID"))
+		}
+		reply = replyManager.Create(db, user, nil, paragraphComment, data)
 	}
 
 	response := schemas.ReplyResponseSchema{
@@ -728,27 +669,27 @@ func (ep Endpoint) ReplyReview(c *fiber.Ctx) error {
 // @Description `This endpoint allows a user to edit his/her reply`
 // @Tags Books
 // @Param id path string true "Reply id (uuid)"
-// @Param review body schemas.ReplyReviewSchema true "Reply object"
+// @Param review body schemas.ReplyReviewOrCommentSchema true "Reply object"
 // @Success 200 {object} schemas.ReplyResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book/review/replies/{id} [put]
+// @Router /books/book/review-or-paragraph-comment/replies/{id} [put]
 // @Security BearerAuth
 func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
-	reviewID := c.Params("id")
-	parsedID := ParseUUID(reviewID)
+	replyID := c.Params("id")
+	parsedID := ParseUUID(replyID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
 	reply := replyManager.GetByUserAndID(db, user, *parsedID)
 	if reply == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a reply with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a reply with that ID"))
 	}
 
-	data := schemas.ReplyReviewSchema{}
+	data := schemas.ReplyReviewOrCommentSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
@@ -767,7 +708,7 @@ func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 // @Success 200 {object} schemas.ResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /books/book/review/replies/{id} [delete]
+// @Router /books/book/review-or-paragraph-comment/replies/{id} [delete]
 // @Security BearerAuth
 func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 	db := ep.DB
@@ -775,15 +716,107 @@ func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 	reviewID := c.Params("id")
 	parsedID := ParseUUID(reviewID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
 	reply := replyManager.GetByUserAndID(db, user, *parsedID)
 	if reply == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a reply with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a reply with that ID"))
 	}
 	db.Delete(&reply)
 	return c.Status(200).JSON(ResponseMessage("Reply deleted successfully"))
+}
+
+// @Summary Add A Comment To A Paragraph In A Book Chapter
+// @Description `This endpoint allows a user to add a comment in a paragraph to a book chapter.`
+// @Tags Books
+// @Param slug path string true "Chapter slug"
+// @Param review body schemas.ParagraphCommentAddSchema true "Paragraph Comment object"
+// @Success 201 {object} schemas.ParagraphCommentResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/chapters/chapter/{slug} [post]
+// @Security BearerAuth
+func (ep Endpoint) AddParagraphComment(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	chapter, err := chapterManager.GetBySlug(db, slug)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	data := schemas.ParagraphCommentAddSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	paragraphComment := paragraphCommentManager.Create(db, user, chapter.ID, data)
+	response := schemas.ParagraphCommentResponseSchema{
+		ResponseSchema: ResponseMessage("Paragraph created successfully"),
+		Data:           schemas.ParagraphCommentSchema{}.Init(paragraphComment),
+	}
+	return c.Status(201).JSON(response)
+}
+
+// @Summary Edit Paragraph Comment
+// @Description `This endpoint allows a user to edit his/her paragraph comment.`
+// @Tags Books
+// @Param id path string true "Comment id (uuid)"
+// @Param review body schemas.ParagraphCommentAddSchema true "Comment object"
+// @Success 200 {object} schemas.ParagraphCommentResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book/chapters/chapter/paragraph-comment/{id} [put]
+// @Security BearerAuth
+func (ep Endpoint) EditParagraphComment(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	commentID := c.Params("id")
+	parsedID := ParseUUID(commentID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
+	}
+
+	paragraphComment := paragraphCommentManager.GetByUserAndID(db, user, *parsedID)
+	if paragraphComment == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a comment with that ID"))
+	}
+	data := schemas.ParagraphCommentAddSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	updatedComment := paragraphCommentManager.Update(db, *paragraphComment, data)
+	response := schemas.ParagraphCommentResponseSchema{
+		ResponseSchema: ResponseMessage("Comment updated successfully"),
+		Data:           schemas.ParagraphCommentSchema{}.Init(updatedComment),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Delete Paragraph Comment
+// @Description `This endpoint allows a user to delete his/her paragraph comment.`
+// @Tags Books
+// @Param id path string true "Review id (uuid)"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 404 {object} utils.ErrorResponse
+// @Router /books/book/chapters/chapter/paragraph-comment/{id} [delete]
+// @Security BearerAuth
+func (ep Endpoint) DeleteParagraphComment(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	commentID := c.Params("id")
+	parsedID := ParseUUID(commentID)
+	if parsedID == nil {
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
+	}
+
+	comment := paragraphCommentManager.GetByUserAndID(db, user, *parsedID)
+	if comment == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a review with that ID"))
+	}
+	db.Delete(&comment)
+	return c.Status(200).JSON(ResponseMessage("Comment deleted successfully"))
 }
 
 // @Summary Vote A Book

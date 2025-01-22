@@ -30,13 +30,13 @@ func Models() []interface{} {
 		&models.Gift{},
 		&models.SentGift{},
 		&models.Review{},
+		&models.ParagraphComment{},
 		&models.Reply{},
 		&models.Vote{},
 
 		// wallet
 		&models.Coin{},
 		&models.Transaction{},
-		&models.BoughtChapter{},
 		&models.SubscriptionPlan{},
 
 		// waitlist

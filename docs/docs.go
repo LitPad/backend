@@ -1610,7 +1610,238 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book/review/replies/{id}": {
+        "/books/book/chapters/chapter/paragraph-comment/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to edit his/her paragraph comment.` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Edit Paragraph Comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment id (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comment object",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to delete his/her paragraph comment.` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Delete Paragraph Comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Review id (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/chapters/chapter/{slug}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint views a single chapter of a book` + "`" + `\n` + "`" + `An inactive subscriber can only view the chapter if its the first one` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Book Chapter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Get Chapter by Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ChapterResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to add a comment in a paragraph to a book chapter.` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Add A Comment To A Paragraph In A Book Chapter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chapter slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Paragraph Comment object",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/chapters/chapter/{slug}/paragraph-comments/{index}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint view comments of a single paragraph of a chapter` + "`" + `\n` + "`" + `An inactive subscriber can only view the paragraph comment if its the first one` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Comments Of A Paragraph of A Chapter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chapter Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Paragraph Index",
+                        "name": "index",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Current Page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/review-or-paragraph-comment/replies/{id}": {
             "put": {
                 "security": [
                     {
@@ -1636,7 +1867,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.ReplyReviewSchema"
+                            "$ref": "#/definitions/schemas.ReplyReviewOrCommentSchema"
                         }
                     }
                 ],
@@ -1686,6 +1917,58 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/review-or-paragraph-comment/{id}/replies": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to reply a book review.` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Reply A Review Or A Paragraph Comment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Review or Paragraph Comment id (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Reply object",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ReplyReviewOrCommentSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ReplyResponseSchema"
                         }
                     },
                     "400": {
@@ -1824,56 +2107,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.RepliesResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "` + "`" + `This endpoint allows a user to reply a book review.` + "`" + `",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Reply A Review",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Review id (uuid)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Reply object",
-                        "name": "review",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ReplyReviewSchema"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ReplyResponseSchema"
                         }
                     },
                     "400": {
@@ -2150,80 +2383,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book/{slug}/buy": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "This endpoint allows a user to buy an entire book",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Buy An Entire Book",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Book slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.BookResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/books/book/{slug}/buy-chapter": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "` + "`" + `This endpoint allows a user to buy the next chapter of a book.` + "`" + `\n` + "`" + `It happens in sequence. 1, 2, 3, 4 etc. That means if a user has bought chapter 2 before. This endpoint will buy chapter 3` + "`" + `",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Buy A Chapter Of A Book",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Book slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.BookResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/books/book/{slug}/chapters": {
             "get": {
                 "security": [
@@ -2231,7 +2390,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "` + "`" + `This endpoint views chapters of a book` + "`" + `\n` + "`" + `A Guest user will view just the first chapter` + "`" + `\n` + "`" + `An Authenticated user will view all the chapters he has bought` + "`" + `\n` + "`" + `The owner will view all chapters of the book` + "`" + `",
+                "description": "` + "`" + `This endpoint views chapters of a book` + "`" + `\n` + "`" + `A Guest user will view just the first chapter` + "`" + `\n` + "`" + `An Authenticated user will view all the chapters if he's subscribed or he gets only the first chapter` + "`" + `\n` + "`" + `The owner will view all chapters of the book` + "`" + `",
                 "tags": [
                     "Books"
                 ],
@@ -2498,43 +2657,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/books/bought": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "This endpoint returns all books in which a user has bought at least a chapter",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "View Bought Books",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Current Page",
-                        "name": "page",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.BooksResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -3244,6 +3366,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/wallet/icp/gifts/{username}/{gift_slug}/send/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to send a gift via ICP",
+                "tags": [
+                    "Waller"
+                ],
+                "summary": "Send Gift Via ICP",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of the writer",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Slug of the gift being sent",
+                        "name": "gift_slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SentGiftResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/wallet/icp/{username}/balance": {
             "get": {
                 "description": "This endpoint returns user ICP wallet balance",
@@ -3458,19 +3624,6 @@ const docTemplate = `{
                 "ATYPE_EIGHTEEN"
             ]
         },
-        "choices.ChapterStatus": {
-            "type": "string",
-            "enum": [
-                "DRAFT",
-                "PUBLISHED",
-                "TRASH"
-            ],
-            "x-enum-varnames": [
-                "CS_DRAFT",
-                "CS_PUBLISHED",
-                "CS_TRASH"
-            ]
-        },
         "choices.ContractIDTypeChoice": {
             "type": "string",
             "enum": [
@@ -3587,6 +3740,17 @@ const docTemplate = `{
                 "RC_3",
                 "RC_4",
                 "RC_5"
+            ]
+        },
+        "choices.ReplyType": {
+            "type": "string",
+            "enum": [
+                "REVIEW",
+                "PARAGRAPH_COMMENT"
+            ],
+            "x-enum-varnames": [
+                "RT_REVIEW",
+                "RT_PARAGRAPH_COMMENT"
             ]
         },
         "choices.SubscriptionTypeChoice": {
@@ -3759,9 +3923,6 @@ const docTemplate = `{
                 },
                 "votes": {
                     "type": "integer"
-                },
-                "word_count": {
-                    "type": "integer"
                 }
             }
         },
@@ -3839,20 +4000,29 @@ const docTemplate = `{
                 },
                 "votes": {
                     "type": "integer"
-                },
-                "word_count": {
-                    "type": "integer"
                 }
             }
         },
         "schemas.BookWithStats": {
             "type": "object",
             "properties": {
+                "author_name": {
+                    "type": "string"
+                },
                 "avg_rating": {
                     "type": "number"
                 },
-                "id": {
-                    "type": "integer"
+                "cover_image": {
+                    "type": "string"
+                },
+                "genre_name": {
+                    "type": "string"
+                },
+                "genre_slug": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
                 },
                 "title": {
                     "type": "string"
@@ -3922,14 +4092,10 @@ const docTemplate = `{
         "schemas.ChapterCreateSchema": {
             "type": "object",
             "required": [
-                "chapter_status",
                 "text",
                 "title"
             ],
             "properties": {
-                "chapter_status": {
-                    "$ref": "#/definitions/choices.ChapterStatus"
-                },
                 "text": {
                     "type": "string",
                     "maxLength": 10000
@@ -3959,14 +4125,6 @@ const docTemplate = `{
         "schemas.ChapterSchema": {
             "type": "object",
             "properties": {
-                "chapter_status": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/choices.ChapterStatus"
-                        }
-                    ],
-                    "example": "PUBLISHED"
-                },
                 "slug": {
                     "type": "string"
                 },
@@ -3976,8 +4134,9 @@ const docTemplate = `{
                 "title": {
                     "type": "string"
                 },
-                "word_count": {
-                    "type": "integer"
+                "trash": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
@@ -4222,6 +4381,9 @@ const docTemplate = `{
                 "active_subscribers": {
                     "type": "integer"
                 },
+                "avatar": {
+                    "type": "string"
+                },
                 "books": {
                     "type": "array",
                     "items": {
@@ -4242,6 +4404,9 @@ const docTemplate = `{
                 },
                 "user_subscription_plan_percentages": {
                     "$ref": "#/definitions/schemas.SubscriptionPlansAndPercentages"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -4542,6 +4707,114 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.ParagraphCommentAddSchema": {
+            "type": "object",
+            "required": [
+                "paragraph_index",
+                "text"
+            ],
+            "properties": {
+                "paragraph_index": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string",
+                    "maxLength": 10000
+                }
+            }
+        },
+        "schemas.ParagraphCommentResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.ParagraphCommentSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.ParagraphCommentSchema": {
+            "type": "object",
+            "required": [
+                "paragraph_index",
+                "text"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "paragraph_index": {
+                    "type": "integer"
+                },
+                "replies_count": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string",
+                    "maxLength": 10000
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "user": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
+                }
+            }
+        },
+        "schemas.ParagraphCommentsResponseDataSchema": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "replies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ParagraphCommentSchema"
+                    }
+                }
+            }
+        },
+        "schemas.ParagraphCommentsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.ParagraphCommentsResponseDataSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.PaymentResponseSchema": {
             "type": "object",
             "properties": {
@@ -4674,23 +4947,24 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.ReplyReviewSchema": {
+        "schemas.ReplyReviewOrCommentSchema": {
             "type": "object",
             "required": [
-                "text"
+                "text",
+                "type"
             ],
             "properties": {
                 "text": {
                     "type": "string",
                     "maxLength": 10000
+                },
+                "type": {
+                    "$ref": "#/definitions/choices.ReplyType"
                 }
             }
         },
         "schemas.ReplySchema": {
             "type": "object",
-            "required": [
-                "text"
-            ],
             "properties": {
                 "created_at": {
                     "type": "string",
@@ -4704,8 +4978,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "text": {
-                    "type": "string",
-                    "maxLength": 10000
+                    "type": "string"
                 },
                 "updated_at": {
                     "type": "string",

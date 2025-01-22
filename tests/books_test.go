@@ -277,7 +277,6 @@ func addChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	book := BookData(db, author)
 	chapterData := schemas.ChapterCreateSchema{
 		Title: "Test Chapter Title", Text: "Test Content",
-		ChapterStatus: choices.CS_PUBLISHED,
 	}
 	t.Run("Accept Chapter Creation Due To Valid Data", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/%s/add-chapter", baseUrl, book.Slug)
@@ -303,7 +302,6 @@ func updateChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 	chapterData := schemas.ChapterCreateSchema{
 		Title: "Test Chapter Title Updated", Text: "Test Content Updated",
-		ChapterStatus: choices.CS_PUBLISHED,
 	}
 
 	t.Run("Reject Chapter Update Due To Invalid Slug", func(t *testing.T) {

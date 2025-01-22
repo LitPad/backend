@@ -80,22 +80,6 @@ func (a AgeType) IsValid() bool {
 	return false
 }
 
-type ChapterStatus string
-
-const (
-	CS_DRAFT     ChapterStatus = "DRAFT"
-	CS_PUBLISHED ChapterStatus = "PUBLISHED"
-	CS_TRASH     ChapterStatus = "TRASH"
-)
-
-func (c ChapterStatus) IsValid() bool {
-	switch c {
-	case CS_DRAFT, CS_PUBLISHED, CS_TRASH:
-		return true
-	}
-	return false
-}
-
 type RatingChoice int
 
 const (
@@ -237,20 +221,35 @@ type ImageFolderChoice string
 
 const (
 	IF_AVATAR ImageFolderChoice = "avatars"
-	IF_BOOKS ImageFolderChoice  = "books"
+	IF_BOOKS  ImageFolderChoice = "books"
 )
 
 type UserGrowthChoice int64
 
 const (
-	UG_7 UserGrowthChoice = 7
-	UG_30 UserGrowthChoice = 30
+	UG_7   UserGrowthChoice = 7
+	UG_30  UserGrowthChoice = 30
 	UG_365 UserGrowthChoice = 365
 )
 
 func (u UserGrowthChoice) IsValid() bool {
 	switch u {
 	case UG_7, UG_30, UG_365:
+		return true
+	}
+	return false
+}
+
+type ReplyType string
+
+const (
+	RT_REVIEW            ReplyType = "REVIEW"
+	RT_PARAGRAPH_COMMENT ReplyType = "PARAGRAPH_COMMENT"
+)
+
+func (r ReplyType) IsValid() bool {
+	switch r {
+	case RT_REVIEW, RT_PARAGRAPH_COMMENT:
 		return true
 	}
 	return false

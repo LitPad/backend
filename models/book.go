@@ -53,8 +53,8 @@ type Book struct {
 	Views     string   `gorm:"type:varchar(10000000)"`
 	Reviews   []Review `gorm:"<-:false"`
 	Votes     []Vote   `gorm:"<-:false"`
-	
-	AvgRating float64  // meant for query purposes. do not intentionally populate field
+
+	AvgRating float64 // meant for query purposes. do not intentionally populate field
 
 	// BOOK CONTRACT
 	FullName             string `gorm:"type: varchar(1000)"`
@@ -92,14 +92,6 @@ func (b Book) ViewsCount() int {
 	return 0
 }
 
-func (b Book) WordCount() int {
-	wordCount := 0
-	for _, chapter := range b.Chapters {
-		wordCount += chapter.WordCount()
-	}
-	return wordCount
-}
-
 func (b Book) VotesCount() int {
 	return len(b.Votes)
 }
@@ -135,12 +127,13 @@ func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
 
 type Chapter struct {
 	BaseModel
-	BookID        uuid.UUID             `json:"book_id"`
-	Book          Book                  `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
-	Title         string                `json:"title" gorm:"type: varchar(255)"`
-	Slug          string                `gorm:"unique"`
-	Text          string                `json:"text" gorm:"type: varchar(100000)"`
-	ChapterStatus choices.ChapterStatus `gorm:"type:varchar(100); default:DRAFT" json:"chapter_status"`
+	BookID   uuid.UUID          `json:"book_id"`
+	Book     Book               `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+	Title    string             `json:"title" gorm:"type: varchar(255)"`
+	Slug     string             `gorm:"unique"`
+	Text     string             `gorm:"type:text"`
+	Trash    bool               `gorm:"default:false"`
+	Comments []ParagraphComment `gorm:"<-:false"`
 }
 
 func (c *Chapter) GenerateUniqueSlug(tx *gorm.DB) string {
@@ -167,21 +160,28 @@ func (c *Chapter) BeforeSave(tx *gorm.DB) (err error) {
 	return
 }
 
-func (c Chapter) WordCount() int {
-	words := strings.Fields(c.Text)
-	wordCount := len(words)
-	return wordCount
-}
-
-type BoughtChapter struct {
+type ParagraphComment struct {
 	BaseModel
-	BuyerID uuid.UUID `gorm:"index:,unique,composite:buyer_id_chapter_id_bought_chapter"`
-	Buyer   User      `gorm:"foreignKey:BuyerID;constraint:OnDelete:CASCADE;<-:false"`
+	UserID uuid.UUID
+	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
 
-	ChapterID uuid.UUID `gorm:"index:,unique,composite:buyer_id_chapter_id_bought_chapter"`
-	Chapter   Chapter   `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
+	ChapterID uuid.UUID
+	Chapter   Chapter `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
+	Index     int
+	Likes     []User  `gorm:"many2many:paragraph_comment_likes;<-:false"`
+	Text      string  `gorm:"type:varchar(10000)"`
+	Replies   []Reply `gorm:"<-:false"`
 }
 
+func (p ParagraphComment) LikesCount() int {
+	return len(p.Likes)
+}
+
+func (p ParagraphComment) RepliesCount() int {
+	return len(p.Replies)
+}
+
+// REVIEWS
 type Review struct {
 	BaseModel
 	UserID uuid.UUID `gorm:"index:,unique,composite:user_id_book_id_reviews"`
@@ -209,10 +209,13 @@ type Reply struct {
 	UserID uuid.UUID
 	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
 
-	ReviewID uuid.UUID
-	Review   Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
+	ReviewID *uuid.UUID
+	Review   *Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:CASCADE;<-:false"`
 
-	Likes []User `gorm:"many2many:review_reply_likes;<-:false"`
+	ParagraphCommentID *uuid.UUID
+	ParagraphComment   *ParagraphComment `gorm:"foreignKey:ParagraphCommentID;constraint:OnDelete:CASCADE;<-:false"`
+
+	Likes []User `gorm:"many2many:review_or_paragraph_comment_reply_likes;<-:false"`
 	Text  string `gorm:"type:varchar(10000)"`
 }
 
