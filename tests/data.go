@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/routes"
@@ -20,15 +22,20 @@ func TestUser(db *gorm.DB) models.User {
 	return user
 }
 
-func TestVerifiedUser(db *gorm.DB) models.User {
+func TestVerifiedUser(db *gorm.DB, activeSub ...bool) models.User {
 	email := "testverifieduser@example.com"
-	db.Where("email = ?", email).Delete(&models.User{})
 
 	user := models.User{
 		Email:          email,
 		Password:       "testpassword",
 		IsEmailVerified: true,
 	}
+	if len(activeSub) > 0 {
+		user.Email = "testactivesubuser@example.com"
+		expiry := time.Now().AddDate(0, 1, 0)
+		user.SubscriptionExpiry = &expiry
+	}
+	db.Where("email = ?", user.Email).Delete(&models.User{})
 	db.Create(&user)
 	return user
 }
@@ -93,4 +100,10 @@ func ChapterData(db *gorm.DB, book models.Book) models.Chapter {
 	chapter := models.Chapter{BookID: book.ID, Title: "Test Chapter", Text: "Stop doing that"}
 	db.FirstOrCreate(&chapter, chapter)
 	return chapter
+}
+
+func ReviewData(db *gorm.DB, book models.Book, user models.User) models.Review {
+	review := models.Review{BookID: book.ID, UserID: user.ID, Rating: choices.RC_1, Text: "This is a test review"}
+	db.FirstOrCreate(&review, review)
+	return review
 }

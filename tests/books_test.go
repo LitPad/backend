@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/LitPad/backend/database"
+	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/schemas"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
@@ -331,7 +334,6 @@ func updateChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
-
 		// Parse and assert body
 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
 		assert.Equal(t, "success", body["status"])
@@ -359,6 +361,121 @@ func deleteChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 }
 
+func reviewBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	reviewer := TestVerifiedUser(db)
+	token := AccessToken(db, reviewer)
+	reviewData := schemas.ReviewBookSchema{
+		Rating: choices.RC_5, Text: "Test Review",
+	}
+	t.Run("Reject Review Creation Due To Inactive Subscription", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
+		res := ProcessJsonTestBody(t, app, url, "POST", reviewData, token)
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "User doesn't have active subscription", body["message"])
+	})
+
+	t.Run("Reject Review Creation Due To Already Existing Review", func(t *testing.T) {
+		ReviewData(db, book, reviewer) // Get or create review
+		expiry := time.Now().AddDate(0, 0, 1)
+		reviewer.SubscriptionExpiry = &expiry
+		reviewer.Access = &token 
+		db.Save(&reviewer)
+
+		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
+		res := ProcessJsonTestBody(t, app, url, "POST", reviewData, token)
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "This book has been reviewed by you already", body["message"])
+	})
+
+	t.Run("Accept Review Creation Due To Valid Conditions", func(t *testing.T) {
+		db.Delete(&models.Review{}, "book_id = ? AND user_id = ?", book.ID, reviewer.ID)
+		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
+		res := ProcessJsonTestBody(t, app, url, "POST", reviewData, token)
+		// Assert Status code
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Review created successfully", body["message"])
+	})
+}
+
+func editBookReview(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	reviewer := TestVerifiedUser(db, true)
+	token := AccessToken(db, reviewer)
+	reviewData := schemas.ReviewBookSchema{
+		Rating: choices.RC_3, Text: "Test Review Updated",
+	}
+	review := ReviewData(db, book, reviewer) 
+
+	t.Run("Reject Review Edit Due To Invalid UUID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review/%s", baseUrl, "invalid_id")
+		res := ProcessJsonTestBody(t, app, url, "PUT", reviewData, token)
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "You entered an invalid uuid", body["message"])
+	})
+
+	t.Run("Reject Review Edit Due To Invalid Review ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review/%s", baseUrl, uuid.New())
+		res := ProcessJsonTestBody(t, app, url, "PUT", reviewData, token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "You don't have a review with that ID", body["message"])
+	})
+
+	t.Run("Accept Review Edit Due To Valid Conditions", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review/%s", baseUrl, review.ID)
+		res := ProcessJsonTestBody(t, app, url, "PUT", reviewData, token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Review updated successfully", body["message"])
+	})
+}
+
+func deleteBookReview(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	reviewer := TestVerifiedUser(db, true)
+	token := AccessToken(db, reviewer)
+	review := ReviewData(db, book, reviewer) 
+
+	t.Run("Accept Review Deletion", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review/%s", baseUrl, review.ID)
+		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Review deleted successfully", body["message"])
+	})
+}
+
 func TestBooks(t *testing.T) {
 	app := fiber.New()
 	db := Setup(t, app)
@@ -377,6 +494,9 @@ func TestBooks(t *testing.T) {
 	addChapter(t, app, db, baseUrl)
 	updateChapter(t, app, db, baseUrl)
 	deleteChapter(t, app, db, baseUrl)
+	reviewBook(t, app, db, baseUrl)
+	editBookReview(t, app, db, baseUrl)
+	deleteBookReview(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)
