@@ -625,6 +625,7 @@ func TestBooks(t *testing.T) {
 	getReviewReplies(t, app, db, baseUrl)
 	replyReviewOrParagraphComment(t, app, db, baseUrl)
 	editReply(t, app, db, baseUrl)
+	deleteReply(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)
