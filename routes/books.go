@@ -669,7 +669,7 @@ func (ep Endpoint) ReplyReviewOrParagraphComment(c *fiber.Ctx) error {
 // @Description `This endpoint allows a user to edit his/her reply`
 // @Tags Books
 // @Param id path string true "Reply id (uuid)"
-// @Param review body schemas.ReplyReviewOrCommentSchema true "Reply object"
+// @Param review body schemas.ReplyEditSchema true "Reply object"
 // @Success 200 {object} schemas.ReplyResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
@@ -689,7 +689,7 @@ func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.NotFoundErr("You don't have a reply with that ID"))
 	}
 
-	data := schemas.ReplyReviewOrCommentSchema{}
+	data := schemas.ReplyEditSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}

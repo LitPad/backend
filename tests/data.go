@@ -35,8 +35,7 @@ func TestVerifiedUser(db *gorm.DB, activeSub ...bool) models.User {
 		expiry := time.Now().AddDate(0, 1, 0)
 		user.SubscriptionExpiry = &expiry
 	}
-	db.Where("email = ?", user.Email).Delete(&models.User{})
-	db.Create(&user)
+	db.FirstOrCreate(&user, models.User{Email: user.Email})
 	return user
 }
 
@@ -104,6 +103,18 @@ func ChapterData(db *gorm.DB, book models.Book) models.Chapter {
 
 func ReviewData(db *gorm.DB, book models.Book, user models.User) models.Review {
 	review := models.Review{BookID: book.ID, UserID: user.ID, Rating: choices.RC_1, Text: "This is a test review"}
-	db.FirstOrCreate(&review, review)
+	db.FirstOrCreate(&review, models.Review{BookID: book.ID, UserID: user.ID})
 	return review
+}
+
+func ReplyData(db *gorm.DB, review models.Review, user models.User) models.Reply {
+	reply := models.Reply{ReviewID: &review.ID, UserID: user.ID, Text: "This is a test reply"}
+	db.FirstOrCreate(&reply, reply)
+	return reply
+}
+
+func ParagraphCommentData(db *gorm.DB, chapter models.Chapter, user models.User) models.ParagraphComment {
+	comment := models.ParagraphComment{ChapterID: chapter.ID, Index: 2, UserID: user.ID, Text: "This is a test comment"}
+	db.FirstOrCreate(&comment, comment)
+	return comment
 }

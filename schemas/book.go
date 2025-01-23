@@ -438,8 +438,12 @@ type ChapterResponseSchema struct {
 	Data ChapterSchema `json:"data"`
 }
 
+type ReplyEditSchema struct {
+	Text string `json:"text" validate:"required,max=10000"`
+}
+
 type ReplyReviewOrCommentSchema struct {
-	Text string            `json:"text" validate:"required,max=10000"`
+	ReplyEditSchema
 	Type choices.ReplyType `json:"type" validate:"required,reply_type_validator"`
 }
 

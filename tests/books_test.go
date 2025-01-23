@@ -476,6 +476,131 @@ func deleteBookReview(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string)
 	})
 }
 
+func getReviewReplies(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	reviewer := TestVerifiedUser(db, true)
+	token := AccessToken(db, reviewer)
+	review := ReviewData(db, book, reviewer) 
+	ReplyData(db, review, author)
+
+	t.Run("Accept Review Deletion", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review/%s/replies", baseUrl, review.ID)
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Replies fetched successfully", body["message"])
+	})
+}
+
+func replyReviewOrParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	chapter := ChapterData(db, book)
+	reviewer := TestVerifiedUser(db, true)
+	review := ReviewData(db, book, reviewer) 
+	paragraphComment := ParagraphCommentData(db, chapter, reviewer)
+	token := AccessToken(db, reviewer)
+	replyData := schemas.ReplyReviewOrCommentSchema{
+		ReplyEditSchema: schemas.ReplyEditSchema{Text: "Test Reply"},
+		Type: choices.RT_REVIEW,
+	}
+
+	t.Run("Accept Reply Creation Due To Valid Review Data", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, review.ID)
+		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Reply created successfully", body["message"])
+	})
+
+	t.Run("Reject Reply Creation Due To Invalid Paragraph Comment ID", func(t *testing.T) {
+		replyData.Type = choices.RT_PARAGRAPH_COMMENT
+		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, uuid.New())
+		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "No paragraph comment with that ID", body["message"])
+	})
+
+	t.Run("Accept Reply Creation Due To Valid Paragraph Comment ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, paragraphComment.ID)
+		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
+		// Assert Status code
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Reply created successfully", body["message"])
+	})
+}
+
+func editReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	reviewer := TestVerifiedUser(db, true)
+	review := ReviewData(db, book, reviewer) 
+	token := AccessToken(db, reviewer)
+	replyData := schemas.ReplyEditSchema{
+		Text: "Test Reply Updated",
+	}
+	reply := ReplyData(db, review, reviewer)
+	t.Run("Reject Reply Edit Due To Invalid ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/replies/%s", baseUrl, uuid.New())
+		res := ProcessJsonTestBody(t, app, url, "PUT", replyData, token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "You don't have a reply with that ID", body["message"])
+	})
+
+	t.Run("Accept Reply Edit Due To Valid Reply ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/replies/%s", baseUrl, reply.ID)
+		res := ProcessJsonTestBody(t, app, url, "PUT", replyData, token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Reply updated successfully", body["message"])
+	})
+}
+
+func deleteReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	reviewer := TestVerifiedUser(db, true)
+	review := ReviewData(db, book, reviewer) 
+	token := AccessToken(db, reviewer)
+	reply := ReplyData(db, review, reviewer)
+
+	t.Run("Accept Reply Delete Due To Valid Reply ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/replies/%s", baseUrl, reply.ID)
+		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Reply deleted successfully", body["message"])
+	})
+}
+
 func TestBooks(t *testing.T) {
 	app := fiber.New()
 	db := Setup(t, app)
@@ -497,6 +622,9 @@ func TestBooks(t *testing.T) {
 	reviewBook(t, app, db, baseUrl)
 	editBookReview(t, app, db, baseUrl)
 	deleteBookReview(t, app, db, baseUrl)
+	getReviewReplies(t, app, db, baseUrl)
+	replyReviewOrParagraphComment(t, app, db, baseUrl)
+	editReply(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)

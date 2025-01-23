@@ -438,7 +438,7 @@ func (r ReplyManager) Create(db *gorm.DB, user *models.User, review *models.Revi
 	return reply
 }
 
-func (r ReplyManager) Update(db *gorm.DB, reply models.Reply, data schemas.ReplyReviewOrCommentSchema) models.Reply {
+func (r ReplyManager) Update(db *gorm.DB, reply models.Reply, data schemas.ReplyEditSchema) models.Reply {
 	reply.Text = data.Text
 	db.Save(&reply)
 	return reply

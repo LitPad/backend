@@ -94,7 +94,7 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	if len(loggedOpts) == 0 {
 		db.Logger = logger.Default.LogMode(logger.Info)
 	} else {
-		db.Logger = logger.Default.LogMode(logger.Silent)
+		db.Logger = logger.Default.LogMode(logger.Error)
 	}
 	log.Println("Running Migrations")
 
