@@ -101,7 +101,7 @@ func ProcessJsonTestBody(t *testing.T, app *fiber.App, url string, method string
 	return res
 }
 
-func ProcessMultipartTestBody(t *testing.T, app *fiber.App, url string, method string, body interface{}, fileFieldName string, filePath string, access ...string) *http.Response {
+func ProcessMultipartTestBody(t *testing.T, app *fiber.App, url string, method string, body interface{}, fileFieldNames []string, filePaths []string, access ...string) *http.Response {
 	// Multipart handling
 	requestBody := &bytes.Buffer{}
 	writer := multipart.NewWriter(requestBody)
@@ -110,16 +110,19 @@ func ProcessMultipartTestBody(t *testing.T, app *fiber.App, url string, method s
 	populateMultipartFromStruct(t, body, writer)
 
 	// Add the file separately if provided
-	if filePath != "" {
-		file, err := os.Open(filePath)
-		assert.Nil(t, err)
-		defer file.Close()
+	if len(fileFieldNames) > 0 && len(filePaths) > 0 {
+		for i, fileFieldName := range fileFieldNames {
+			filePath := filePaths[i]
+			file, err := os.Open(filePath)
+			assert.Nil(t, err)
+			defer file.Close()
 
-		// Add the file to the multipart form
-		fileWriter, err := writer.CreateFormFile(fileFieldName, filepath.Base(filePath))
-		assert.Nil(t, err)
-		_, err = io.Copy(fileWriter, file)
-		assert.Nil(t, err)
+			// Add the file to the multipart form
+			fileWriter, err := writer.CreateFormFile(fileFieldName, filepath.Base(filePath))
+			assert.Nil(t, err)
+			_, err = io.Copy(fileWriter, file)
+			assert.Nil(t, err)
+		}
 	}
 
 	// Close the writer to finalize the body
@@ -172,17 +175,35 @@ func populateMultipartFromStruct(t *testing.T, body interface{}, writer *multipa
 			}
 
 		case reflect.Ptr:
-			// Handle file pointers
+			// Handle pointer fields
+			if field.IsNil() {
+				continue // Skip nil pointers
+			}
+
+			// Special handling for *os.File
 			if file, ok := field.Interface().(*os.File); ok && file != nil {
 				fileWriter, err := writer.CreateFormFile(fieldName, filepath.Base(file.Name()))
 				assert.Nil(t, err)
 				_, err = io.Copy(fileWriter, file)
 				assert.Nil(t, err)
 				file.Close()
+			} else if field.Type().Elem().Kind() == reflect.String {
+				// Handle *string
+				err := writer.WriteField(fieldName, field.Elem().String())
+				assert.Nil(t, err)
 			} else {
 				t.Errorf("Unsupported pointer type for field: %s", fieldName)
 			}
 
+
+		case reflect.Bool:
+			// Handle boolean fields
+			boolValue := "false"
+			if field.Bool() {
+				boolValue = "true"
+			}
+			err := writer.WriteField(fieldName, boolValue)
+			assert.Nil(t, err)
 		default:
 			// Handle all other types generically
 			if field.CanInterface() {

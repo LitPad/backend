@@ -65,7 +65,7 @@ type Book struct {
 	Address              string `gorm:"type: varchar(1000)"`
 	City                 string `gorm:"type: varchar(1000)"`
 	State                string `gorm:"type: varchar(1000)"`
-	PostalCode           uint
+	PostalCode           string
 	TelephoneNumber      string                       `gorm:"type: varchar(20)"`
 	IDType               choices.ContractIDTypeChoice `gorm:"type: varchar(100)"`
 	IDFrontImage         string

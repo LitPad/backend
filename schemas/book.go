@@ -314,7 +314,7 @@ type ContractSchema struct {
 	Address              string                       `json:"address"`
 	City                 string                       `json:"city"`
 	State                string                       `json:"state"`
-	PostalCode           uint                         `json:"postal_code"`
+	PostalCode           string                         `json:"postal_code"`
 	TelephoneNumber      string                       `json:"telephone_number"`
 	IDType               choices.ContractIDTypeChoice `json:"id_type"`
 	IDFrontImage         string                       `json:"id_front_image"`
@@ -369,7 +369,7 @@ type ContractCreateSchema struct {
 	Address              string                       `form:"address" validate:"required,max=1000"`
 	City                 string                       `form:"city" validate:"required,max=1000"`
 	State                string                       `form:"state" validate:"required,max=1000"`
-	PostalCode           uint                         `form:"postal_code" validate:"required"`
+	PostalCode           string                       `form:"postal_code" validate:"required"`
 	TelephoneNumber      string                       `form:"telephone_number" validate:"required,max=20"`
 	IDType               choices.ContractIDTypeChoice `form:"id_type" validate:"required,contract_id_type_validator"`
 	BookAvailabilityLink *string                      `form:"book_availability_link"`

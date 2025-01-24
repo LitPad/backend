@@ -752,7 +752,7 @@ func (ep Endpoint) AddParagraphComment(c *fiber.Ctx) error {
 	}
 	paragraphComment := paragraphCommentManager.Create(db, user, chapter.ID, data)
 	response := schemas.ParagraphCommentResponseSchema{
-		ResponseSchema: ResponseMessage("Paragraph created successfully"),
+		ResponseSchema: ResponseMessage("Comment created successfully"),
 		Data:           schemas.ParagraphCommentSchema{}.Init(paragraphComment),
 	}
 	return c.Status(201).JSON(response)
@@ -813,7 +813,7 @@ func (ep Endpoint) DeleteParagraphComment(c *fiber.Ctx) error {
 
 	comment := paragraphCommentManager.GetByUserAndID(db, user, *parsedID)
 	if comment == nil {
-		return c.Status(404).JSON(utils.NotFoundErr("You don't have a review with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a comment with that ID"))
 	}
 	db.Delete(&comment)
 	return c.Status(200).JSON(ResponseMessage("Comment deleted successfully"))

@@ -168,7 +168,7 @@ func createBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	token := AccessToken(db, author)
 
 	t.Run("Reject Book Creation Due To Invalid Genre Slug", func(t *testing.T) {
-		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, "", "", token)
+		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, []string{}, []string{}, token)
 		assert.Equal(t, 422, res.StatusCode)
 
 		// Parse and assert body
@@ -181,7 +181,7 @@ func createBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject Book Creation Due To Invalid Tag Slugs", func(t *testing.T) {
 		bookData.GenreSlug = genre.Slug
 		bookData.TagSlugs = []string{"invalid"}
-		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, "", "", token)
+		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, []string{}, []string{}, token)
 
 		// Assert Status code
 		assert.Equal(t, 422, res.StatusCode)
@@ -195,7 +195,7 @@ func createBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 	t.Run("Reject Book Creation Due To Empty File", func(t *testing.T) {
 		bookData.TagSlugs = []string{genre.Tags[0].Slug}
-		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, "", "", token)
+		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, []string{}, []string{}, token)
 
 		// Assert Status code
 		assert.Equal(t, 422, res.StatusCode)
@@ -211,7 +211,7 @@ func createBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		// Create a temporary file
 		tempFilePath := CreateTempImageFile(t)
 		defer os.Remove(tempFilePath)
-		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, "cover_image", tempFilePath, token)
+		res := ProcessMultipartTestBody(t, app, baseUrl, "POST", bookData, []string{"cover_image"}, []string{tempFilePath}, token)
 		// Assert Status code
 		assert.Equal(t, 201, res.StatusCode)
 
@@ -234,7 +234,7 @@ func updateBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 	t.Run("Reject Book Update Due To Invalid Slug", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/invalid-slug", baseUrl)
-		res := ProcessMultipartTestBody(t, app, url, "PUT", bookData, "", "", token)
+		res := ProcessMultipartTestBody(t, app, url, "PUT", bookData, []string{}, []string{}, token)
 		assert.Equal(t, 404, res.StatusCode)
 
 		// Parse and assert body
@@ -245,7 +245,7 @@ func updateBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 	t.Run("Accept Book Update Due To Valid Data", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
-		res := ProcessMultipartTestBody(t, app, url, "PUT", bookData, "", "", token)
+		res := ProcessMultipartTestBody(t, app, url, "PUT", bookData, []string{}, []string{}, token)
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
 
@@ -384,7 +384,7 @@ func reviewBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		ReviewData(db, book, reviewer) // Get or create review
 		expiry := time.Now().AddDate(0, 0, 1)
 		reviewer.SubscriptionExpiry = &expiry
-		reviewer.Access = &token 
+		reviewer.Access = &token
 		db.Save(&reviewer)
 
 		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
@@ -419,7 +419,7 @@ func editBookReview(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	reviewData := schemas.ReviewBookSchema{
 		Rating: choices.RC_3, Text: "Test Review Updated",
 	}
-	review := ReviewData(db, book, reviewer) 
+	review := ReviewData(db, book, reviewer)
 
 	t.Run("Reject Review Edit Due To Invalid UUID", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/review/%s", baseUrl, "invalid_id")
@@ -461,7 +461,7 @@ func deleteBookReview(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string)
 	book := BookData(db, author)
 	reviewer := TestVerifiedUser(db, true)
 	token := AccessToken(db, reviewer)
-	review := ReviewData(db, book, reviewer) 
+	review := ReviewData(db, book, reviewer)
 
 	t.Run("Accept Review Deletion", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/review/%s", baseUrl, review.ID)
@@ -481,10 +481,10 @@ func getReviewReplies(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string)
 	book := BookData(db, author)
 	reviewer := TestVerifiedUser(db, true)
 	token := AccessToken(db, reviewer)
-	review := ReviewData(db, book, reviewer) 
+	review := ReviewData(db, book, reviewer)
 	ReplyData(db, review, author)
 
-	t.Run("Accept Review Deletion", func(t *testing.T) {
+	t.Run("Accept Replies Fetch", func(t *testing.T) {
 		url := fmt.Sprintf("%s/book/review/%s/replies", baseUrl, review.ID)
 		res := ProcessTestGetOrDelete(app, url, "GET", token)
 		// Assert Status code
@@ -502,12 +502,12 @@ func replyReviewOrParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, ba
 	book := BookData(db, author)
 	chapter := ChapterData(db, book)
 	reviewer := TestVerifiedUser(db, true)
-	review := ReviewData(db, book, reviewer) 
+	review := ReviewData(db, book, reviewer)
 	paragraphComment := ParagraphCommentData(db, chapter, reviewer)
 	token := AccessToken(db, reviewer)
 	replyData := schemas.ReplyReviewOrCommentSchema{
 		ReplyEditSchema: schemas.ReplyEditSchema{Text: "Test Reply"},
-		Type: choices.RT_REVIEW,
+		Type:            choices.RT_REVIEW,
 	}
 
 	t.Run("Accept Reply Creation Due To Valid Review Data", func(t *testing.T) {
@@ -550,7 +550,7 @@ func editReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	author := TestAuthor(db)
 	book := BookData(db, author)
 	reviewer := TestVerifiedUser(db, true)
-	review := ReviewData(db, book, reviewer) 
+	review := ReviewData(db, book, reviewer)
 	token := AccessToken(db, reviewer)
 	replyData := schemas.ReplyEditSchema{
 		Text: "Test Reply Updated",
@@ -584,7 +584,7 @@ func deleteReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	author := TestAuthor(db)
 	book := BookData(db, author)
 	reviewer := TestVerifiedUser(db, true)
-	review := ReviewData(db, book, reviewer) 
+	review := ReviewData(db, book, reviewer)
 	token := AccessToken(db, reviewer)
 	reply := ReplyData(db, review, reviewer)
 
@@ -598,6 +598,232 @@ func deleteReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
 		assert.Equal(t, "success", body["status"])
 		assert.Equal(t, "Reply deleted successfully", body["message"])
+	})
+}
+
+func addParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	chapter := ChapterData(db, book)
+	commenter := TestVerifiedUser(db)
+	token := AccessToken(db, commenter)
+	commentData := schemas.ParagraphCommentAddSchema{
+		Text: "Test Comment", Index: 4,
+	}
+	t.Run("Reject Paragraph Comment Add Due To Invalid Chapter Slug", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapters/chapter/invalid-slug", baseUrl)
+		res := ProcessJsonTestBody(t, app, url, "POST", commentData, token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "No chapter with that slug", body["message"])
+	})
+
+	t.Run("Accept Paragraph Comment Add Due To Valid Chapter Slug", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapters/chapter/%s", baseUrl, chapter.Slug)
+		res := ProcessJsonTestBody(t, app, url, "POST", commentData, token)
+		// Assert Status code
+		assert.Equal(t, 201, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Comment created successfully", body["message"])
+	})
+}
+
+func editParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	chapter := ChapterData(db, book)
+	commenter := TestVerifiedUser(db)
+	token := AccessToken(db, commenter)
+	comment := ParagraphCommentData(db, chapter, commenter)
+	commentData := schemas.ParagraphCommentAddSchema{
+		Text: "Test Comment Updated", Index: 5,
+	}
+	t.Run("Reject Paragraph Comment Edit Due To Invalid Comment ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, uuid.New())
+		res := ProcessJsonTestBody(t, app, url, "PUT", commentData, token)
+		assert.Equal(t, 404, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "You don't have a comment with that ID", body["message"])
+	})
+
+	t.Run("Accept Paragraph Comment Edit Due To Valid Comment ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, comment.ID)
+		res := ProcessJsonTestBody(t, app, url, "PUT", commentData, token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Comment updated successfully", body["message"])
+	})
+}
+
+func deleteParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	chapter := ChapterData(db, book)
+	commenter := TestVerifiedUser(db)
+	token := AccessToken(db, commenter)
+	comment := ParagraphCommentData(db, chapter, commenter)
+
+	t.Run("Accept Paragraph Comment Delete Due To Valid Comment ID", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, comment.ID)
+		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Comment deleted successfully", body["message"])
+	})
+}
+
+func voteBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	voter := TestVerifiedUser(db)
+	token := AccessToken(db, voter)
+
+	t.Run("Reject Book Vote Due To Insufficient Lanterns", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/%s/vote", baseUrl, book.Slug)
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "You have insufficient lanterns to vote", body["message"])
+	})
+
+	t.Run("Accept Book Vote Due To Sufficient Lanterns", func(t *testing.T) {
+		voter.Lanterns = 10
+		voter.Access = &token
+		db.Save(&voter)
+
+		url := fmt.Sprintf("%s/book/%s/vote", baseUrl, book.Slug)
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Book voted successfully", body["message"])
+	})
+}
+
+func convertCoinsToLanterns(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	user := TestVerifiedUser(db)
+	token := AccessToken(db, user)
+
+	t.Run("Reject Coins Conversion Due To Invalid Amount Parameter", func(t *testing.T) {
+		url := fmt.Sprintf("%s/lanterns-generation/%s", baseUrl, "invalid_param")
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Invalid amount parameter", body["message"])
+	})
+
+	t.Run("Reject Coins Conversion Due To Amount Being Less Than 1", func(t *testing.T) {
+		url := fmt.Sprintf("%s/lanterns-generation/%s", baseUrl, "0")
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "Amount must not be less than 1", body["message"])
+	})
+
+	t.Run("Reject Coins Conversion Due To Insufficient Coins", func(t *testing.T) {
+		url := fmt.Sprintf("%s/lanterns-generation/%s", baseUrl, "2")
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "You have insufficient coins for that conversion", body["message"])
+	})
+
+	t.Run("Accept Coins Conversion Due To Sufficient Coins", func(t *testing.T) {
+		user.Coins = 10
+		user.Access = &token
+		db.Save(&user)
+
+		url := fmt.Sprintf("%s/lanterns-generation/%s", baseUrl, "2")
+		res := ProcessTestGetOrDelete(app, url, "GET", token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Lanterns added successfully", body["message"])
+	})
+}
+
+func setContract(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+	author := TestAuthor(db)
+	book := BookData(db, author)
+	token := AccessToken(db, author)
+	contractData := schemas.ContractCreateSchema{
+		FullName: "John Doe", Email: "johndoe@example.com", PenName: "johnny",
+		Age: 29, Country: "Nigeria", Address: "123, Example Street",
+		City: "Example City", State: "Example State", PostalCode: "123456",
+		TelephoneNumber: "+123456778", IDType: choices.CID_DRIVERS_LICENSE,
+		PlannedLength: 1000, AverageChapter: 100, UpdateRate: 20,
+		Synopsis: "The Example Synopsis", Outline: "Example Outline",
+		IntendedContract: choices.CT_EXCLUSIVE, FullPurchaseMode: true,
+		BookAvailabilityLink: nil,
+	}
+
+	// Create a temporary file
+	tempFilePath := CreateTempImageFile(t)
+	defer os.Remove(tempFilePath)
+
+	t.Run("Accept Contract Set Due To Valid Data", func(t *testing.T) {
+		url := fmt.Sprintf("%s/book/%s/set-contract", baseUrl, book.Slug)
+		res := ProcessMultipartTestBody(t, app, url, "POST", contractData, []string{"id_front_image", "id_back_image"}, []string{tempFilePath, tempFilePath}, token)
+		// Assert Status code
+		assert.Equal(t, 200, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "success", body["status"])
+		assert.Equal(t, "Contract set successfully", body["message"])
+	})
+
+	t.Run("Reject Contract Set Due To Already Approved", func(t *testing.T) {
+		book.ContractStatus = choices.CTS_APPROVED
+		db.Save(&book)
+
+		url := fmt.Sprintf("%s/book/%s/set-contract", baseUrl, book.Slug)
+		res := ProcessMultipartTestBody(t, app, url, "POST", contractData, []string{}, []string{}, token)
+		assert.Equal(t, 400, res.StatusCode)
+
+		// Parse and assert body
+		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+		assert.Equal(t, "failure", body["status"])
+		assert.Equal(t, "This book already has an approved contract", body["message"])
 	})
 }
 
@@ -626,6 +852,12 @@ func TestBooks(t *testing.T) {
 	replyReviewOrParagraphComment(t, app, db, baseUrl)
 	editReply(t, app, db, baseUrl)
 	deleteReply(t, app, db, baseUrl)
+	addParagraphComment(t, app, db, baseUrl)
+	editParagraphComment(t, app, db, baseUrl)
+	deleteParagraphComment(t, app, db, baseUrl)
+	voteBook(t, app, db, baseUrl)
+	convertCoinsToLanterns(t, app, db, baseUrl)
+	setContract(t, app, db, baseUrl)
 
 	// Drop Tables and Close Connectiom
 	database.DropTables(db)
