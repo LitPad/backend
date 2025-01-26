@@ -30,8 +30,6 @@ func generateTokenForWalletReq(conf config.Config) (string, error){
 	return token.SignedString([]byte(conf.WalletSecret))
 }
 
-// const WALLET_SERVER = "http://backend:2500/api"
-const WALLET_SERVER = "http://localhost:2500/api"
 
 
 // @Summary Create a new ICP wallet
@@ -41,7 +39,8 @@ const WALLET_SERVER = "http://localhost:2500/api"
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /wallet/icp [post]
 func (ep Endpoint) CreateICPWallet(c *fiber.Ctx) error {
-	endpoint := WALLET_SERVER + "/wallet"
+	wallet_server_ip := ep.Config.ICPWalletIp
+	endpoint := wallet_server_ip + "/wallet"
 	
 	conf := config.GetConfig()
 
@@ -92,11 +91,10 @@ func(ep Endpoint) GetICPWalletBalance(c *fiber.Ctx) error {
 			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path params"))
 	}
 
-	endpoint := WALLET_SERVER + "/wallet/" + username + "/balance";
+	wallet_server_ip := ep.Config.ICPWalletIp
+	endpoint := wallet_server_ip + "/wallet/" + username + "/balance";
 
-	conf := config.GetConfig()
-
-	token, err := generateTokenForWalletReq(conf)
+	token, err := generateTokenForWalletReq(ep.Config)
 
 	if err != nil{
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"err": err})
@@ -110,7 +108,7 @@ func(ep Endpoint) GetICPWalletBalance(c *fiber.Ctx) error {
 	response, err := senders.MakeRequest(fasthttp.MethodGet, endpoint, headers, nil)
 
 	if err != nil{
-				return c.Status(response.StatusCode()).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(response.StatusCode()).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	var decodedResponse map[string]interface{}
@@ -144,7 +142,8 @@ func (ep Endpoint) SendGiftViaICPWallet(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotFound).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No writer with tis username"))
 	}
 
-	endpoint := WALLET_SERVER + "/wallet/" + writeUsername;
+	wallet_server_ip := ep.Config.ICPWalletIp
+	endpoint := wallet_server_ip + "/wallet/" + writeUsername;
 
 	conf := config.GetConfig()
 
@@ -178,9 +177,11 @@ func (ep Endpoint) SendGiftViaICPWallet(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotFound).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No available gift with that slug"))
 	}
 
-	gift_price_in_icp := (float64(gift.Price) / ICP_TO_USD) * TEMP_FEE
+	gift_price_in_icp := (float64(gift.Price) / ICP_TO_USD)
+	// gift_price_in_icp := (float64(gift.Price) / ICP_TO_USD) * TEMP_FEE
 	
-	endpoint = WALLET_SERVER + "/wallet/" + "transfer";
+
+	endpoint = wallet_server_ip+ "/wallet/" + "transfer";
 
 	requestBody := []byte(fmt.Sprintf(`{"username": "%s", "address": "%s", "amount": "%s"}`, user.Username, account_id ,fmt.Sprintf("%.6f", gift_price_in_icp)))
 
