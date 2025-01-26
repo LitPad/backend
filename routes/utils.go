@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/LitPad/backend/config"
@@ -10,6 +11,7 @@ import (
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/paymentintent"
@@ -22,6 +24,15 @@ func ResponseMessage(message string) schemas.ResponseSchema {
 
 func RequestUser(c *fiber.Ctx) *models.User {
 	return c.Locals("user").(*models.User)
+}
+
+func Session(c *fiber.Ctx, store *session.Store) *session.Session {
+	// Get session from storage
+    sess, err := store.Get(c)
+    if err != nil {
+        log.Println("Error Getting Session: ", err)
+    }
+	return sess
 }
 
 func GetBaseReferer(c *fiber.Ctx) string {

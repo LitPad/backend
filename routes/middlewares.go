@@ -122,6 +122,11 @@ func (ep Endpoint) WalletAccessMiddleware(c *fiber.Ctx) error {
 
 func RequestLogger(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Exclude specific path groups (e.g., /logs)
+		if strings.HasPrefix(c.Path(), "/logs") {
+			return c.Next()
+		}
+		
 		// Call the next middleware and capture response status after
 		err := c.Next()
 

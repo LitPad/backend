@@ -52,6 +52,15 @@ func (u UserManager) GetByUsername(db *gorm.DB, username string) *models.User {
 	return &user
 }
 
+func (u UserManager) GetByEmail(db *gorm.DB, email string) *models.User {
+	user := models.User{Email: email}
+	db.Take(&user, user)
+	if user.ID == uuid.Nil {
+		return nil
+	}
+	return &user
+}
+
 func (u UserManager) GetReaderByUsername(db *gorm.DB, username string) *models.User {
 	user := models.User{Username: username, AccountType: choices.ACCTYPE_READER}
 	db.Scopes(scopes.VerifiedUserScope).Take(&user, user)

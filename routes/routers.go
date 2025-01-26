@@ -4,22 +4,31 @@ import (
 	"github.com/LitPad/backend/config"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"gorm.io/gorm"
 )
 
 type Endpoint struct {
-	DB *gorm.DB
+	DB     *gorm.DB
 	Config config.Config
+	Store  *session.Store
 }
 
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
-	endpoint := Endpoint{DB: db, Config: config.GetConfig()}
+	store := session.New()
+	endpoint := Endpoint{DB: db, Config: config.GetConfig(), Store: store}
 
 	// ROUTES (40)
 	api := app.Group("/api/v1")
 
 	// HealthCheck Route (1)
 	api.Get("/healthcheck", HealthCheck)
+
+	// Logs Route (3)
+	logsRouter := app.Group("/logs")
+	logsRouter.Get("", endpoint.RenderLogs)
+	logsRouter.Get("/login", endpoint.RenderLogsLogin)
+	logsRouter.Post("/login", endpoint.HandleLogsLogin)
 
 	// General Routes (2)
 	generalRouter := api.Group("/general")
@@ -103,7 +112,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	icpWalletRouter := walletRouter.Group("/icp")
 	icpWalletRouter.Post("/", endpoint.CreateICPWallet)
 	icpWalletRouter.Get("/:username/balance", endpoint.GetICPWalletBalance)
-	icpWalletRouter.Get("/gifts/:username/:gift_slug/send", endpoint.AuthMiddleware , endpoint.SendGiftViaICPWallet)
+	icpWalletRouter.Get("/gifts/:username/:gift_slug/send", endpoint.AuthMiddleware, endpoint.SendGiftViaICPWallet)
 
 	// ADMIN ROUTES (7)
 	adminRouter := api.Group("/admin")
