@@ -28,12 +28,10 @@ func (ep Endpoint) HandleLogsLogin(c *fiber.Ctx) error {
 	session := Session(c, ep.Store)
 	email := c.FormValue("email")
 	password := c.FormValue("password")
-	user := userManager.GetByUsername(db, email)
+	user := userManager.GetByEmail(db, email)
 	if user == nil {
 		session.Set("error", "Invalid email or password!")
-		if err := session.Save(); err != nil {
-			panic(err)
-		}
+		session.Save()
 		return c.Redirect("/logs/login")
 	}	
 	if user.Password != password && !utils.CheckPasswordHash(password, user.Password) {
@@ -52,8 +50,8 @@ func (ep Endpoint) HandleLogsLogin(c *fiber.Ctx) error {
 	// Hash password
 	if user.Password == password {
 		user.Password = utils.HashPassword(password)
-		db.Save(&user)
 	}
+	db.Save(&user)
 	session.Set("access", accessToken)
 	session.Set("success", "Logged in successfully!")
 	session.Set("error", nil)
@@ -102,10 +100,15 @@ func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
 
 	// Fetch logs from the database
 	query.Find(&logs)
-
+	successMessage := session.Get("success")
+	if successMessage != nil {
+		session.Set("success", nil)
+		session.Save()
+	}
 	// Pass logs to the template
 	return c.Render("templates/logs/logs.html", fiber.Map{
 		"Logs": logs,
+		"success": successMessage,
 	})
 }
 

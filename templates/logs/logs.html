@@ -14,11 +14,17 @@
 
         .container {
             max-width: 1200px;
-            margin: 20px auto;
+            margin: 50px auto;
             padding: 20px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 1253px) {
+            .container {
+                margin: 20px 20px;
+            }
         }
 
         h1 {
@@ -111,6 +117,53 @@
                 padding: 8px; /* Reduce padding */
             }
         }
+
+        /* Toast Styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+        }
+
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: none;
+            font-size: 14px;
+            animation: fadeInOut 4s ease-in-out;
+        }
+
+        .toast.success {
+            background-color: #4caf50;
+        }
+
+        .toast.error {
+            background-color: #f44336;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
     </style>
 </head>
 <body>
@@ -148,16 +201,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Example Log -->
-                    <tr>
-                        <td>GET</td>
-                        <td>/api/books</td>
-                        <td>200</td>
-                        <td>192.168.1.1</td>
-                        <td>{"query":"author=John"}</td>
-                        <td></td>
-                        <td>2025-01-24 10:00:00</td>
-                    </tr>
+                    <!-- Loop through logs -->
+                    {{range .Logs}}
+                        <tr>
+                            <td>{{.Method}}</td>
+                            <td>{{.Path}}</td>
+                            <td>{{.StatusCode}}</td>
+                            <td>{{.IP}}</td>
+                            <td>{{.Params}}</td>
+                            <td>{{.Body}}</td>
+                            <td>{{.CreatedAt}}</td>
+                        </tr>
+                    {{else}}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: blue; font-weight: bold; font-size: 15px;">No logs found yet!</td>
+                        </tr>
+                    {{end}}
                 </tbody>
             </table>
         </div>

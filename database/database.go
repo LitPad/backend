@@ -41,6 +41,9 @@ func Models() []interface{} {
 
 		// waitlist
 		&models.Waitlist{},
+
+		// logs
+		&models.Log{},
 	}
 }
 
