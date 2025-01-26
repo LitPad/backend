@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/LitPad/backend/config"
@@ -96,11 +97,11 @@ func (ep Endpoint) WalletAccessMiddleware(c *fiber.Ctx) error {
 
 	token := c.Get("Access")
 
-	if len(token) < 1{
+	if len(token) < 1 {
 		return c.Status(403).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Forbidden"))
 	}
 
-	if !strings.HasPrefix(token, "Litpad "){
+	if !strings.HasPrefix(token, "Litpad ") {
 		return c.Status(403).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Forbidden"))
 	}
 
@@ -108,21 +109,46 @@ func (ep Endpoint) WalletAccessMiddleware(c *fiber.Ctx) error {
 		return []byte(conf.WalletSecret), nil
 	})
 
-	if err != nil{
+	if err != nil {
 		c.Status(500).JSON(utils.ERR_SERVER_ERROR)
 	}
 
-	if !parsedToken.Valid{
+	if !parsedToken.Valid {
 		c.Status(403).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Forbidden"))
 	}
 
 	return c.Next()
 }
 
+func RequestLogger(db *gorm.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Call the next middleware and capture response status after
+		err := c.Next()
+
+		// Serialize query parameters and route parameters
+		params, _ := json.Marshal(map[string]string{
+			"query":  string(c.Request().URI().QueryString()),
+			"params": string(c.Params("*")), // captures all route parameters
+		})
+		paramsStr := string(params)
+		// Log details of the request
+		log := models.Log{
+			Method: c.Method(), Path: c.Path(), IP: c.IP(),
+			StatusCode: c.Response().StatusCode(), Body: c.Body(), Params: &paramsStr,
+		}
+		// Save log to the database
+		if dbErr := db.Create(&log).Error; dbErr != nil {
+			return dbErr // return error if logging fails
+		}
+
+		return err
+	}
+}
+
 func ParseUUID(input string) *uuid.UUID {
-    uuidVal, err := uuid.Parse(input)
+	uuidVal, err := uuid.Parse(input)
 	if err != nil {
 		return nil
 	}
-    return &uuidVal
+	return &uuidVal
 }

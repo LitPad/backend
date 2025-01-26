@@ -53,11 +53,13 @@ func main() {
 	}
 
 	app.Use(swagger.New(swaggerCfg))
+	app.Use(routes.RequestLogger(db))
+
 	// Register Routes & Sockets
 	routes.SetupRoutes(app, db)
 	
 	// RUN JOBS
 	jobs.RunJobs(conf, db)
-	log.Fatal(app.Listen(":" + conf.Port))
+	log.Fatal(app.Listen(":" + conf.Port)) 
 
 }

@@ -16,8 +16,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var falsy = false
-
 func ResponseMessage(message string) schemas.ResponseSchema {
 	return schemas.ResponseSchema{Status: "success", Message: message}
 }
