@@ -16,6 +16,9 @@ func (ep Endpoint) RenderLogsLogin(c *fiber.Ctx) error {
 	sessionData := map[string]interface{}{
         "error": sess.Get("error"),
     }
+	// Remove the error from session after it's been rendered
+    sess.Set("error", nil)
+    sess.Save()
 	return c.Render("templates/logs/login.html", sessionData)
 }
 
@@ -28,7 +31,9 @@ func (ep Endpoint) HandleLogsLogin(c *fiber.Ctx) error {
 	user := userManager.GetByUsername(db, email)
 	if user == nil {
 		session.Set("error", "Invalid email or password!")
-		session.Save()
+		if err := session.Save(); err != nil {
+			panic(err)
+		}
 		return c.Redirect("/logs/login")
 	}	
 	if user.Password != password && !utils.CheckPasswordHash(password, user.Password) {

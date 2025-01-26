@@ -165,5 +165,38 @@
         <!-- No Data Message -->
         <div class="no-data" style="display: none;">No logs found for the selected filters.</div>
     </div>
+
+    <!-- Toasts -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Function to show toast messages
+        function showToast(message) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.classList.add('toast');
+            toast.classList.add("success");
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            // Display the toast
+            toast.style.display = 'block';
+
+            // Remove toast after animation
+            setTimeout(() => {
+                toast.style.display = 'none';
+                toastContainer.removeChild(toast);
+            }, 4000);
+        }
+
+        // Simulate a failed login for demonstration
+        window.onload = function() {
+            var message = "{{.success}}";
+            if (message !== "<no value>") {
+                showToast(message);
+            }
+        };
+    </script>
 </body>
 </html>

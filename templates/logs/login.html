@@ -122,9 +122,9 @@
 <body>
     <div class="login-container">
         <h1>LitPad Logging Login</h1>
-        <form id="loginForm" action="/logs" method="GET">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
+        <form id="loginForm" action="/logs/login" method="POST">
+            <label for="email">Email</label>
+            <input type="text" id="email" name="email" required>
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required>
             <button type="submit">Login</button>
@@ -136,11 +136,11 @@
 
     <script>
         // Function to show toast messages
-        function showToast(message, type) {
+        function showToast(message) {
             const toastContainer = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.classList.add('toast');
-            toast.classList.add(type); // success or error
+            toast.classList.add("error");
             toast.textContent = message;
 
             toastContainer.appendChild(toast);
@@ -157,8 +157,10 @@
 
         // Simulate a failed login for demonstration
         window.onload = function() {
-            console.log("{{.error}}");
-            showToast("{{.error}}", "error");
+            var errorMessage = "{{.error}}";
+            if (errorMessage !== "<no value>") {
+                showToast(errorMessage);
+            }
         };
     </script>
 </body>
