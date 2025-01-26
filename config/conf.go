@@ -56,6 +56,7 @@ type Config struct {
 	IDBackImagesBucket        string `mapstructure:"ID_BACK_IMAGES_BUCKET"`
 	WalletSecret              string `mapstructure:"LITPAD_WALLET_SECRET"`
 	PGAdminPassword           string `mapstructure:"PGADMIN_PASSWORD"`
+	ICPWalletIp              string `mapstructure:"LITPAD_WALLET_IP"`
 	ICPPrivateKey             string `mapstructure:"ICP_PRIVATE_KEY"`
 	ICPPublicKey              string `mapstructure:"ICP_PUBLIC_KEY"`
 	CloudinaryCloudName       string `mapstructure:"CLOUDINARY_CLOUD_NAME"`
