@@ -21,7 +21,7 @@ jobs:
     - name: Get Commit Details
       id: commit_info
       run: |
-        echo "commit_message=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+        echo "commit_message=$(git log -1 --pretty=%B | sed ':a;N;$!ba;s/\n/ /g' | sed 's/\"/\\"/g')" >> $GITHUB_ENV
         echo "commit_author=$(git log -1 --pretty=%an)" >> $GITHUB_ENV
 
     # Install dependencies
