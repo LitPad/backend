@@ -164,12 +164,66 @@
                 transform: translateY(10px);
             }
         }
+        .pagination ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping to new lines */
+            justify-content: center;
+            gap: 5px;
+            padding: 0;
+            margin-top: 20px;
+            overflow-x: auto; /* Add horizontal scrolling for small screens */
+        }
+
+        .pagination li {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pagination li a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .pagination li.active {
+            background-color: #007bff;
+            color: white;
+            pointer-events: none;
+        }
+
+        .pagination li.disabled {
+            background-color: #f4f4f4;
+            color: #ccc;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .pagination ul {
+                gap: 2px; /* Reduce gaps on smaller screens */
+            }
+
+            .pagination li {
+                padding: 6px 8px; /* Reduce padding for smaller screens */
+            }
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <h1>LitPad Request Logs</h1>
 
+        <!-- Logout Button -->
+        <div style="text-align: right; margin-bottom: 20px;">
+            <form action="/logs/logout" method="GET" style="display: inline;">
+                <button type="submit" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+                    Logout
+                </button>
+            </form>
+        </div>
+        
         <!-- Filters -->
         <form class="filters" method="GET" action="/logs">
             <input type="datetime-local" name="start_time" placeholder="Start Time">
@@ -223,9 +277,46 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- No Data Message -->
-        <div class="no-data" style="display: none;">No logs found for the selected filters.</div>
+        <div class="pagination">
+            {{if gt .totalPages 1}}
+                <ul>
+                    <!-- Prev Button -->
+                    {{if gt .page 1}}
+                        <li><a href="/logs?page={{sub .page 1}}&limit={{.limit}}">&laquo; Prev</a></li>
+                    {{else}}
+                        <li class="disabled">&laquo; Prev</li>
+                    {{end}}
+        
+                    <!-- First Page -->
+                    {{if gt .page 4}}
+                        <li><a href="/logs?page=1&limit={{.limit}}">1</a></li>
+                        <li class="disabled">...</li>
+                    {{end}}
+        
+                    <!-- Middle Pages -->
+                    {{range $i := (paginationRange .page .totalPages)}}
+                        {{if eq $i $.page}}
+                            <li class="active">{{$i}}</li>
+                        {{else}}
+                            <li><a href="/logs?page={{$i}}&limit={{$.limit}}">{{$i}}</a></li>
+                        {{end}}
+                    {{end}}
+        
+                    <!-- Last Page -->
+                    {{if lt .page (sub .totalPages 3)}}
+                        <li class="disabled">...</li>
+                        <li><a href="/logs?page={{.totalPages}}&limit={{.limit}}">{{.totalPages}}</a></li>
+                    {{end}}
+        
+                    <!-- Next Button -->
+                    {{if lt .page .totalPages}}
+                        <li><a href="/logs?page={{add .page 1}}&limit={{.limit}}">Next &raquo;</a></li>
+                    {{else}}
+                        <li class="disabled">Next &raquo;</li>
+                    {{end}}
+                </ul>
+            {{end}}
+        </div>
     </div>
 
     <!-- Toasts -->

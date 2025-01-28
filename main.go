@@ -9,6 +9,7 @@ import (
 	"github.com/LitPad/backend/initials"
 	"github.com/LitPad/backend/jobs"
 	"github.com/LitPad/backend/routes"
+	"github.com/LitPad/backend/templates"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -35,8 +36,14 @@ func main() {
 	// Create initial data
 	initials.CreateInitialData(db, conf)
 
+	engine := html.New("./templates", ".html")
+	engine.AddFunc("add", templates.TemplateFuncMap["add"])
+	engine.AddFunc("sub", templates.TemplateFuncMap["sub"])
+	engine.AddFunc("sequence", templates.TemplateFuncMap["sequence"])
+	engine.AddFunc("paginationRange", templates.TemplateFuncMap["paginationRange"])
+
 	app := fiber.New(fiber.Config{
-		Views: html.New("./templates", ".html"),
+		Views: engine,
 	})
 
 	// CORS config

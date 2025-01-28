@@ -29,6 +29,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	logsRouter.Get("", endpoint.RenderLogs)
 	logsRouter.Get("/login", endpoint.RenderLogsLogin)
 	logsRouter.Post("/login", endpoint.HandleLogsLogin)
+	logsRouter.Get("/logout", endpoint.HandleLogsLogout)
 
 	// General Routes (2)
 	generalRouter := api.Group("/general")

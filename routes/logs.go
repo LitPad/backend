@@ -16,9 +16,11 @@ func (ep Endpoint) RenderLogsLogin(c *fiber.Ctx) error {
 	sess := Session(c, ep.Store)
 	sessionData := map[string]interface{}{
         "error": sess.Get("error"),
+        "success": sess.Get("success"),
     }
 	// Remove the error from session after it's been rendered
     sess.Set("error", nil)
+    sess.Set("success", nil)
     sess.Save()
 	return c.Render("login", sessionData)
 }
@@ -60,16 +62,33 @@ func (ep Endpoint) HandleLogsLogin(c *fiber.Ctx) error {
 	return c.Redirect("/logs")
 }
 
-// Renders the logs page with optional filters
-func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
-	// Verify page access
+// Handles login form submission
+func (ep Endpoint) HandleLogsLogout(c *fiber.Ctx) error {
+	// Verify view access
+	db := ep.DB
 	session := Session(c, ep.Store)
-	user := VerifyAccess(session, ep.DB)
+	user := VerifyAccess(session, db)
 	if user == nil {
 		return c.Redirect("/logs/login")
 	}
+	user.Access = nil
+	user.Refresh = nil
+	db.Save(&user)
+	session.Set("access", nil)
+	session.Set("success", "Logged out successfully!")
+	session.Save()
+	return c.Redirect("/logs/login")
+}
 
+// Renders the logs page with optional filters
+func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
 	db := ep.DB
+	// Verify page access
+	session := Session(c, ep.Store)
+	user := VerifyAccess(session, db)
+	if user == nil {
+		return c.Redirect("/logs/login")
+	}
 	logs := []models.Log{}
 
 
@@ -79,6 +98,12 @@ func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
 	method := c.Query("method")
 	path := c.Query("path")
 	status := c.QueryInt("status", 0)
+
+	// Pagination parameters
+	page := c.QueryInt("page", 1) // Default to page 1
+	limit := c.QueryInt("limit", 100) // Default to 100 logs per page
+	offset := (page - 1) * limit
+
 	query := db.Model(&models.Log{}).Order("created_at DESC")
 	
 	// Apply filters based on query parameters
@@ -120,17 +145,26 @@ func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
 		query = query.Where("status_code = ?", status)
 	}
 
-	// Fetch logs from the database
-	query.Find(&logs)
+	// Fetch total count of logs for pagination
+	var totalCount int64
+	query.Count(&totalCount)
+
+	// Fetch logs with pagination
+	query.Limit(limit).Offset(offset).Find(&logs)
+
+	totalPages := int((totalCount + int64(limit) - 1) / int64(limit))
+
 	successMessage := session.Get("success")
 	if successMessage != nil {
 		session.Set("success", nil)
 		session.Save()
 	}
-	log.Println(logs)
 	return c.Render("logs", fiber.Map{
 		"logs": logs,
 		"success": successMessage,
+		"page":       page,
+		"limit":      limit,
+		"totalPages": totalPages,
 	})
 }
 
