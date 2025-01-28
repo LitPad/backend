@@ -155,13 +155,11 @@
             }, 4000);
         }
 
-        // Simulate a failed login for demonstration
-        window.onload = function() {
-            var errorMessage = "{{.error}}";
-            if (errorMessage !== "<no value>") {
-                showToast(errorMessage);
-            }
-        };
+        var errorMessage = "{{.error}}";
+        console.log(errorMessage)
+        if (errorMessage !== "") {
+            showToast(errorMessage);
+        }
     </script>
 </body>
 </html>

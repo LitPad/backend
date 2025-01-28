@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"time"
 
 	"github.com/LitPad/backend/models"
@@ -19,7 +20,7 @@ func (ep Endpoint) RenderLogsLogin(c *fiber.Ctx) error {
 	// Remove the error from session after it's been rendered
     sess.Set("error", nil)
     sess.Save()
-	return c.Render("templates/logs/login.html", sessionData)
+	return c.Render("login", sessionData)
 }
 
 // Handles login form submission
@@ -71,31 +72,52 @@ func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
 	db := ep.DB
 	logs := []models.Log{}
 
+
 	// Get query parameters for filtering
 	startTime := c.Query("start_time")
 	endTime := c.Query("end_time")
 	method := c.Query("method")
 	path := c.Query("path")
-	query := db.Order("created_at DESC")
-
+	status := c.QueryInt("status", 0)
+	query := db.Model(&models.Log{}).Order("created_at DESC")
+	
 	// Apply filters based on query parameters
 	if startTime != "" {
+		// Check if startTime is missing seconds or timezone and add them
+		if len(startTime) == 16 { // "2025-01-27T22:21" format
+			startTime = startTime + ":00Z" // Add missing seconds and assume UTC timezone
+		}
+		
 		start, err := time.Parse(time.RFC3339, startTime)
 		if err == nil {
 			query = query.Where("created_at >= ?", start)
+		} else {
+			log.Println("Error parsing startTime:", err)
 		}
 	}
+	
 	if endTime != "" {
+		// Check if endTime is missing seconds or timezone and add them
+		if len(endTime) == 16 { // "2025-01-27T22:21" format
+			endTime = endTime + ":00Z" // Add missing seconds and assume UTC timezone
+		}
+	
 		end, err := time.Parse(time.RFC3339, endTime)
 		if err == nil {
 			query = query.Where("created_at <= ?", end)
+		} else {
+			log.Println("Error parsing endTime:", err)
 		}
 	}
+	
 	if method != "" {
 		query = query.Where("method = ?", method)
 	}
 	if path != "" {
 		query = query.Where("path LIKE ?", "%"+path+"%")
+	}
+	if status != 0 {
+		query = query.Where("status_code = ?", status)
 	}
 
 	// Fetch logs from the database
@@ -105,9 +127,9 @@ func (ep Endpoint) RenderLogs(c *fiber.Ctx) error {
 		session.Set("success", nil)
 		session.Save()
 	}
-	// Pass logs to the template
-	return c.Render("templates/logs/logs.html", fiber.Map{
-		"Logs": logs,
+	log.Println(logs)
+	return c.Render("logs", fiber.Map{
+		"logs": logs,
 		"success": successMessage,
 	})
 }

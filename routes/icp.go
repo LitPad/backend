@@ -123,7 +123,7 @@ func(ep Endpoint) GetICPWalletBalance(c *fiber.Ctx) error {
 
 // @Summary Send Gift Via ICP
 // @Description This endpoint allows a user to send a gift via ICP
-// @Tags Waller
+// @Tags Wallet
 // @Param username path string true "Username of the writer"
 // @Param gift_slug path string true "Slug of the gift being sent"
 // @Success 200 {object} schemas.SentGiftResponseSchema

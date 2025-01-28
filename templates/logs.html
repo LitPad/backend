@@ -183,6 +183,7 @@
                 <option value="DELETE">DELETE</option>
             </select>
             <input type="text" name="path" placeholder="Endpoint Path">
+            <input type="number" name="status" placeholder="Endpoint Status">
             <button type="submit">Filter</button>
         </form>
 
@@ -195,20 +196,22 @@
                         <th>Path</th>
                         <th>Status</th>
                         <th>IP</th>
-                        <th>Params</th>
+                        <th>PathParams</th>
+                        <th>QueryParams</th>
                         <th>Body</th>
                         <th>Time</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- Loop through logs -->
-                    {{range .Logs}}
+                    {{range .logs}}
                         <tr>
                             <td>{{.Method}}</td>
                             <td>{{.Path}}</td>
                             <td>{{.StatusCode}}</td>
                             <td>{{.IP}}</td>
-                            <td>{{.Params}}</td>
+                            <td>{{.PathParams}}</td>
+                            <td>{{.QueryParams}}</td>
                             <td>{{.Body}}</td>
                             <td>{{.CreatedAt}}</td>
                         </tr>
@@ -250,12 +253,34 @@
         }
 
         // Simulate a failed login for demonstration
-        window.onload = function() {
-            var message = "{{.success}}";
-            if (message !== "<no value>") {
-                showToast(message);
+        var message = "{{.success}}";
+        if (message !== "") {
+            showToast(message);
+        }
+
+        function convertToUTC(localTime) {
+            const date = new Date(localTime);
+            const isoString = date.toISOString(); // ISO format: "2025-01-28T11:03:00.000Z"
+            return isoString.slice(0, 16); // Trim to "yyyy-MM-ddThh:mm"
+        }
+
+
+        // When the user submits the form, adjust the times to UTC
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const startTimeInput = document.querySelector('input[name="start_time"]');
+            const endTimeInput = document.querySelector('input[name="end_time"]');
+            // Adjust the start and end times to UTC
+            if (startTimeInput.value) {
+                startTimeInput.value = convertToUTC(startTimeInput.value);
             }
-        };
+
+            if (endTimeInput.value) {
+                endTimeInput.value = convertToUTC(endTimeInput.value);
+            }
+            // Resubmit the form after adjusting values
+            this.submit();
+        });
     </script>
 </body>
 </html>

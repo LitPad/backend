@@ -1867,7 +1867,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.ReplyReviewOrCommentSchema"
+                            "$ref": "#/definitions/schemas.ReplyEditSchema"
                         }
                     }
                 ],
@@ -2555,7 +2555,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "name": "postal_code",
                         "in": "formData",
                         "required": true
@@ -3375,7 +3375,7 @@ const docTemplate = `{
                 ],
                 "description": "This endpoint allows a user to send a gift via ICP",
                 "tags": [
-                    "Waller"
+                    "Wallet"
                 ],
                 "summary": "Send Gift Via ICP",
                 "parameters": [
@@ -4292,7 +4292,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "postal_code": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "state": {
                     "type": "string"
@@ -4928,6 +4928,18 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.ReplyEditSchema": {
+            "type": "object",
+            "required": [
+                "text"
+            ],
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "maxLength": 10000
                 }
             }
         },

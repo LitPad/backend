@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/template/html/v2"
 )
 
 // @title LITPAD API
@@ -34,7 +35,9 @@ func main() {
 	// Create initial data
 	initials.CreateInitialData(db, conf)
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		Views: html.New("./templates", ".html"),
+	})
 
 	// CORS config
 	app.Use(cors.New(cors.Config{

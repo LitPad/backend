@@ -126,25 +126,35 @@ func RequestLogger(db *gorm.DB) fiber.Handler {
 			return c.Next()
 		}
 
-		// Call the next middleware and capture response status after
+		// Call the next middleware to capture response status
 		err := c.Next()
 
-		// Serialize query parameters and route parameters
-		params, _ := json.Marshal(map[string]string{
-			"query":  string(c.Request().URI().QueryString()),
-			"params": string(c.Params("*")), // captures all route parameters
-		})
-		paramsStr := string(params)
-		// Log details of the request
-		log := models.Log{
-			Method: c.Method(), Path: c.Path(), IP: c.IP(),
-			StatusCode: c.Response().StatusCode(), Body: c.Body(), Params: &paramsStr,
-		}
-		// Save log to the database
-		if dbErr := db.Create(&log).Error; dbErr != nil {
-			return dbErr // return error if logging fails
+		// Parse the body
+		bodyStr := ""
+		bodyBytes := c.Body()
+		if len(bodyBytes) > 0 {
+			var bodyMap map[string]interface{}
+			if json.Unmarshal(bodyBytes, &bodyMap) == nil { // Valid JSON
+				parsedBody, _ := json.Marshal(bodyMap)
+				bodyStr = string(parsedBody)
+			} else {
+				bodyStr = string(bodyBytes) // Fallback for non-JSON body
+			}
 		}
 
+		// Create the log entry
+		log := models.Log{
+			Method:     c.Method(),
+			Path:       c.Path(),
+			IP:         c.IP(),
+			StatusCode: c.Response().StatusCode(),
+			QueryParams: string(c.Request().URI().QueryString()),
+			PathParams: string(c.Params("*")),
+			Body:       bodyStr,
+		}
+
+		// Save the log
+		db.Create(&log)
 		return err
 	}
 }
