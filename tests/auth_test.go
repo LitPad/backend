@@ -206,7 +206,7 @@ func sendPasswordResetLink(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl st
 func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	t.Run("Reject verification due to invalid token", func(t *testing.T) {
 		url := fmt.Sprintf("%s/verify-password-reset-token/invalid-token-string", baseUrl)
-		res := ProcessTestGetOrDelete(app, "GET", url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 
 		// Assert Status code
 		assert.Equal(t, 404, res.StatusCode)
@@ -225,7 +225,7 @@ func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl
 		db.Save(&user)
 
 		url := fmt.Sprintf("%s/verify-password-reset-token/%s", baseUrl, *user.TokenString)
-		res := ProcessTestGetOrDelete(app, "GET", url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 
 		// Assert Status code
 		assert.Equal(t, 400, res.StatusCode)
@@ -242,7 +242,7 @@ func verifyPasswordResetToken(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl
 		db.Save(&user)
 
 		url := fmt.Sprintf("%s/verify-password-reset-token/%s", baseUrl, *user.TokenString)
-		res := ProcessTestGetOrDelete(app, "GET", url)
+		res := ProcessTestGetOrDelete(app, url, "GET")
 
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -340,7 +340,7 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		url := fmt.Sprintf("%s/login", baseUrl)
 		loginData := schemas.LoginSchema{
 			Email:    user.Email,
-			Password: "testpassword",
+			Password: MASTER_PASSWORD,
 		}
 		res := ProcessJsonTestBody(t, app, url, "POST", loginData)
 
@@ -359,7 +359,7 @@ func login(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		url := fmt.Sprintf("%s/login", baseUrl)
 		loginData := schemas.LoginSchema{
 			Email:    user.Email,
-			Password: "testpassword",
+			Password: MASTER_PASSWORD,
 		}
 		res := ProcessJsonTestBody(t, app, url, "POST", loginData)
 

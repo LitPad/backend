@@ -3,18 +3,15 @@ package routes
 import (
 	"fmt"
 
-	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
-	"github.com/LitPad/backend/routes/helpers"
 	"github.com/LitPad/backend/schemas"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
-var notificationManager = managers.NotificationManager{}
 
 // @Summary View User Profile
 // @Description This endpoint views a user profile
@@ -27,13 +24,9 @@ func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 	db := ep.DB
 
 	username := c.Params("username")
-	if username == "" {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path params"))
-	}
-
 	user := userManager.GetByUsername(db, username)
 	if user == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "User does not exist!"))
+		return c.Status(404).JSON(utils.NotFoundErr("User does not exist!"))
 	}
 
 	response := schemas.UserProfileResponseSchema{
@@ -65,7 +58,7 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx) error {
 		existingUser := models.User{Username: username}
 		db.Not(models.User{BaseModel: models.BaseModel{ID: user.ID}}).Take(&existingUser, existingUser)
 		if existingUser.ID != uuid.Nil {
-			return c.Status(400).JSON(utils.ValidationErr("username", "Username is already taken"))
+			return c.Status(422).JSON(utils.ValidationErr("username", "Username is already taken"))
 		}
 		user.Username = username
 	}
@@ -115,15 +108,12 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 
 	user := RequestUser(c)
 
-	if !utils.CheckPasswordHash(data.OldPassword, user.Password) {
-		data := map[string]string{"old_password": "Password Mismatch"}
-
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_MISMATCH, "Invalid Entry", data))
+	if data.NewPassword == data.OldPassword {
+		return c.Status(422).JSON(utils.ValidationErr("new_password", "New password is same as old password"))
 	}
 
-	if data.NewPassword == data.OldPassword {
-		data := map[string]string{"new_password": "New password is same as old password"}
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_PASSWORD_SAME, "Invalid Entry", data))
+	if !utils.CheckPasswordHash(data.OldPassword, user.Password) {
+		return c.Status(422).JSON(utils.ValidationErr("old_password", "Password Mismatch"))
 	}
 
 	user.Password = utils.HashPassword(data.NewPassword)
@@ -149,10 +139,6 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	toFollowUsername := c.Params("username")
-	if toFollowUsername == "" {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_REQUEST, "Invalid path parameter for username"))
-	}
-
 	followerUsername := user.Username
 
 	if toFollowUsername == followerUsername {
@@ -163,7 +149,7 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 
 	// Retrieve the user to follow
 	if err := db.Scopes(scopes.VerifiedUserScope).Where(models.User{Username: toFollowUsername}).Take(&toFollowUser).Error; err != nil {
-		return helpers.UserNotFoundError(c, "User to follow does not exist", err)
+		return c.Status(404).JSON(utils.NotFoundErr("User to follow does not exist"))
 	}
 
 	// check if both are readers
@@ -255,7 +241,7 @@ func (ep Endpoint) ReadNotification(c *fiber.Ctx) error {
 	notificationID := data.ID
 	markAllAsRead := data.MarkAllAsRead
 
-	respMessage := "Notifications read"
+	respMessage := "Notifications read successfully"
 	if markAllAsRead {
 		// Mark all notifications as read
 		notificationManager.MarkAsRead(db, user)
@@ -265,7 +251,7 @@ func (ep Endpoint) ReadNotification(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(404).JSON(err)
 		}
-		respMessage = "Notification read"
+		respMessage = "Notification read successfully"
 	}
 	return c.Status(200).JSON(ResponseMessage(respMessage))
 }

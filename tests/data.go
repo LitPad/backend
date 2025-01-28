@@ -9,6 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const MASTER_PASSWORD = "testpassword"
+
 // AUTH FIXTURES
 func TestUser(db *gorm.DB) models.User {
 	email := "testuser@example.com"
@@ -16,7 +18,7 @@ func TestUser(db *gorm.DB) models.User {
 
 	user := models.User{
 		Email:          email,
-		Password:       "testpassword",
+		Password:       MASTER_PASSWORD,
 	}
 	db.Create(&user)
 	return user
@@ -27,7 +29,7 @@ func TestVerifiedUser(db *gorm.DB, activeSub ...bool) models.User {
 
 	user := models.User{
 		Email:          email,
-		Password:       "testpassword",
+		Password:       MASTER_PASSWORD,
 		IsEmailVerified: true,
 	}
 	if len(activeSub) > 0 {
@@ -43,7 +45,7 @@ func TestAuthor(db *gorm.DB, another ...bool) models.User {
 	email := "testauthormail@example.com"
 	user := models.User{
 		Email:          email,
-		Password:       "testpassword",
+		Password:       MASTER_PASSWORD,
 		IsEmailVerified: true,
 		AccountType: choices.ACCTYPE_AUTHOR,
 	}
@@ -117,4 +119,15 @@ func ParagraphCommentData(db *gorm.DB, chapter models.Chapter, user models.User)
 	comment := models.ParagraphComment{ChapterID: chapter.ID, Index: 2, UserID: user.ID, Text: "This is a test comment"}
 	db.FirstOrCreate(&comment, comment)
 	return comment
+}
+
+// PROFILES TEST DATA
+
+func NotificationData(db *gorm.DB, sender models.User, receiver models.User) models.Notification {
+	notification := models.Notification{
+		SenderID: sender.ID, ReceiverID: receiver.ID, 
+		Ntype: choices.NT_FOLLOWING, Text: "This is a test notification",
+	}
+	db.FirstOrCreate(&notification, notification)
+	return notification
 }

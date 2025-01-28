@@ -20,7 +20,6 @@ func Models() []interface{} {
 
 		// accounts
 		&models.User{},
-		&models.Notification{},
 
 		// book
 		&models.Tag{},
@@ -36,11 +35,14 @@ func Models() []interface{} {
 
 		// wallet
 		&models.Coin{},
-		&models.Transaction{},
 		&models.SubscriptionPlan{},
+		&models.Transaction{},
 
 		// waitlist
 		&models.Waitlist{},
+
+		// accounts
+		&models.Notification{},
 
 		// logs
 		&models.Log{},
@@ -108,6 +110,8 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	}
 
 	// Add Migrations
-	MakeMigrations(db)
+	if os.Getenv("ENVIRONMENT") != "test" {
+		MakeMigrations(db)
+	}
 	return db
 }
