@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/database"
@@ -10,9 +11,11 @@ import (
 	"github.com/LitPad/backend/jobs"
 	"github.com/LitPad/backend/routes"
 	"github.com/LitPad/backend/templates"
+	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/template/html/v2"
 )
 
@@ -52,6 +55,21 @@ func main() {
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Access-Control-Allow-Origin, Content-Disposition",
 		AllowCredentials: conf.CORSAllowCredentials,
 		AllowMethods:     "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+	}))
+
+	// General Rate Limiter: 200 requests per 1 minute
+	app.Use(limiter.New(limiter.Config{
+		// Next: func(c *fiber.Ctx) bool {
+		// 	return c.IP() == "127.0.0.1" // Do not set a rate limiter for local requests
+		// },
+		Max:        100,                         // maximum number of requests
+		Expiration: 1 * time.Minute,             // time period for limiting (1 minute)
+		KeyGenerator: func(c *fiber.Ctx) string { // define how to generate the key
+			return c.IP() // Limit by IP address
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(429).JSON(utils.RateLimitError("Rate Limit Reached"))
+		},
 	}))
 
 	// Swagger Config

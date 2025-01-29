@@ -41,6 +41,7 @@ var ERR_ALREADY_REVIEWED = "already_reviewed"
 var ERR_ALREADY_VOTED = "already_voted"
 var ERR_CONTRACT_ALREADY_APPROVED = "contract_already_approved"
 var ERR_INSUFFICIENT_LANTERNS = "insufficient_lanterns"
+var ERR_LIMITS_REACHED = "limits_reached"
 
 func RequestErr(code string, message string, opts ...map[string]string) ErrorResponse {
 	var data *map[string]string
@@ -58,6 +59,10 @@ func NotFoundErr(message string) ErrorResponse {
 
 func InvalidParamErr(message string) ErrorResponse {
 	return RequestErr(ERR_INVALID_PARAM, message)
+}
+
+func RateLimitError(message string) ErrorResponse {
+	return RequestErr(ERR_LIMITS_REACHED, message)
 }
 
 func ValidationErr(field string, message string) ErrorResponse {

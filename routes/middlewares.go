@@ -3,12 +3,14 @@ package routes
 import (
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -118,6 +120,20 @@ func (ep Endpoint) WalletAccessMiddleware(c *fiber.Ctx) error {
 	}
 
 	return c.Next()
+}
+
+func (ep Endpoint) DynamicRateLimiter(expirationMinute int, maxRequest int ) fiber.Handler {
+	// Apply rate limiter middleware
+	return limiter.New(limiter.Config{
+		Max:        maxRequest,               // dynamic request limit
+		Expiration: time.Duration(expirationMinute) * time.Minute, // expiration time in minutes
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP() // Use IP as the key for rate limiting
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(429).JSON(utils.RateLimitError("Rate Limit Reached"))
+		},
+	})
 }
 
 func RequestLogger(db *gorm.DB) fiber.Handler {
