@@ -17,8 +17,8 @@ func TestUser(db *gorm.DB) models.User {
 	db.Where("email = ?", email).Delete(&models.User{})
 
 	user := models.User{
-		Email:          email,
-		Password:       MASTER_PASSWORD,
+		Email:    email,
+		Password: MASTER_PASSWORD,
 	}
 	db.Create(&user)
 	return user
@@ -28,8 +28,8 @@ func TestVerifiedUser(db *gorm.DB, activeSub ...bool) models.User {
 	email := "testverifieduser@example.com"
 
 	user := models.User{
-		Email:          email,
-		Password:       MASTER_PASSWORD,
+		Email:           email,
+		Password:        MASTER_PASSWORD,
 		IsEmailVerified: true,
 	}
 	if len(activeSub) > 0 {
@@ -44,10 +44,10 @@ func TestVerifiedUser(db *gorm.DB, activeSub ...bool) models.User {
 func TestAuthor(db *gorm.DB, another ...bool) models.User {
 	email := "testauthormail@example.com"
 	user := models.User{
-		Email:          email,
-		Password:       MASTER_PASSWORD,
+		Email:           email,
+		Password:        MASTER_PASSWORD,
 		IsEmailVerified: true,
-		AccountType: choices.ACCTYPE_AUTHOR,
+		AccountType:     choices.ACCTYPE_AUTHOR,
 	}
 
 	if len(another) > 0 {
@@ -56,7 +56,6 @@ func TestAuthor(db *gorm.DB, another ...bool) models.User {
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
 	return user
 }
-
 
 func JwtData(db *gorm.DB, user models.User) models.User {
 	access := routes.GenerateAccessToken(user.ID)
@@ -125,9 +124,24 @@ func ParagraphCommentData(db *gorm.DB, chapter models.Chapter, user models.User)
 
 func NotificationData(db *gorm.DB, sender models.User, receiver models.User) models.Notification {
 	notification := models.Notification{
-		SenderID: sender.ID, ReceiverID: receiver.ID, 
+		SenderID: sender.ID, ReceiverID: receiver.ID,
 		Ntype: choices.NT_FOLLOWING, Text: "This is a test notification",
 	}
 	db.FirstOrCreate(&notification, notification)
 	return notification
+}
+
+// ADMIN TEST DATA
+func TestAdmin(db *gorm.DB) models.User {
+	email := "testadmin@example.com"
+
+	user := models.User{
+		Email:           email,
+		Password:        MASTER_PASSWORD,
+		IsStaff:         true,
+		IsSuperuser:     true,
+		IsEmailVerified: true,
+	}
+	db.FirstOrCreate(&user, models.User{Email: user.Email})
+	return user
 }

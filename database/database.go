@@ -64,7 +64,6 @@ func CreateTables(db *gorm.DB) {
 }
 
 func DropTables(db *gorm.DB) {
-	// Drop Tables
 	models := Models()
 	for _, model := range models {
 		db.Migrator().DropTable(model)
@@ -101,7 +100,6 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	} else {
 		db.Logger = logger.Default.LogMode(logger.Error)
 	}
-	log.Println("Running Migrations")
 
 	// Add UUID extension
 	result := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
@@ -111,6 +109,7 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 
 	// Add Migrations
 	if os.Getenv("ENVIRONMENT") != "test" {
+		log.Println("Running Migrations")
 		MakeMigrations(db)
 	}
 	return db

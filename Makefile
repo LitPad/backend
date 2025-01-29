@@ -30,7 +30,7 @@ logsp:
 	docker-compose -f docker-compose-prod.yml logs
 	
 test:
-	go test -timeout 30m ./tests -v -count=1 -run TestProfiles
+	go test -timeout 30m ./tests -v -count=1 -run TestAdminUsers
 
 swag:
 	swag init --md .

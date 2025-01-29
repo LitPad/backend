@@ -57,10 +57,10 @@ func Setup(t *testing.T, app *fiber.App) *gorm.DB {
 	db := SetupTestDatabase(t)
 
 	routes.SetupRoutes(app, db)
-	t.Logf("Making Database Migrations....")
+	t.Log("Dropping & Creating Tables...")
 	database.DropTables(db)
 	database.CreateTables(db)
-	t.Logf("Database Migrations Made successfully")
+	t.Log("Tables Created Successfully")
 	return db
 }
 

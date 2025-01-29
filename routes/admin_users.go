@@ -36,7 +36,7 @@ func (ep Endpoint) AdminGetUsers(c *fiber.Ctx) error {
 		accountType = (*choices.AccType)(&acctType)
 		accountType.IsValid()
 		if !accountType.IsValid() {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid account type"))
+			return c.Status(400).JSON(utils.InvalidParamErr("Invalid account type!"))
 		}
 		if acctType == "ADMIN" {
 			staff = &truthy
