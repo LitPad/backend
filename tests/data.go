@@ -145,3 +145,19 @@ func TestAdmin(db *gorm.DB) models.User {
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
 	return user
 }
+
+
+func TestSubscriber(db *gorm.DB) models.User {
+	email := "testsubscriber@example.com"
+	subExpiry := time.Now().AddDate(0, 1, 0)
+	currentPlan := choices.ST_MONTHLY
+	user := models.User{
+		Email:           email,
+		Password:        MASTER_PASSWORD,
+		IsEmailVerified: true,
+		SubscriptionExpiry: &subExpiry,
+		CurrentPlan: &currentPlan,
+	}
+	db.FirstOrCreate(&user, models.User{Email: user.Email})
+	return user
+}

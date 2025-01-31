@@ -34,7 +34,7 @@ func (ep Endpoint) AdminGetSubscribers(c *fiber.Ctx) error {
 	} else {
 		subscriptionType = (*choices.SubscriptionTypeChoice)(&subType)
 		if !subscriptionType.IsValid() {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid subscription type"))
+			return c.Status(400).JSON(utils.InvalidParamErr("Invalid subscription type!"))
 		}
 	}
 
@@ -43,7 +43,7 @@ func (ep Endpoint) AdminGetSubscribers(c *fiber.Ctx) error {
 	} else {
 		subscriptionStatus = (*choices.SubscriptionStatusChoice)(&subStatus)
 		if !subscriptionStatus.IsValid() {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid subscription status"))
+			return c.Status(400).JSON(utils.InvalidParamErr("Invalid subscription status!"))
 		}
 	}
 

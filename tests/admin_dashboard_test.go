@@ -6,10 +6,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 )
 
-func getDashboardData(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, token string) {
+func getDashboardData(t *testing.T, app *fiber.App, baseUrl string, token string) {
 	t.Run("Reject Dashboard Data Fetch Due to Invalid Growth Filter", func(t *testing.T) {
 		url := fmt.Sprintf("%s/?user_growth_filter=1", baseUrl)
 		res := ProcessTestGetOrDelete(app, url, "GET", token)
@@ -23,7 +22,6 @@ func getDashboardData(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string,
 	})
 
 	t.Run("Accept Dashboard Data Fetch Due to Valid Data", func(t *testing.T) {
-		TestVerifiedUser(db)
 		res := ProcessTestGetOrDelete(app, baseUrl, "GET", token)
 		// Assert Status code
 		assert.Equal(t, 200, res.StatusCode)
@@ -43,5 +41,5 @@ func TestAdminDashboard(t *testing.T) {
 	baseUrl := "/api/v1/admin"
 
 	// Run Admin Dashboard Endpoint Tests
-	getDashboardData(t, app, db, baseUrl, token)
+	getDashboardData(t, app, baseUrl, token)
 }
