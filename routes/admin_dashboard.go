@@ -28,7 +28,7 @@ func (ep Endpoint) AdminDashboard(c *fiber.Ctx) error {
 	userGrowthFilterQuery := c.QueryInt("user_growth_filter", int(choices.UG_365))
 	userGrowthFilter := choices.UserGrowthChoice(userGrowthFilterQuery)
 	if !userGrowthFilter.IsValid() {
-		return c.Status(400).JSON(utils.InvalidParamErr("Invalid user growth filter choice"))
+		return c.Status(400).JSON(utils.InvalidParamErr("Invalid user growth filter choice!"))
 	}
 	totalUsers := userManager.GetCount(db)
 	activeSubscribers := userManager.GetActiveSubscribersCount(db)
