@@ -38,7 +38,7 @@ func getUsers(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, token s
 	})
 }
 
-func updateUserRole(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, admin models.User, token string) {
+func updateUserRole(t *testing.T, app *fiber.App, baseUrl string, admin models.User, token string) {
 	data := schemas.UpdateUserRoleSchema{AccountType: choices.ACCTYPE_READER}
 
 	t.Run("Reject Role Update Due to Invalid Username", func(t *testing.T) {
@@ -91,6 +91,6 @@ func TestAdminUsers(t *testing.T) {
 
 	// Run Admin Users Endpoint Tests
 	getUsers(t, app, db, baseUrl, token)
-	updateUserRole(t, app, db, baseUrl, admin, token)
+	updateUserRole(t, app, baseUrl, admin, token)
 	toggleUserActivation(t, app, db, baseUrl, token)
 }
