@@ -6,6 +6,7 @@ import (
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/routes"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -160,4 +161,22 @@ func TestSubscriber(db *gorm.DB) models.User {
 	}
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
 	return user
+}
+
+func TestSubscriptionPlan(db *gorm.DB) models.SubscriptionPlan {
+	plan := models.SubscriptionPlan{
+		Amount: decimal.NewFromInt(1000), SubType: choices.ST_MONTHLY,
+	}
+	db.FirstOrCreate(&plan, plan)
+	return plan
+}
+
+func TestTransaction(db *gorm.DB, user models.User) models.Transaction {
+	plan := TestSubscriptionPlan(db)
+	transaction := models.Transaction{
+		UserID: user.ID, SubscriptionPlanID: &plan.ID,
+		PaymentType: choices.PTYPE_GPAY, PaymentPurpose: choices.PP_SUB,
+	}
+	db.FirstOrCreate(&transaction, transaction)
+	return transaction
 }
