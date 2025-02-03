@@ -34,10 +34,10 @@ func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 		return c.Status(422).JSON(utils.ValidationErr("name", "Genre already exists"))
 	}
 	tags := []models.Tag{}
-	if len(tags) > 0 {
+	if len(data.TagSlugs) > 0 {
 		db.Where("slug IN ?", data.TagSlugs).Find(&tags)
 		if len(tags) < 1 {
-			return c.Status(422).JSON(utils.ValidationErr("tag_slugs", "Enter at leat one valid tag slugs"))
+			return c.Status(422).JSON(utils.ValidationErr("tag_slugs", "Enter at least one valid tag slug"))
 		}
 	}
 	db.Omit("Tags.*").Create(&models.Genre{Name: name, Tags: tags})
