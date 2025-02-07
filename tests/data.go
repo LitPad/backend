@@ -180,3 +180,10 @@ func TestTransaction(db *gorm.DB, user models.User) models.Transaction {
 	db.FirstOrCreate(&transaction, transaction)
 	return transaction
 }
+
+// WALLET TEST DATA
+func TestCoin(db *gorm.DB) models.Coin {
+	coin := models.Coin{Amount: 100, Price: decimal.NewFromInt(100)}
+	db.FirstOrCreate(&coin, coin)
+	return coin
+}

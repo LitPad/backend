@@ -106,7 +106,6 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	walletRouter.Get("/transactions", endpoint.AuthMiddleware, endpoint.AllUserTransactions)
 	walletRouter.Post("/verify-payment", endpoint.VerifyPayment)
 	walletRouter.Get("/plans", endpoint.GetSubscriptionPlans)
-	walletRouter.Put("/plans", endpoint.AdminMiddleware, endpoint.UpdateSubscriptionPlan)
 	walletRouter.Post("/subscription", endpoint.AuthMiddleware, endpoint.BookSubscription)
 
 	// ICP Wallet Routes
@@ -144,6 +143,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
 
 	// Admin Payments (1)
+	walletRouter.Put("/payments/plans", endpoint.AdminMiddleware, endpoint.UpdateSubscriptionPlan)
 	adminRouter.Get("/payments/transactions", endpoint.AdminMiddleware, endpoint.AdminGetTransactions)
 	// --------------------------------------------------------------------------------
 

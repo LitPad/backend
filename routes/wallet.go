@@ -56,7 +56,7 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 	coin := models.Coin{}
 	db.Where("id = ?", data.CoinID).Take(&coin)
 	if coin.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No set of coins with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("No set of coins with that ID"))
 	}
 
 	// Create payment intent
@@ -69,7 +69,7 @@ func (ep Endpoint) BuyCoins(c *fiber.Ctx) error {
 		ResponseSchema: ResponseMessage("Payment Data Generated"),
 		Data:           schemas.TransactionSchema{}.Init(*transaction),
 	}
-	return c.Status(200).JSON(response)
+	return c.Status(201).JSON(response)
 }
 
 // @Summary View Current Transactions
@@ -236,33 +236,6 @@ func (ep Endpoint) GetSubscriptionPlans(c *fiber.Ctx) error {
 	response := schemas.SubscriptionPlansResponseSchema{
 		ResponseSchema: ResponseMessage("Plans fetched successfully"),
 	}.Init(plans)
-	return c.Status(200).JSON(response)
-}
-
-// @Summary Update A Plan Amount
-// @Description This endpoint allows an admin to change the amount of a plan
-// @Tags Wallet
-// @Param plan body schemas.SubscriptionPlanSchema true "Plan data"
-// @Success 200 {object} schemas.SubscriptionPlanResponseSchema
-// @Failure 400 {object} utils.ErrorResponse
-// @Failure 422 {object} utils.ErrorResponse
-// @Failure 401 {object} utils.ErrorResponse
-// @Router /wallet/plans [put]
-// @Security BearerAuth
-func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
-	db := ep.DB
-	data := schemas.SubscriptionPlanSchema{}
-	if errCode, errData := ValidateRequest(c, &data); errData != nil {
-		return c.Status(*errCode).JSON(errData)
-	}
-	plan := models.SubscriptionPlan{SubType: data.SubType}
-	db.Take(&plan, plan)
-	plan.Amount = data.Amount
-	db.Save(&plan)
-	response := schemas.SubscriptionPlanResponseSchema{
-		ResponseSchema: ResponseMessage("Plan updated successfully"),
-		Data:           schemas.SubscriptionPlanSchema{}.Init(plan),
-	}
 	return c.Status(200).JSON(response)
 }
 

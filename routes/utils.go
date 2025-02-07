@@ -42,7 +42,6 @@ func GetBaseReferer(c *fiber.Ctx) string {
 
 func CreatePaymentIntent(db *gorm.DB, user models.User, plan *models.SubscriptionPlan, paymentToken *string, coin *models.Coin, quantity int) (*models.Transaction, *utils.ErrorResponse) {
 	cfg := config.GetConfig()
-	
     stripe.Key = cfg.StripeSecretKey
 	var price int64
 	if coin != nil {

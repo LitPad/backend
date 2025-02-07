@@ -7,6 +7,33 @@ import (
 	"github.com/google/uuid"
 )
 
+// @Summary Update A Plan Amount
+// @Description This endpoint allows an admin to change the amount of a plan
+// @Tags Wallet
+// @Param plan body schemas.SubscriptionPlanSchema true "Plan data"
+// @Success 200 {object} schemas.SubscriptionPlanResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 422 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /admin/payments/plans [put]
+// @Security BearerAuth
+func (ep Endpoint) UpdateSubscriptionPlan(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.SubscriptionPlanSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	plan := models.SubscriptionPlan{SubType: data.SubType}
+	db.Take(&plan, plan)
+	plan.Amount = data.Amount
+	db.Save(&plan)
+	response := schemas.SubscriptionPlanResponseSchema{
+		ResponseSchema: ResponseMessage("Plan updated successfully"),
+		Data:           schemas.SubscriptionPlanSchema{}.Init(plan),
+	}
+	return c.Status(200).JSON(response)
+}
+
 // @Summary Latest Transactions with Pagination
 // @Description Retrieves a list of current transactions with support for pagination and optional filtering based on username.
 // @Tags Admin | Payments
