@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	ProjectName               string `mapstructure:"PROJECT_NAME"`
-	Environment               string   `mapstructure:"ENVIRONMENT"`
+	Environment               string `mapstructure:"ENVIRONMENT"`
 	EmailOtpExpireSeconds     int64  `mapstructure:"EMAIL_OTP_EXPIRE_SECONDS"`
 	AccessTokenExpireMinutes  int    `mapstructure:"ACCESS_TOKEN_EXPIRE_MINUTES"`
 	RefreshTokenExpireMinutes int    `mapstructure:"REFRESH_TOKEN_EXPIRE_MINUTES"`
@@ -37,8 +37,8 @@ type Config struct {
 	BrevoContactsUrl          string `mapstructure:"BREVO_CONTACTS_URL"`
 	CORSAllowedOrigins        string `mapstructure:"CORS_ALLOWED_ORIGINS"`
 	CORSAllowCredentials      bool   `mapstructure:"CORS_ALLOW_CREDENTIALS"`
-	GoogleClientID            string `mapstructure:"GOOGLE_CLIENT_ID"`
-	GoogleClientSecret        string `mapstructure:"GOOGLE_CLIENT_SECRET"`
+	GoogleAndroidClientID     string `mapstructure:"GOOGLE_ANDROID_CLIENT_ID"`
+	GoogleIOSClientID         string `mapstructure:"GOOGLE_IOS_CLIENT_ID"`
 	FacebookAppID             string `mapstructure:"FACEBOOK_APP_ID"`
 	SocialsPassword           string `mapstructure:"SOCIALS_PASSWORD"`
 	EmailVerificationPath     string `mapstructure:"EMAIL_VERIFICATION_PATH"`
@@ -56,7 +56,7 @@ type Config struct {
 	IDBackImagesBucket        string `mapstructure:"ID_BACK_IMAGES_BUCKET"`
 	WalletSecret              string `mapstructure:"LITPAD_WALLET_SECRET"`
 	PGAdminPassword           string `mapstructure:"PGADMIN_PASSWORD"`
-	ICPWalletIp              string `mapstructure:"LITPAD_WALLET_IP"`
+	ICPWalletIp               string `mapstructure:"LITPAD_WALLET_IP"`
 	ICPPrivateKey             string `mapstructure:"ICP_PRIVATE_KEY"`
 	ICPPublicKey              string `mapstructure:"ICP_PUBLIC_KEY"`
 	CloudinaryCloudName       string `mapstructure:"CLOUDINARY_CLOUD_NAME"`

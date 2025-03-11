@@ -254,3 +254,18 @@ func (r ReplyType) IsValid() bool {
 	}
 	return false
 }
+
+type DeviceType string
+
+const (
+	DT_ANDROID DeviceType = "android"
+	DT_IOS   DeviceType = "ios"
+)
+
+func (s DeviceType) IsValid() bool {
+	switch s {
+	case DT_ANDROID, DT_IOS:
+		return true
+	}
+	return false
+}

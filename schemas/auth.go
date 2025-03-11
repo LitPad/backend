@@ -1,6 +1,9 @@
 package schemas
 
-import "github.com/LitPad/backend/models"
+import (
+	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
+)
 
 // REQUEST BODY SCHEMAS
 type RegisterUser struct {
@@ -29,6 +32,7 @@ type LoginSchema struct {
 }
 
 type SocialLoginSchema struct {
+	DeviceType  choices.DeviceType `json:"device_type" validate:"device_type_validator"` 
 	Token string `json:"token" validate:"required,min=10" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 }
 

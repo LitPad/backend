@@ -49,3 +49,8 @@ func AgeDiscretionValidator(fl validator.FieldLevel) bool {
 func ReplyTypeValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.ReplyType).IsValid()
 }
+
+// Validates if a device type value is the correct one
+func DeviceTypeValidator(fl validator.FieldLevel) bool {
+	return fl.Field().Interface().(choices.DeviceType).IsValid()
+}

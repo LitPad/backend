@@ -280,7 +280,7 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	userGoogleData, errData := ConvertGoogleToken(data.Token)
+	userGoogleData, errData := ConvertGoogleToken(data.Token, data.DeviceType)
 	if errData != nil {
 		return c.Status(401).JSON(errData)
 	}

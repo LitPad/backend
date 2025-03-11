@@ -15,6 +15,7 @@ import (
 	fb "github.com/huandu/facebook/v2"
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/api/idtoken"
+	"github.com/LitPad/backend/models/choices"
 	"gorm.io/gorm"
 )
 
@@ -132,10 +133,14 @@ type GooglePayload struct {
 	Locale        string `json:"locale"`
 }
 
-func ConvertGoogleToken(accessToken string) (*GooglePayload, *utils.ErrorResponse) {
+func ConvertGoogleToken(accessToken string, deviceType choices.DeviceType) (*GooglePayload, *utils.ErrorResponse) {
 	cfg := config.GetConfig()
 
-	payload, err := idtoken.Validate(context.Background(), accessToken, cfg.GoogleClientID)
+	clientID := cfg.GoogleAndroidClientID
+	if deviceType == choices.DT_IOS{
+		clientID = cfg.GoogleIOSClientID
+	}
+	payload, err := idtoken.Validate(context.Background(), accessToken, clientID)
 	if err != nil {
 		errMsg := "Invalid Token"
 		if strings.Contains(err.Error(), "audience provided") {
