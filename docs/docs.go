@@ -638,6 +638,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/payments/plans": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows an admin to change the amount of a plan",
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Update A Plan Amount",
+                "parameters": [
+                    {
+                        "description": "Plan data",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubscriptionPlanResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/payments/transactions": {
             "get": {
                 "security": [
@@ -3463,55 +3514,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "This endpoint allows an admin to change the amount of a plan",
-                "tags": [
-                    "Wallet"
-                ],
-                "summary": "Update A Plan Amount",
-                "parameters": [
-                    {
-                        "description": "Plan data",
-                        "name": "plan",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.SubscriptionPlanSchema"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.SubscriptionPlanResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/wallet/subscription": {
@@ -3663,6 +3665,17 @@ const docTemplate = `{
                 "CT_EXCLUSIVE",
                 "CT_NON_EXCLUSIVE",
                 "CT_ONLY_EXCLUSIVE"
+            ]
+        },
+        "choices.DeviceType": {
+            "type": "string",
+            "enum": [
+                "android",
+                "ios"
+            ],
+            "x-enum-varnames": [
+                "DT_ANDROID",
+                "DT_IOS"
             ]
         },
         "choices.NotificationTypeChoice": {
@@ -5233,6 +5246,9 @@ const docTemplate = `{
                 "token"
             ],
             "properties": {
+                "device_type": {
+                    "$ref": "#/definitions/choices.DeviceType"
+                },
                 "token": {
                     "type": "string",
                     "minLength": 10,

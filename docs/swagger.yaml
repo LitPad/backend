@@ -54,6 +54,14 @@ definitions:
     - CT_EXCLUSIVE
     - CT_NON_EXCLUSIVE
     - CT_ONLY_EXCLUSIVE
+  choices.DeviceType:
+    enum:
+    - android
+    - ios
+    type: string
+    x-enum-varnames:
+    - DT_ANDROID
+    - DT_IOS
   choices.NotificationTypeChoice:
     enum:
     - LIKE
@@ -1141,6 +1149,8 @@ definitions:
     type: object
   schemas.SocialLoginSchema:
     properties:
+      device_type:
+        $ref: '#/definitions/choices.DeviceType'
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ
         minLength: 10
@@ -1888,6 +1898,38 @@ paths:
       summary: Update Tag
       tags:
       - Admin | Books
+  /admin/payments/plans:
+    put:
+      description: This endpoint allows an admin to change the amount of a plan
+      parameters:
+      - description: Plan data
+        in: body
+        name: plan
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.SubscriptionPlanSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SubscriptionPlanResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update A Plan Amount
+      tags:
+      - Wallet
   /admin/payments/transactions:
     get:
       consumes:
@@ -3744,37 +3786,6 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: List Available Subscription Plans
-      tags:
-      - Wallet
-    put:
-      description: This endpoint allows an admin to change the amount of a plan
-      parameters:
-      - description: Plan data
-        in: body
-        name: plan
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.SubscriptionPlanSchema'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/schemas.SubscriptionPlanResponseSchema'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Update A Plan Amount
       tags:
       - Wallet
   /wallet/subscription:
