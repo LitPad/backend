@@ -24,7 +24,6 @@ var (
 
 	BOOK = models.Book{
 		Title:  "The Mysterious Island",
-		Slug:   "the-mysterious-island",
 		Blurb:  "An adventure novel about survival and discovery on an uncharted island.",
 		AgeDiscretion: choices.ATYPE_EIGHTEEN,
 		CoverImage: "https://example.com/cover.jpg",
