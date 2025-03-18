@@ -28,10 +28,10 @@ func RequestUser(c *fiber.Ctx) *models.User {
 
 func Session(c *fiber.Ctx, store *session.Store) *session.Session {
 	// Get session from storage
-    sess, err := store.Get(c)
-    if err != nil {
-        log.Println("Error Getting Session: ", err)
-    }
+	sess, err := store.Get(c)
+	if err != nil {
+		log.Println("Error Getting Session: ", err)
+	}
 	return sess
 }
 
@@ -42,7 +42,7 @@ func GetBaseReferer(c *fiber.Ctx) string {
 
 func CreatePaymentIntent(db *gorm.DB, user models.User, plan *models.SubscriptionPlan, paymentToken *string, coin *models.Coin, quantity int) (*models.Transaction, *utils.ErrorResponse) {
 	cfg := config.GetConfig()
-    stripe.Key = cfg.StripeSecretKey
+	stripe.Key = cfg.StripeSecretKey
 	var price int64
 	if coin != nil {
 		price = coin.Price.Mul(decimal.NewFromFloat(100)).IntPart()
@@ -50,42 +50,42 @@ func CreatePaymentIntent(db *gorm.DB, user models.User, plan *models.Subscriptio
 		price = plan.Amount.Mul(decimal.NewFromFloat(100)).IntPart()
 	}
 
-    // Base PaymentIntent parameters
-    params := &stripe.PaymentIntentParams{
-        Amount:   stripe.Int64(price),
-        Currency: stripe.String(string(stripe.CurrencyUSD)),
-    }
+	// Base PaymentIntent parameters
+	params := &stripe.PaymentIntentParams{
+		Amount:   stripe.Int64(price),
+		Currency: stripe.String(string(stripe.CurrencyUSD)),
+	}
 
-    // Determine payment method type based on token presence
-    if paymentToken != nil {
-        // Google Pay (Token provided)
-        params.PaymentMethodData = &stripe.PaymentIntentPaymentMethodDataParams{
-            Type: stripe.String("card"),
-            Card: &stripe.PaymentMethodCardParams{
-                Token: stripe.String(*paymentToken), // Tokenized card
-            },
-        }
-        params.ConfirmationMethod = stripe.String(string(stripe.PaymentIntentConfirmationMethodManual))
-        params.Confirm = stripe.Bool(true)
-    } else {
-        // Card, Cashapp, etc (No token provided)
-        params.PaymentMethodTypes = stripe.StringSlice([]string{"card", "cashapp"})
-    }
+	// Determine payment method type based on token presence
+	if paymentToken != nil {
+		// Google Pay (Token provided)
+		params.PaymentMethodData = &stripe.PaymentIntentPaymentMethodDataParams{
+			Type: stripe.String("card"),
+			Card: &stripe.PaymentMethodCardParams{
+				Token: stripe.String(*paymentToken), // Tokenized card
+			},
+		}
+		params.ConfirmationMethod = stripe.String(string(stripe.PaymentIntentConfirmationMethodManual))
+		params.Confirm = stripe.Bool(true)
+	} else {
+		// Card, Cashapp, etc (No token provided)
+		params.PaymentMethodTypes = stripe.StringSlice([]string{"card", "cashapp"})
+	}
 
-    // Create the Payment Intent
-    intent, err := paymentintent.New(params)
-    if err != nil {
-        errD := utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to create Payment Intent")
-        return nil, &errD
-    }
+	// Create the Payment Intent
+	intent, err := paymentintent.New(params)
+	if err != nil {
+		errD := utils.RequestErr(utils.ERR_SERVER_ERROR, "Failed to create Payment Intent")
+		return nil, &errD
+	}
 
-    // Create Transaction Object
-    transaction := models.Transaction{
-        Reference: intent.ID,
-        UserID: user.ID,
-		Quantity: quantity,
+	// Create Transaction Object
+	transaction := models.Transaction{
+		Reference:    intent.ID,
+		UserID:       user.ID,
+		Quantity:     quantity,
 		ClientSecret: intent.ClientSecret,
-    }
+	}
 	if coin != nil {
 		transaction.CoinID = &coin.ID
 		transaction.PaymentType = choices.PTYPE_STRIPE
@@ -95,10 +95,10 @@ func CreatePaymentIntent(db *gorm.DB, user models.User, plan *models.Subscriptio
 		transaction.PaymentType = choices.PTYPE_GPAY
 		transaction.PaymentPurpose = choices.PP_SUB
 	}
-    db.Create(&transaction)
-    transaction.SubscriptionPlan = plan
-    transaction.Coin = coin
-    return &transaction, nil
+	db.Create(&transaction)
+	transaction.SubscriptionPlan = plan
+	transaction.Coin = coin
+	return &transaction, nil
 }
 
 func IsValidPaymentStatus(s string) bool {
@@ -112,7 +112,7 @@ func IsValidPaymentStatus(s string) bool {
 func ValidatePaymentStatus(c *fiber.Ctx) (*string, *utils.ErrorResponse) {
 	status := c.Query("payment_status", "")
 	if status != "" && !IsValidPaymentStatus(status) {
-		errD := utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid payment status")
+		errD := utils.InvalidParamErr("Invalid payment status")
 		return nil, &errD
 	}
 	return &status, nil
@@ -121,26 +121,26 @@ func ValidatePaymentStatus(c *fiber.Ctx) (*string, *utils.ErrorResponse) {
 func CheckTagStrings(db *gorm.DB, submittedList []string) ([]models.Tag, *string) {
 	tags := []models.Tag{}
 	db.Find(&tags)
-    // Create a map for quick lookup of predefined strings
-    predefinedMap := make(map[string]bool)
-    for _, item := range tags {
-        predefinedMap[item.Slug] = true
-    }
+	// Create a map for quick lookup of predefined strings
+	predefinedMap := make(map[string]bool)
+	for _, item := range tags {
+		predefinedMap[item.Slug] = true
+	}
 
-    // Iterate over the submitted list and check for any missing strings
-    missingStrings := []string{}
-    for _, item := range submittedList {
-        if !predefinedMap[item] {
-            missingStrings = append(missingStrings, item)
-        }
-    }
+	// Iterate over the submitted list and check for any missing strings
+	missingStrings := []string{}
+	for _, item := range submittedList {
+		if !predefinedMap[item] {
+			missingStrings = append(missingStrings, item)
+		}
+	}
 
-    // Return a message based on the result
-    if len(missingStrings) > 0 {
+	// Return a message based on the result
+	if len(missingStrings) > 0 {
 		missingTags := strings.Join(missingStrings, ", ")
-        errMsg := fmt.Sprintf("The following are invalid tag slugs: %v", missingTags)
+		errMsg := fmt.Sprintf("The following are invalid tag slugs: %v", missingTags)
 		return tags, &errMsg
-    }
+	}
 	tagsToReturn := []models.Tag{}
 	db.Where("slug IN ?", submittedList).Find(&tagsToReturn)
 	return tagsToReturn, nil
@@ -161,14 +161,14 @@ func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {
 }
 
 func IsAmongUserType(target string) bool {
-    switch target {
-    case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_AUTHOR):
-        return true
-    }
-    return false
+	switch target {
+	case "ADMIN", string(choices.ACCTYPE_READER), string(choices.ACCTYPE_AUTHOR):
+		return true
+	}
+	return false
 }
 
-func GetQueryValue (c *fiber.Ctx, key string) *string {
+func GetQueryValue(c *fiber.Ctx, key string) *string {
 	value := c.Query(key, "")
 	if value == "" {
 		return nil

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	giftManager      = managers.GiftManager{}
-	sendGiftManager      = managers.SentGiftManager{}
+	giftManager     = managers.GiftManager{}
+	sendGiftManager = managers.SentGiftManager{}
 )
 
 // @Summary View All Available Gifts
@@ -49,7 +49,7 @@ func (ep Endpoint) SendGift(c *fiber.Ctx) error {
 
 	writer := userManager.GetWriterByUsername(db, writerUsername)
 	if writer == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No writer with that username"))
+		return c.Status(404).JSON(utils.NotFoundErr("No writer with that username"))
 	}
 
 	if user.ID == writer.ID {
@@ -58,7 +58,7 @@ func (ep Endpoint) SendGift(c *fiber.Ctx) error {
 
 	gift := giftManager.GetBySlug(db, giftSlug)
 	if gift == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No available gift with that slug"))
+		return c.Status(404).JSON(utils.NotFoundErr("No available gift with that slug"))
 	}
 
 	if gift.Price > user.Coins {
@@ -68,10 +68,10 @@ func (ep Endpoint) SendGift(c *fiber.Ctx) error {
 
 	// Send gift
 	sentGift := sendGiftManager.Create(db, *gift, *user, *writer)
-	
+
 	// Create and send notification in socket
 	notification := notificationManager.Create(
-		db, user, *writer, choices.NT_GIFT, 
+		db, user, *writer, choices.NT_GIFT,
 		fmt.Sprintf("%s sent you a gift.", user.Username),
 		nil, nil, nil, &sentGift.ID,
 	)
@@ -104,13 +104,12 @@ func (ep Endpoint) GetAllSentGifts(c *fiber.Ctx) error {
 		if claimed == "NOT_CLAIMED" {
 			claimOpt = false
 		} else if claimed != "CLAIMED" {
-			return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid claimed param"))
+			return c.Status(400).JSON(utils.InvalidParamErr("Invalid claimed param"))
 		}
 		sentGifts = sendGiftManager.GetByWriter(db, *user, claimOpt)
 	} else {
 		sentGifts = sendGiftManager.GetByWriter(db, *user)
 	}
-
 
 	// Paginate and return sent gifts
 	paginatedData, paginatedSentGifts, err := PaginateQueryset(sentGifts, c, 100)
@@ -131,7 +130,7 @@ func (ep Endpoint) GetAllSentGifts(c *fiber.Ctx) error {
 // @Description This endpoint allows a writer to claim a gift
 // @Tags Gifts
 // @Param id path string true "ID of the sent gift (uuid)"
-// @Success 200 {object} schemas.SentGiftResponseSchema	
+// @Success 200 {object} schemas.SentGiftResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /gifts/sent/{id}/claim [get]
 // @Security BearerAuth
@@ -141,11 +140,11 @@ func (ep Endpoint) ClaimGift(c *fiber.Ctx) error {
 	sentGiftID := c.Params("id")
 	parsedID := ParseUUID(sentGiftID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 	sentGift := sendGiftManager.GetByWriterAndID(db, *user, *parsedID)
 	if sentGift == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No gift with that ID was sent to you"))
+		return c.Status(404).JSON(utils.NotFoundErr("No gift with that ID was sent to you"))
 	}
 
 	if !sentGift.Claimed {

@@ -262,7 +262,7 @@ func (ep Endpoint) BookSubscription(c *fiber.Ctx) error {
 	plan := models.SubscriptionPlan{}
 	db.Where("type = ?", data.SubType).Take(&plan)
 	if plan.ID == uuid.Nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No subscription plan with that type"))
+		return c.Status(404).JSON(utils.NotFoundErr("No subscription plan with that type"))
 	}
 
 	// Create payment intent

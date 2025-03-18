@@ -31,10 +31,7 @@ func (ep Endpoint) Register(c *fiber.Ctx) error {
 	// Validate email uniqueness
 	db.Take(&existingUser, models.User{Email: data.Email})
 	if existingUser.ID != uuid.Nil {
-		data := map[string]string{
-			"email": "Email already taken!",
-		}
-		return c.Status(422).JSON(utils.RequestErr(utils.ERR_INVALID_ENTRY, "Invalid Entry", data))
+		return c.Status(422).JSON(utils.ValidationErr("email", "Email already taken!"))
 	}
 
 	user := models.User{Email: data.Email, Password: data.Password}

@@ -28,21 +28,21 @@ func (ep Endpoint) AddToWaitlist(c *fiber.Ctx) error {
 
 	data := schemas.AddToWaitlist{}
 
-	if errCode, errData := ValidateRequest(c, &data); errData != nil{
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
 
 	genre := genreManager.GetBySlug(db, data.GenreSlug)
 
-	if genre == nil{
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "Genre does not exist"))
+	if genre == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Genre does not exist"))
 	}
 
 	waitlist := models.Waitlist{
 		BaseModel: models.BaseModel{CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		Name: data.Name,
-		Email: data.Email,
-		GenreID: genre.ID,
+		Name:      data.Name,
+		Email:     data.Email,
+		GenreID:   genre.ID,
 	}
 
 	db.Take(&waitlist, models.Waitlist{Email: waitlist.Email})

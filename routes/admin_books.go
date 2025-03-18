@@ -23,8 +23,8 @@ import (
 func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 	db := ep.DB
 	data := schemas.GenreAddSchema{}
-	errCode, errData := ValidateRequest(c, &data);
-	if errData != nil{
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
 	name := data.Name
@@ -58,8 +58,8 @@ func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 func (ep Endpoint) AdminAddBookTag(c *fiber.Ctx) error {
 	db := ep.DB
 	data := schemas.TagsAddSchema{}
-	errCode, errData := ValidateRequest(c, &data);
-	if errData != nil{
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
 	name := data.Name
@@ -92,8 +92,8 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 	}
 
 	data := schemas.GenreAddSchema{}
-	errCode, errData := ValidateRequest(c, &data);
-	if errData != nil{
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
 
@@ -137,8 +137,8 @@ func (ep Endpoint) AdminUpdateBookTag(c *fiber.Ctx) error {
 	}
 
 	data := schemas.TagsAddSchema{}
-	errCode, errData := ValidateRequest(c, &data);
-	if errData != nil{
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
 	name := data.Name
@@ -335,7 +335,7 @@ func (ep Endpoint) AdminGetBookContracts(c *fiber.Ctx) error {
 	}
 	contractStatus := choices.ContractStatusChoice(c.Query("contract_status", ""))
 	if !contractStatus.IsValid() {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid contract status"))
+		return c.Status(400).JSON(utils.InvalidParamErr("Invalid contract status"))
 	}
 
 	books := bookManager.GetBookContracts(db, name, &contractStatus)

@@ -176,7 +176,7 @@ func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
 	}
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter fetched successfully"),
-		Data: schemas.ChapterSchema{}.Init(*chapter),
+		Data:           schemas.ChapterSchema{}.Init(*chapter),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -532,12 +532,12 @@ func (ep Endpoint) EditBookReview(c *fiber.Ctx) error {
 	reviewID := c.Params("id")
 	parsedID := ParseUUID(reviewID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
 	review := reviewManager.GetByUserAndID(db, user, *parsedID)
 	if review == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a review with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a review with that ID"))
 	}
 	data := schemas.ReviewBookSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
@@ -566,12 +566,12 @@ func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
 	reviewID := c.Params("id")
 	parsedID := ParseUUID(reviewID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
 	review := reviewManager.GetByUserAndID(db, user, *parsedID)
 	if review == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "You don't have a review with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("You don't have a review with that ID"))
 	}
 	db.Delete(&review)
 	return c.Status(200).JSON(ResponseMessage("Review deleted successfully"))
@@ -591,12 +591,12 @@ func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
 	reviewID := c.Params("id")
 	parsedID := ParseUUID(reviewID)
 	if parsedID == nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "You entered an invalid uuid"))
+		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
 	review := reviewManager.GetByID(db, *parsedID)
 	if review == nil {
-		return c.Status(404).JSON(utils.RequestErr(utils.ERR_NON_EXISTENT, "No review with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("No review with that ID"))
 	}
 
 	// Paginate and return replies
@@ -867,10 +867,10 @@ func (ep Endpoint) ConvertCoinsToLanterns(c *fiber.Ctx) error {
 	user := RequestUser(c)
 	amount, err := c.ParamsInt("amount")
 	if err != nil {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Invalid amount parameter"))
+		return c.Status(400).JSON(utils.InvalidParamErr("Invalid amount parameter"))
 	}
 	if amount < 1 {
-		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INVALID_PARAM, "Amount must not be less than 1"))
+		return c.Status(400).JSON(utils.InvalidParamErr("Amount must not be less than 1"))
 	}
 	if amount > user.Coins {
 		return c.Status(400).JSON(utils.RequestErr(utils.ERR_INSUFFICIENT_COINS, "You have insufficient coins for that conversion"))
