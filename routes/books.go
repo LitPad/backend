@@ -176,7 +176,7 @@ func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
 	}
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter fetched successfully"),
-		Data:           schemas.ChapterSchema{}.Init(*chapter),
+		Data:           schemas.ChapterDetailSchema{}.Init(*chapter),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -190,14 +190,14 @@ func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
 // @Param page query int false "Current Page" default(1)
 // @Success 200 {object} schemas.ParagraphCommentsResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book/chapters/chapter/{slug}/paragraph-comments/{index} [get]
+// @Router /books/book/chapters/chapter/{slug}/paragraph/{index}/comments [get]
 // @Security BearerAuth
-func (ep Endpoint) GetChapterParagraphComments(c *fiber.Ctx) error {
+func (ep Endpoint) GetParagraphComments(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	slug := c.Params("slug")
 	index, _ := c.ParamsInt("index", 1)
-	chapter, err := chapterManager.GetBySlugWithComments(db, slug, index)
+	chapter, comments, err := chapterManager.GetBySlugWithComments(db, slug, uint(index))
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -207,14 +207,14 @@ func (ep Endpoint) GetChapterParagraphComments(c *fiber.Ctx) error {
 	}
 
 	// Paginate and return comments
-	paginatedData, paginatedComments, err := PaginateQueryset(chapter.Comments, c, 100)
+	paginatedData, paginatedComments, err := PaginateQueryset(comments, c, 100)
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
-	comments := paginatedComments.([]models.ParagraphComment)
+	comments = paginatedComments.([]models.Comment)
 
 	response := schemas.ParagraphCommentsResponseSchema{
-		ResponseSchema: ResponseMessage("Chapter Comments fetched successfully"),
+		ResponseSchema: ResponseMessage("Paragraph Comments fetched successfully"),
 		Data: schemas.ParagraphCommentsResponseDataSchema{
 			PaginatedResponseDataSchema: *paginatedData,
 		}.Init(comments),
@@ -245,7 +245,7 @@ func (ep Endpoint) GetSingleBook(c *fiber.Ctx) error {
 
 	book = ViewBook(c, db, *book)
 
-	reviews := paginatedReviews.([]models.Review)
+	reviews := paginatedReviews.([]models.Comment)
 	response := schemas.BookDetailResponseSchema{
 		ResponseSchema: ResponseMessage("Book details fetched successfully"),
 		Data:           schemas.BookDetailSchema{}.Init(*book, *paginatedData, reviews),
@@ -405,7 +405,7 @@ func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
 	chapter := chapterManager.Create(db, *book, data)
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter added successfully"),
-		Data:           schemas.ChapterSchema{}.Init(chapter),
+		Data:           schemas.ChapterDetailSchema{}.Init(chapter),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -440,7 +440,7 @@ func (ep Endpoint) UpdateChapter(c *fiber.Ctx) error {
 	updatedChapter := chapterManager.Update(db, *chapter, data)
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter updated successfully"),
-		Data:           schemas.ChapterSchema{}.Init(updatedChapter),
+		Data:           schemas.ChapterDetailSchema{}.Init(updatedChapter),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -643,11 +643,11 @@ func (ep Endpoint) ReplyReviewOrParagraphComment(c *fiber.Ctx) error {
 		if review == nil {
 			return c.Status(404).JSON(utils.NotFoundErr("No review with that ID"))
 		}
-		reply = replyManager.Create(db, user, review, nil, data)
+		reply = replyManager.Create(db, user, review, data)
 		// Create and Send Notification in socket
 		if user.ID != review.User.ID {
 			text := fmt.Sprintf("%s replied your review", user.Username)
-			notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, &review.Book, &review.ID, &reply.ID, nil)
+			notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, review.Book, &review.ID, &reply.ID, nil)
 			SendNotificationInSocket(c, notification)
 		}
 	} else {
@@ -655,7 +655,7 @@ func (ep Endpoint) ReplyReviewOrParagraphComment(c *fiber.Ctx) error {
 		if paragraphComment == nil {
 			return c.Status(404).JSON(utils.NotFoundErr("No paragraph comment with that ID"))
 		}
-		reply = replyManager.Create(db, user, nil, paragraphComment, data)
+		reply = replyManager.Create(db, user, paragraphComment, data)
 	}
 
 	response := schemas.ReplyResponseSchema{

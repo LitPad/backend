@@ -83,7 +83,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	bookRouter.Post("/book/:slug/add-chapter", endpoint.AuthorMiddleware, endpoint.AddChapter)
 
 	bookRouter.Get("/book/chapters/chapter/:slug", endpoint.AuthMiddleware, endpoint.GetBookChapter)
-	bookRouter.Get("/book/chapters/chapter/:slug/paragraph-comments/:index", endpoint.AuthMiddleware, endpoint.GetChapterParagraphComments)
+	bookRouter.Get("/book/chapters/chapter/:slug/paragraph/:index/comments", endpoint.AuthMiddleware, endpoint.GetParagraphComments)
 	bookRouter.Post("/book/chapters/chapter/:slug", endpoint.AuthMiddleware, endpoint.AddParagraphComment)
 	bookRouter.Put("/book/chapters/chapter/paragraph-comment/:id", endpoint.AuthMiddleware, endpoint.EditParagraphComment)
 	bookRouter.Delete("/book/chapters/chapter/paragraph-comment/:id", endpoint.AuthMiddleware, endpoint.DeleteParagraphComment)
@@ -123,6 +123,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/users", endpoint.AdminMiddleware, endpoint.AdminGetUsers)
 	adminRouter.Put("/users/:username", endpoint.AdminMiddleware, endpoint.AdminUpdateUser)
 	adminRouter.Get("/users/:username/toggle-activation", endpoint.AdminMiddleware, endpoint.ToggleUserActivation)
+	adminRouter.Post("/users/admins/invite", endpoint.AdminMiddleware, endpoint.InviteAdmin)
 
 	// Admin Users
 	adminRouter.Get("/subscribers", endpoint.AdminMiddleware, endpoint.AdminGetSubscribers)

@@ -59,7 +59,7 @@ func TestAuthor(db *gorm.DB, another ...bool) models.User {
 }
 
 func JwtData(db *gorm.DB, user models.User) models.User {
-	access := routes.GenerateAccessToken(user.ID)
+	access := routes.GenerateAccessToken(user)
 	refresh := routes.GenerateRefreshToken()
 	user.Access = &access
 	user.Refresh = &refresh

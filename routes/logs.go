@@ -48,7 +48,7 @@ func (ep Endpoint) HandleLogsLogin(c *fiber.Ctx) error {
 		return c.Redirect("/logs/login")
 	}
 	
-	accessToken := GenerateAccessToken(user.ID)
+	accessToken := GenerateAccessToken(*user)
 	user.Access = &accessToken
 	// Hash password
 	if user.Password == password {

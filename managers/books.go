@@ -8,6 +8,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"fmt"
 )
 
 type BookManager struct {
@@ -56,12 +57,12 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 			Where("users.username ILIKE ? OR users.name ILIKE ?", "%"+nameContains+"%", "%"+nameContains+"%")
 	}
 
-	query = query.Select("books.*, COALESCE(AVG(reviews.rating), 0) AS avg_rating").
-		Joins("left join reviews on reviews.book_id = books.id").
+	query = query.Select("books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating").
+		Joins("left join comments on comments.book_id = books.id").
 		Group("books.id")
 
 	if byRating {
-		query = query.Order("COALESCE(AVG(reviews.rating), 0) DESC")
+		query = query.Order("COALESCE(AVG(comments.rating), 0) DESC")
 	} else {
 		query = query.Order("books.created_at DESC")
 	}
@@ -88,13 +89,13 @@ func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.Book
 			books.title, 
 			books.cover_image, 
 			users.username AS author_name, 
-			COALESCE(AVG(reviews.rating), 0) AS avg_rating, 
+			COALESCE(AVG(comments.rating), 0) AS avg_rating, 
 			COUNT(votes.id) AS votes_count, 
 			genres.name AS genre_name, 
 			genres.slug AS genre_slug
 		`).
 		Joins("LEFT JOIN users ON users.id = books.author_id"). // Adjust `author_id` if necessary
-		Joins("LEFT JOIN reviews ON reviews.book_id = books.id").
+		Joins("LEFT JOIN comments ON comments.book_id = books.id").
 		Joins("LEFT JOIN votes ON votes.book_id = books.id").
 		Joins("LEFT JOIN genres ON genres.id = books.genre_id"). // Adjust `genre_id` if necessary
 		Group("books.slug, books.title, books.cover_image, users.username, genres.name, genres.slug").
@@ -131,8 +132,8 @@ func (b BookManager) GetContractedBookBySlug(db *gorm.DB, slug string) (*models.
 func (b BookManager) GetBySlugWithReviews(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagReviewsBookScope).
-		Select("books.*, AVG(reviews.rating) as avg_rating").
-		Joins("LEFT JOIN reviews ON reviews.book_id = books.id").
+		Select("books.*, AVG(comments.rating) as avg_rating").
+		Joins("LEFT JOIN comments ON comments.book_id = books.id").
 		Group("books.id").
 		Take(&book, book)
 	if book.ID == uuid.Nil {
@@ -219,7 +220,7 @@ type ChapterManager struct {
 
 func (c ChapterManager) GetBySlug(db *gorm.DB, slug string) (*models.Chapter, *utils.ErrorResponse) {
 	chapter := models.Chapter{Slug: slug}
-	db.Joins("Book").Take(&chapter, chapter)
+	db.Joins("Book").Preload("Paragraphs").Preload("Paragraphs.Comments").Take(&chapter, chapter)
 	if chapter.ID == uuid.Nil {
 		errD := utils.NotFoundErr("No chapter with that slug")
 		return nil, &errD
@@ -227,14 +228,17 @@ func (c ChapterManager) GetBySlug(db *gorm.DB, slug string) (*models.Chapter, *u
 	return &chapter, nil
 }
 
-func (c ChapterManager) GetBySlugWithComments(db *gorm.DB, slug string, index int) (*models.Chapter, *utils.ErrorResponse) {
+func (c ChapterManager) GetBySlugWithComments(db *gorm.DB, slug string, index uint) (*models.Chapter, []models.Comment, *utils.ErrorResponse) {
 	chapter := models.Chapter{Slug: slug}
-	db.Joins("Book").Preload("Comments", "index = ?", index).Take(&chapter, chapter)
+	db.Take(&chapter, chapter)
 	if chapter.ID == uuid.Nil {
 		errD := utils.NotFoundErr("No chapter with that slug")
-		return nil, &errD
+		return nil, nil, &errD
 	}
-	return &chapter, nil
+	paragraph := models.Paragraph{ChapterID: chapter.ID, Index: index}
+	comments := []models.Comment{}
+	db.Joins("User").Joins("Replies").Joins("Likes").Where("paragraph_id = ?", paragraph.ID).Find(&comments)
+	return &chapter, comments, nil
 }
 
 func (c ChapterManager) IsFirstChapter(db *gorm.DB, chapter models.Chapter) bool {
@@ -247,16 +251,89 @@ func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.Chapt
 	chapter := models.Chapter{
 		BookID: book.ID,
 		Title:  data.Title,
-		Text:   data.Text,
 	}
 	db.Create(&chapter)
+	// Generate paragraphs
+	paragraphsToCreate := []models.Paragraph{}
+	for idx, paragraph := range data.Paragraphs {
+		paragraphsToCreate = append(paragraphsToCreate, models.Paragraph{ChapterID: chapter.ID, Text: paragraph, Index: uint(idx+1)})
+	}
+	db.Create(&paragraphsToCreate)
+	chapter.Paragraphs = paragraphsToCreate
 	return chapter
 }
 
 func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas.ChapterCreateSchema) models.Chapter {
-	chapter.Title = data.Title
-	chapter.Text = data.Text
-	db.Save(&chapter)
+	// Update title only if changed
+	if chapter.Title != data.Title {
+		chapter.Title = data.Title
+		db.Save(&chapter)
+	}
+
+	existingParagraphs := chapter.Paragraphs
+
+	existingMap := make(map[uint]models.Paragraph) // Existing paragraphs indexed by index
+	for _, p := range existingParagraphs {
+		existingMap[p.Index] = p
+	}
+
+	toInsert := []models.Paragraph{}
+	toUpdate := []models.Paragraph{}
+	toDelete := []uuid.UUID{} // Store IDs for deletion
+
+	existingIndexes := make(map[uint]bool)
+	for i, text := range data.Paragraphs {
+		index := uint(i)
+
+		if existingPara, exists := existingMap[index]; exists {
+			// Update only if text has changed
+			if existingPara.Text != text {
+				toUpdate = append(toUpdate, models.Paragraph{BaseModel: models.BaseModel{ID: existingPara.ID}, Text: text})
+			}
+			existingIndexes[index] = true
+		} else {
+			// Insert new paragraph
+			toInsert = append(toInsert, models.Paragraph{ChapterID: chapter.ID, Index: index, Text: text})
+		}
+	}
+
+	// Find paragraphs to delete (those not in `existingIndexes`)
+	for _, p := range existingParagraphs {
+		if !existingIndexes[p.Index] {
+			toDelete = append(toDelete, p.ID)
+		}
+	}
+
+	// Step 5: Execute Bulk Queries Efficiently
+	tx := db.Begin()
+
+	// Bulk Update (Uses GORM's Batch Update Feature)
+	if len(toUpdate) > 0 {
+		for _, p := range toUpdate {
+			if err := tx.Model(&models.Paragraph{}).Where("id = ?", p.ID).Update("text", p.Text).Error; err != nil {
+				tx.Rollback()
+				fmt.Errorf("failed to update paragraphs: %w", err)
+			}
+		}
+	}
+
+	// Bulk Insert
+	if len(toInsert) > 0 {
+		if err := tx.Create(&toInsert).Error; err != nil {
+			tx.Rollback()
+			fmt.Errorf("failed to insert paragraphs: %w", err)
+		}
+	}
+
+	// Bulk Delete
+	if len(toDelete) > 0 {
+		if err := tx.Where("id IN ?", toDelete).Delete(&models.Paragraph{}).Error; err != nil {
+			tx.Rollback()
+			fmt.Errorf("failed to delete paragraphs: %w", err)
+		}
+	}
+
+	tx.Commit()
 	return chapter
 }
 
@@ -307,21 +384,21 @@ func (g GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
 }
 
 type ReviewManager struct {
-	Model     models.Review
-	ModelList []models.Review
+	Model     models.Comment
+	ModelList []models.Comment
 }
 
-func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Review {
+func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Comment {
 	review := r.Model
-	db.Where("reviews.id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
+	db.Where("comments.id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
 	if review.ID == uuid.Nil {
 		return nil
 	}
 	return &review
 }
 
-func (r ReviewManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Review {
-	review := models.Review{}
+func (r ReviewManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Comment {
+	review := models.Comment{}
 	db.Where("user_id = ?", user.ID).Joins("Book").Joins("User").Preload("Replies").Preload("Likes").Take(&review, id)
 	if review.ID == uuid.Nil {
 		return nil
@@ -329,10 +406,10 @@ func (r ReviewManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UU
 	return &review
 }
 
-func (r ReviewManager) GetByUserAndBook(db *gorm.DB, user *models.User, book models.Book) *models.Review {
-	review := models.Review{
+func (r ReviewManager) GetByUserAndBook(db *gorm.DB, user *models.User, book models.Book) *models.Comment {
+	review := models.Comment{
 		UserID: user.ID,
-		BookID: book.ID,
+		BookID: &book.ID,
 	}
 	db.Take(&review, review)
 	if review.ID == uuid.Nil {
@@ -341,12 +418,12 @@ func (r ReviewManager) GetByUserAndBook(db *gorm.DB, user *models.User, book mod
 	return &review
 }
 
-func (r ReviewManager) Create(db *gorm.DB, user *models.User, book models.Book, data schemas.ReviewBookSchema) models.Review {
-	review := models.Review{
+func (r ReviewManager) Create(db *gorm.DB, user *models.User, book models.Book, data schemas.ReviewBookSchema) models.Comment {
+	review := models.Comment{
 		UserID: user.ID,
 		User:   *user,
-		BookID: book.ID,
-		Book:   book,
+		BookID: &book.ID,
+		Book:   &book,
 		Rating: data.Rating,
 		Text:   data.Text,
 	}
@@ -354,7 +431,7 @@ func (r ReviewManager) Create(db *gorm.DB, user *models.User, book models.Book, 
 	return review
 }
 
-func (r ReviewManager) Update(db *gorm.DB, review models.Review, data schemas.ReviewBookSchema) models.Review {
+func (r ReviewManager) Update(db *gorm.DB, review models.Comment, data schemas.ReviewBookSchema) models.Comment {
 	review.Text = data.Text
 	review.Rating = data.Rating
 	db.Save(&review)
@@ -362,20 +439,20 @@ func (r ReviewManager) Update(db *gorm.DB, review models.Review, data schemas.Re
 }
 
 type ParagraphCommentManager struct {
-	Model     models.ParagraphComment
-	ModelList []models.ParagraphComment
+	Model     models.Comment
+	ModelList []models.Comment
 }
 
-func (p ParagraphCommentManager) GetByID(db *gorm.DB, id uuid.UUID) *models.ParagraphComment {
+func (p ParagraphCommentManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Comment {
 	paragraphComment := p.Model
-	db.Where("paragraph_comments.id = ?", id).Joins("User").Joins("Chapter").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&paragraphComment, paragraphComment)
+	db.Where("comments.id = ?", id).Joins("User").Joins("Paragraph").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&paragraphComment, paragraphComment)
 	if paragraphComment.ID == uuid.Nil {
 		return nil
 	}
 	return &paragraphComment
 }
 
-func (p ParagraphCommentManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.ParagraphComment {
+func (p ParagraphCommentManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Comment {
 	paragraphComment := p.Model
 	db.Where("user_id = ?", user.ID).Joins("Chapter").Joins("User").Preload("Replies").Preload("Likes").Take(&paragraphComment, id)
 	if paragraphComment.ID == uuid.Nil {
@@ -384,27 +461,25 @@ func (p ParagraphCommentManager) GetByUserAndID(db *gorm.DB, user *models.User, 
 	return &paragraphComment
 }
 
-func (p ParagraphCommentManager) GetByChapterID(db *gorm.DB, chapterId uuid.UUID) []models.ParagraphComment {
+func (p ParagraphCommentManager) GetByParagraphID(db *gorm.DB, paragraphId uuid.UUID) []models.Comment {
 	paragraphComments := p.ModelList
-	db.Where("chapter_id = ?", chapterId).Find(&paragraphComments)
+	db.Where("paragraph_id = ?", paragraphId).Find(&paragraphComments)
 	return paragraphComments
 }
 
-func (p ParagraphCommentManager) Create(db *gorm.DB, user *models.User, chapterId uuid.UUID, data schemas.ParagraphCommentAddSchema) models.ParagraphComment {
-	paragraphComment := models.ParagraphComment{
+func (p ParagraphCommentManager) Create(db *gorm.DB, user *models.User, paragraphID uuid.UUID, data schemas.ParagraphCommentAddSchema) models.Comment {
+	paragraphComment := models.Comment{
 		UserID:    user.ID,
 		User:      *user,
-		ChapterID: chapterId,
-		Index:     data.Index,
+		ParagraphID: &paragraphID,
 		Text:      data.Text,
 	}
 	db.Create(&paragraphComment)
 	return paragraphComment
 }
 
-func (p ParagraphCommentManager) Update(db *gorm.DB, paragraphComment models.ParagraphComment, data schemas.ParagraphCommentAddSchema) models.ParagraphComment {
+func (p ParagraphCommentManager) Update(db *gorm.DB, paragraphComment models.Comment, data schemas.ParagraphCommentAddSchema) models.Comment {
 	paragraphComment.Text = data.Text
-	paragraphComment.Index = data.Index
 	db.Save(&paragraphComment)
 	return paragraphComment
 }
@@ -423,17 +498,13 @@ func (r ReplyManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUI
 	return &reply
 }
 
-func (r ReplyManager) Create(db *gorm.DB, user *models.User, review *models.Review, paragraphComment *models.ParagraphComment, data schemas.ReplyReviewOrCommentSchema) models.Reply {
+func (r ReplyManager) Create(db *gorm.DB, user *models.User, reviewOrParagraphComment *models.Comment, data schemas.ReplyReviewOrCommentSchema) models.Reply {
 	reply := models.Reply{
 		UserID: user.ID,
 		User:   *user,
 		Text:   data.Text,
 	}
-	if review != nil {
-		reply.ReviewID = &review.ID
-	} else {
-		reply.ParagraphCommentID = &paragraphComment.ID
-	}
+	reply.CommentID = &reviewOrParagraphComment.ID
 	db.Create(&reply)
 	return reply
 }

@@ -398,7 +398,7 @@ func reviewBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 
 	t.Run("Accept Review Creation Due To Valid Conditions", func(t *testing.T) {
-		db.Delete(&models.Review{}, "book_id = ? AND user_id = ?", book.ID, reviewer.ID)
+		db.Delete(&models.Comment{}, "book_id = ? AND user_id = ?", book.ID, reviewer.ID)
 		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
 		res := ProcessJsonTestBody(t, app, url, "POST", reviewData, token)
 		// Assert Status code

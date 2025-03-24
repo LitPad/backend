@@ -140,7 +140,7 @@ type Notification struct {
 	Book   *Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 
 	ReviewID *uuid.UUID
-	Review   *Review `gorm:"foreignKey:ReviewID;constraint:OnDelete:SET NULL;<-:false"`
+	Review   *Comment `gorm:"foreignKey:ReviewID;constraint:OnDelete:SET NULL;<-:false"`
 
 	ReplyID *uuid.UUID
 	Reply   *Reply `gorm:"foreignKey:ReplyID;constraint:OnDelete:SET NULL;<-:false"`

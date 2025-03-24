@@ -8,6 +8,7 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
+	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
 	"github.com/LitPad/backend/utils"
 	"github.com/golang-jwt/jwt/v5"
@@ -15,12 +16,13 @@ import (
 	fb "github.com/huandu/facebook/v2"
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/api/idtoken"
-	"github.com/LitPad/backend/models/choices"
 	"gorm.io/gorm"
 )
 
 type AccessTokenPayload struct {
-	UserId uuid.UUID `json:"user_id"`
+	UserId   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
+	Email    string    `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -29,11 +31,13 @@ type RefreshTokenPayload struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userId uuid.UUID) string {
+func GenerateAccessToken(user models.User) string {
 	cfg := config.GetConfig()
 	expirationTime := time.Now().Add(time.Duration(cfg.AccessTokenExpireMinutes) * time.Minute)
 	payload := AccessTokenPayload{
-		UserId: userId,
+		UserId: user.ID,
+		Username: user.Username,
+		Email: user.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
@@ -137,7 +141,7 @@ func ConvertGoogleToken(accessToken string, deviceType choices.DeviceType) (*Goo
 	cfg := config.GetConfig()
 
 	clientID := cfg.GoogleAndroidClientID
-	if deviceType == choices.DT_IOS{
+	if deviceType == choices.DT_IOS {
 		clientID = cfg.GoogleIOSClientID
 	}
 	payload, err := idtoken.Validate(context.Background(), accessToken, clientID)
@@ -206,7 +210,7 @@ func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) 
 		}
 	}
 	// Generate tokens
-	access := GenerateAccessToken(user.ID)
+	access := GenerateAccessToken(user)
 	user.Access = &access
 	refresh := GenerateRefreshToken()
 	user.Refresh = &refresh

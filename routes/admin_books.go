@@ -306,7 +306,7 @@ func (ep Endpoint) AdminGetBookDetails(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 
-	reviews := paginatedReviews.([]models.Review)
+	reviews := paginatedReviews.([]models.Comment)
 	response := schemas.BookDetailResponseSchema{
 		ResponseSchema: ResponseMessage("Book details fetched successfully"),
 		Data:           schemas.BookDetailSchema{}.Init(*book, *paginatedData, reviews),

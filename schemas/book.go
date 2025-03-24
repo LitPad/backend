@@ -46,18 +46,35 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 	return g
 }
 
-type ChapterSchema struct {
+type ChapterListSchema struct {
 	Title string `json:"title"`
 	Slug  string `json:"slug"`
-	Text  string `json:"text"`
-	Trash bool   `json:"trash" example:"false"`
 }
 
-func (c ChapterSchema) Init(chapter models.Chapter) ChapterSchema {
+func (c ChapterListSchema) Init(chapter models.Chapter) ChapterListSchema {
 	c.Title = chapter.Title
 	c.Slug = chapter.Slug
-	c.Text = chapter.Text
-	c.Trash = chapter.Trash
+	return c
+}
+
+type ParagraphSchema struct {
+	Text          string `json:"text"`
+	CommentsCount int    `json:"comments_count"`
+}
+
+type ChapterDetailSchema struct {
+	ChapterListSchema
+	Paragraphs []ParagraphSchema `json:"paragraphs"`
+}
+
+func (c ChapterDetailSchema) Init(chapter models.Chapter) ChapterDetailSchema {
+	c.Title = chapter.Title
+	c.Slug = chapter.Slug
+	paragraphs := []ParagraphSchema{}
+	for _, p := range chapter.Paragraphs {
+		paragraphs = append(paragraphs, ParagraphSchema{Text: p.Text, CommentsCount: p.CommentsCount()})
+	}
+	c.Paragraphs = paragraphs
 	return c
 }
 
@@ -70,7 +87,7 @@ type BookSchema struct {
 	Genre              GenreWithoutTagSchema `json:"genre"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
-	PartialViewChapter *ChapterSchema        `json:"partial_view_chapter"`
+	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
 	CoverImage         string                `json:"cover_image"`
 	FullPrice          *int                  `json:"full_price"`
 	ChapterPrice       int                   `json:"chapter_price"`
@@ -104,7 +121,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 
 	chapters := book.Chapters
 	if len(chapters) > 0 {
-		chapter := ChapterSchema{}.Init(chapters[0])
+		chapter := ChapterListSchema{}.Init(chapters[0])
 		b.PartialViewChapter = &chapter
 	}
 
@@ -130,7 +147,7 @@ type ReviewSchema struct {
 	UpdatedAt    time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
-func (r ReviewSchema) Init(review models.Review) ReviewSchema {
+func (r ReviewSchema) Init(review models.Comment) ReviewSchema {
 	r.ID = review.ID
 	r.User = r.User.Init(review.User)
 	r.Rating = review.Rating
@@ -153,8 +170,7 @@ type ReviewResponseSchema struct {
 }
 
 type ParagraphCommentAddSchema struct {
-	Index int    `json:"paragraph_index" validate:"required"`
-	Text  string `json:"text" validate:"required,max=10000"`
+	Text string `json:"text" validate:"required,max=10000"`
 }
 
 type ParagraphCommentSchema struct {
@@ -167,10 +183,9 @@ type ParagraphCommentSchema struct {
 	UpdatedAt    time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
-func (p ParagraphCommentSchema) Init(paragraphComment models.ParagraphComment) ParagraphCommentSchema {
+func (p ParagraphCommentSchema) Init(paragraphComment models.Comment) ParagraphCommentSchema {
 	p.ID = paragraphComment.ID
 	p.User = p.User.Init(paragraphComment.User)
-	p.Index = paragraphComment.Index
 	p.Text = paragraphComment.Text
 	p.LikesCount = paragraphComment.LikesCount()
 	p.RepliesCount = paragraphComment.RepliesCount()
@@ -194,7 +209,7 @@ type ParagraphCommentsResponseDataSchema struct {
 	Items []ParagraphCommentSchema `json:"replies"`
 }
 
-func (p ParagraphCommentsResponseDataSchema) Init(comments []models.ParagraphComment) ParagraphCommentsResponseDataSchema {
+func (p ParagraphCommentsResponseDataSchema) Init(comments []models.Comment) ParagraphCommentsResponseDataSchema {
 	// Set Initial Data
 	commentItems := make([]ParagraphCommentSchema, 0)
 	for _, comment := range comments {
@@ -239,7 +254,7 @@ type BookDetailSchema struct {
 	Reviews ReviewsResponseDataSchema `json:"reviews"`
 }
 
-func (b BookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Review) BookDetailSchema {
+func (b BookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Comment) BookDetailSchema {
 	b.BookSchema = b.BookSchema.Init(book)
 	reviewsToAdd := b.Reviews.Items
 	for _, review := range reviews {
@@ -271,8 +286,8 @@ type BookCreateSchema struct {
 }
 
 type ChapterCreateSchema struct {
-	Title string `json:"title" validate:"required,max=100"`
-	Text  string `json:"text" validate:"required,max=10000"`
+	Title      string   `json:"title" validate:"required,max=100"`
+	Paragraphs []string `json:"paragraphs" validate:"required,max=400"`
 }
 
 type TagsResponseSchema struct {
@@ -314,7 +329,7 @@ type ContractSchema struct {
 	Address              string                       `json:"address"`
 	City                 string                       `json:"city"`
 	State                string                       `json:"state"`
-	PostalCode           string                         `json:"postal_code"`
+	PostalCode           string                       `json:"postal_code"`
 	TelephoneNumber      string                       `json:"telephone_number"`
 	IDType               choices.ContractIDTypeChoice `json:"id_type"`
 	IDFrontImage         string                       `json:"id_front_image"`
@@ -415,14 +430,14 @@ type ContractResponseSchema struct {
 
 type ChaptersResponseDataSchema struct {
 	PaginatedResponseDataSchema
-	Items []ChapterSchema `json:"chapters"`
+	Items []ChapterListSchema `json:"chapters"`
 }
 
 func (c ChaptersResponseDataSchema) Init(chapters []models.Chapter) ChaptersResponseDataSchema {
 	// Set Initial Data
-	chapterItems := make([]ChapterSchema, 0)
+	chapterItems := make([]ChapterListSchema, 0)
 	for _, chapter := range chapters {
-		chapterItems = append(chapterItems, ChapterSchema{}.Init(chapter))
+		chapterItems = append(chapterItems, ChapterListSchema{}.Init(chapter))
 	}
 	c.Items = chapterItems
 	return c
@@ -435,7 +450,7 @@ type ChaptersResponseSchema struct {
 
 type ChapterResponseSchema struct {
 	ResponseSchema
-	Data ChapterSchema `json:"data"`
+	Data ChapterDetailSchema `json:"data"`
 }
 
 type ReplyEditSchema struct {

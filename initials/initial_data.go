@@ -140,34 +140,46 @@ func createBook(db *gorm.DB, author models.User, genre models.Genre, tag models.
 func createChapter(db *gorm.DB, book models.Book) models.Chapter {
 	chapter := models.Chapter{
 		BookID: book.ID, Title: "The Journey Begins",
-		Text: "A really longggggg text....",
 	}
-	db.FirstOrCreate(&chapter, chapter)
+	db.Preload("Paragraphs").FirstOrCreate(&chapter, chapter)
 	return chapter
 }
 
-func createParagraphComment(db *gorm.DB, user models.User, chapter models.Chapter) models.ParagraphComment {
-	comment := models.ParagraphComment{
-		UserID: user.ID, ChapterID: chapter.ID, Index: 1,
+func createParagraphs(db *gorm.DB, chapter models.Chapter) models.Paragraph {
+	paragraphs := chapter.Paragraphs
+	if len(paragraphs) < 1 {
+		paragraphsToCreate := []models.Paragraph{}
+		for idx, paragraph := range PARAGRAPHS {
+			paragraphsToCreate = append(paragraphsToCreate, models.Paragraph{ChapterID: chapter.ID, Index: uint(idx+1), Text: paragraph})
+		}
+		db.Create(&paragraphsToCreate)
+		paragraphs = paragraphsToCreate
+	}
+	return paragraphs[0]
+}
+
+func createParagraphComment(db *gorm.DB, user models.User, paragraph models.Paragraph) models.Comment {
+	comment := models.Comment{
+		UserID: user.ID, ParagraphID: &paragraph.ID,
 		Likes: []models.User{user}, Text: "Wow, he's in trouble",
 	}
 	db.Omit("Likes.*").FirstOrCreate(&comment, comment)
 	return comment
 }
 
-func createReply(db *gorm.DB, paragraphComment models.ParagraphComment, user models.User) models.Reply {
+func createReply(db *gorm.DB, paragraphComment models.Comment, user models.User) models.Reply {
 	reply := models.Reply{
-		UserID: user.ID, ParagraphCommentID: &paragraphComment.ID,
+		UserID: user.ID, CommentID: &paragraphComment.ID,
 		Likes: []models.User{user}, Text: "Wow, you're right",
 	}
 	db.Omit("Likes.*").FirstOrCreate(&reply, reply)
 	return reply
 }
 
-func createReview(db *gorm.DB, book models.Book, user models.User) models.Review {
-	review := models.Review{
-		UserID: user.ID, BookID: book.ID, Rating: choices.RC_3,
-		Likes: []models.User{user}, Text: "Wow, you're right",
+func createReview(db *gorm.DB, book models.Book, user models.User) models.Comment {
+	review := models.Comment{
+		UserID: user.ID, BookID: &book.ID, Rating: choices.RC_5,
+		Likes: []models.User{user}, Text: "This is the best book I've ever read.",
 	}
 	db.Omit("Likes.*").FirstOrCreate(&review, review)
 	return review
@@ -185,7 +197,8 @@ func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	createSubscriptionPlans(db)
 	book := createBook(db, author, genres[0], tags[0])
 	chapter := createChapter(db, book)
-	comment := createParagraphComment(db, author, chapter)
+	paragraph := createParagraphs(db, chapter)
+	comment := createParagraphComment(db, author, paragraph)
 	createReply(db, comment, author)
 	createReview(db, book, author)
 	log.Println("Initial Data Created....")

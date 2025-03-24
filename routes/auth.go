@@ -246,7 +246,7 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	}
 
 	// Create Auth Tokens
-	access := GenerateAccessToken(user.ID)
+	access := GenerateAccessToken(user)
 	user.Access = &access
 	refresh := GenerateRefreshToken()
 	user.Refresh = &refresh
@@ -363,7 +363,7 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 	}
 
 	// Create and Update Auth Tokens
-	access := GenerateAccessToken(user.ID)
+	access := GenerateAccessToken(user)
 	user.Access = &access
 	refresh := GenerateRefreshToken()
 	user.Refresh = &refresh

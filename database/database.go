@@ -28,8 +28,7 @@ func Models() []interface{} {
 		&models.Chapter{},
 		&models.Gift{},
 		&models.SentGift{},
-		&models.Review{},
-		&models.ParagraphComment{},
+		&models.Comment{},
 		&models.Reply{},
 		&models.Vote{},
 

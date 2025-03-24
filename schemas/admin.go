@@ -49,3 +49,9 @@ type DashboardResponseSchema struct {
 	ResponseSchema
 	Data DashboardResponseDataSchema `json:"data"`
 }
+
+type InviteAdminSchema struct {
+	Email  string `json:"email" validate:"email,required"`
+	Admin  bool   `json:"admin" validate:"required"`
+	Author bool   `json:"author" validate:"required"`
+}

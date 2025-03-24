@@ -98,6 +98,45 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
+// @Summary Invite Admin
+// @Description Updates the account type of a specified user ot an admin and/or author.
+// @Tags Admin | Users
+// @Accept json
+// @Produce json
+// @Param data body schemas.InviteAdminSchema true "Role update data"
+// @Success 200 {object} schemas.UserProfileResponseSchema "Successfully updated user details"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/users/admins/invite [post]
+// @Security BearerAuth
+func (ep Endpoint) InviteAdmin(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.InviteAdminSchema{}
+	errCode, errData := ValidateRequest(c, &data);
+	if errData != nil{
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	user := models.User{Email: data.Email}
+	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
+	if user.ID == uuid.Nil{
+		return c.Status(422).JSON(utils.ValidationErr("email", "No user with that email"))
+	}
+	if data.Admin {
+		user.IsStaff = true
+	}
+	if data.Author {
+		user.AccountType = choices.ACCTYPE_AUTHOR
+	}
+	db.Save(&user)
+
+	response := schemas.UserProfileResponseSchema{
+		ResponseSchema: ResponseMessage("User upgraded successfully!"),
+		Data: schemas.UserProfile{}.Init(user),
+	}
+	return c.Status(200).JSON(response)
+}
+
 // @Summary Reactivate/Deactivate User
 // @Description Allows the admin to deactivate/reactivate a user.
 // @Tags Admin | Users
