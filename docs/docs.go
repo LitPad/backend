@@ -873,6 +873,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/users/admins/invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the account type of a specified user ot an admin and/or author.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Users"
+                ],
+                "summary": "Invite Admin",
+                "parameters": [
+                    {
+                        "description": "Role update data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.InviteAdminSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated user details",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users/{username}": {
             "put": {
                 "security": [
@@ -1841,7 +1892,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/book/chapters/chapter/{slug}/paragraph-comments/{index}": {
+        "/books/book/chapters/chapter/{slug}/paragraph/{index}/comments": {
             "get": {
                 "security": [
                     {
@@ -3910,7 +3961,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapter": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
+                    "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
@@ -3990,7 +4041,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapter": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
+                    "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
                 "slug": {
                     "type": "string"
@@ -4105,13 +4156,16 @@ const docTemplate = `{
         "schemas.ChapterCreateSchema": {
             "type": "object",
             "required": [
-                "text",
+                "paragraphs",
                 "title"
             ],
             "properties": {
-                "text": {
-                    "type": "string",
-                    "maxLength": 10000
+                "paragraphs": {
+                    "type": "array",
+                    "maxItems": 400,
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "title": {
                     "type": "string",
@@ -4119,11 +4173,39 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.ChapterDetailSchema": {
+            "type": "object",
+            "properties": {
+                "paragraphs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ParagraphSchema"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.ChapterListSchema": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "schemas.ChapterResponseSchema": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
+                    "$ref": "#/definitions/schemas.ChapterDetailSchema"
                 },
                 "message": {
                     "type": "string",
@@ -4135,31 +4217,13 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.ChapterSchema": {
-            "type": "object",
-            "properties": {
-                "slug": {
-                    "type": "string"
-                },
-                "text": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "trash": {
-                    "type": "boolean",
-                    "example": false
-                }
-            }
-        },
         "schemas.ChaptersResponseDataSchema": {
             "type": "object",
             "properties": {
                 "chapters": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.ChapterSchema"
+                        "$ref": "#/definitions/schemas.ChapterListSchema"
                     }
                 },
                 "current_page": {
@@ -4583,6 +4647,25 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.InviteAdminSchema": {
+            "type": "object",
+            "required": [
+                "admin",
+                "author",
+                "email"
+            ],
+            "properties": {
+                "admin": {
+                    "type": "boolean"
+                },
+                "author": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
         "schemas.LoginResponseSchema": {
             "type": "object",
             "properties": {
@@ -4723,13 +4806,9 @@ const docTemplate = `{
         "schemas.ParagraphCommentAddSchema": {
             "type": "object",
             "required": [
-                "paragraph_index",
                 "text"
             ],
             "properties": {
-                "paragraph_index": {
-                    "type": "integer"
-                },
                 "text": {
                     "type": "string",
                     "maxLength": 10000
@@ -4755,7 +4834,6 @@ const docTemplate = `{
         "schemas.ParagraphCommentSchema": {
             "type": "object",
             "required": [
-                "paragraph_index",
                 "text"
             ],
             "properties": {
@@ -4768,9 +4846,6 @@ const docTemplate = `{
                     "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
                 },
                 "likes_count": {
-                    "type": "integer"
-                },
-                "paragraph_index": {
                     "type": "integer"
                 },
                 "replies_count": {
@@ -4825,6 +4900,17 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.ParagraphSchema": {
+            "type": "object",
+            "properties": {
+                "comments_count": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string"
                 }
             }
         },

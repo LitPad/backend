@@ -866,6 +866,57 @@
                 }
             }
         },
+        "/admin/users/admins/invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the account type of a specified user ot an admin and/or author.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Users"
+                ],
+                "summary": "Invite Admin",
+                "parameters": [
+                    {
+                        "description": "Role update data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.InviteAdminSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated user details",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.UserProfileResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/users/{username}": {
             "put": {
                 "security": [
@@ -1834,7 +1885,7 @@
                 }
             }
         },
-        "/books/book/chapters/chapter/{slug}/paragraph-comments/{index}": {
+        "/books/book/chapters/chapter/{slug}/paragraph/{index}/comments": {
             "get": {
                 "security": [
                     {
@@ -3903,7 +3954,7 @@
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapter": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
+                    "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
@@ -3983,7 +4034,7 @@
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
                 "partial_view_chapter": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
+                    "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
                 "slug": {
                     "type": "string"
@@ -4098,13 +4149,16 @@
         "schemas.ChapterCreateSchema": {
             "type": "object",
             "required": [
-                "text",
+                "paragraphs",
                 "title"
             ],
             "properties": {
-                "text": {
-                    "type": "string",
-                    "maxLength": 10000
+                "paragraphs": {
+                    "type": "array",
+                    "maxItems": 400,
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "title": {
                     "type": "string",
@@ -4112,11 +4166,39 @@
                 }
             }
         },
+        "schemas.ChapterDetailSchema": {
+            "type": "object",
+            "properties": {
+                "paragraphs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.ParagraphSchema"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.ChapterListSchema": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "schemas.ChapterResponseSchema": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/schemas.ChapterSchema"
+                    "$ref": "#/definitions/schemas.ChapterDetailSchema"
                 },
                 "message": {
                     "type": "string",
@@ -4128,31 +4210,13 @@
                 }
             }
         },
-        "schemas.ChapterSchema": {
-            "type": "object",
-            "properties": {
-                "slug": {
-                    "type": "string"
-                },
-                "text": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "trash": {
-                    "type": "boolean",
-                    "example": false
-                }
-            }
-        },
         "schemas.ChaptersResponseDataSchema": {
             "type": "object",
             "properties": {
                 "chapters": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.ChapterSchema"
+                        "$ref": "#/definitions/schemas.ChapterListSchema"
                     }
                 },
                 "current_page": {
@@ -4576,6 +4640,25 @@
                 }
             }
         },
+        "schemas.InviteAdminSchema": {
+            "type": "object",
+            "required": [
+                "admin",
+                "author",
+                "email"
+            ],
+            "properties": {
+                "admin": {
+                    "type": "boolean"
+                },
+                "author": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
         "schemas.LoginResponseSchema": {
             "type": "object",
             "properties": {
@@ -4716,13 +4799,9 @@
         "schemas.ParagraphCommentAddSchema": {
             "type": "object",
             "required": [
-                "paragraph_index",
                 "text"
             ],
             "properties": {
-                "paragraph_index": {
-                    "type": "integer"
-                },
                 "text": {
                     "type": "string",
                     "maxLength": 10000
@@ -4748,7 +4827,6 @@
         "schemas.ParagraphCommentSchema": {
             "type": "object",
             "required": [
-                "paragraph_index",
                 "text"
             ],
             "properties": {
@@ -4761,9 +4839,6 @@
                     "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
                 },
                 "likes_count": {
-                    "type": "integer"
-                },
-                "paragraph_index": {
                     "type": "integer"
                 },
                 "replies_count": {
@@ -4818,6 +4893,17 @@
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.ParagraphSchema": {
+            "type": "object",
+            "properties": {
+                "comments_count": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string"
                 }
             }
         },

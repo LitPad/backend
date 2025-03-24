@@ -234,7 +234,7 @@ definitions:
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
       partial_view_chapter:
-        $ref: '#/definitions/schemas.ChapterSchema'
+        $ref: '#/definitions/schemas.ChapterListSchema'
       reviews:
         $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
       slug:
@@ -288,7 +288,7 @@ definitions:
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
       partial_view_chapter:
-        $ref: '#/definitions/schemas.ChapterSchema'
+        $ref: '#/definitions/schemas.ChapterListSchema'
       slug:
         type: string
       tags:
@@ -367,20 +367,40 @@ definitions:
     type: object
   schemas.ChapterCreateSchema:
     properties:
-      text:
-        maxLength: 10000
-        type: string
+      paragraphs:
+        items:
+          type: string
+        maxItems: 400
+        type: array
       title:
         maxLength: 100
         type: string
     required:
-    - text
+    - paragraphs
     - title
+    type: object
+  schemas.ChapterDetailSchema:
+    properties:
+      paragraphs:
+        items:
+          $ref: '#/definitions/schemas.ParagraphSchema'
+        type: array
+      slug:
+        type: string
+      title:
+        type: string
+    type: object
+  schemas.ChapterListSchema:
+    properties:
+      slug:
+        type: string
+      title:
+        type: string
     type: object
   schemas.ChapterResponseSchema:
     properties:
       data:
-        $ref: '#/definitions/schemas.ChapterSchema'
+        $ref: '#/definitions/schemas.ChapterDetailSchema'
       message:
         example: Data fetched/created/updated/deleted
         type: string
@@ -388,23 +408,11 @@ definitions:
         example: success
         type: string
     type: object
-  schemas.ChapterSchema:
-    properties:
-      slug:
-        type: string
-      text:
-        type: string
-      title:
-        type: string
-      trash:
-        example: false
-        type: boolean
-    type: object
   schemas.ChaptersResponseDataSchema:
     properties:
       chapters:
         items:
-          $ref: '#/definitions/schemas.ChapterSchema'
+          $ref: '#/definitions/schemas.ChapterListSchema'
         type: array
       current_page:
         example: 1
@@ -691,6 +699,19 @@ definitions:
         example: success
         type: string
     type: object
+  schemas.InviteAdminSchema:
+    properties:
+      admin:
+        type: boolean
+      author:
+        type: boolean
+      email:
+        type: string
+    required:
+    - admin
+    - author
+    - email
+    type: object
   schemas.LoginResponseSchema:
     properties:
       data:
@@ -787,13 +808,10 @@ definitions:
     type: object
   schemas.ParagraphCommentAddSchema:
     properties:
-      paragraph_index:
-        type: integer
       text:
         maxLength: 10000
         type: string
     required:
-    - paragraph_index
     - text
     type: object
   schemas.ParagraphCommentResponseSchema:
@@ -817,8 +835,6 @@ definitions:
         type: string
       likes_count:
         type: integer
-      paragraph_index:
-        type: integer
       replies_count:
         type: integer
       text:
@@ -830,7 +846,6 @@ definitions:
       user:
         $ref: '#/definitions/schemas.UserDataSchema'
     required:
-    - paragraph_index
     - text
     type: object
   schemas.ParagraphCommentsResponseDataSchema:
@@ -858,6 +873,13 @@ definitions:
         type: string
       status:
         example: success
+        type: string
+    type: object
+  schemas.ParagraphSchema:
+    properties:
+      comments_count:
+        type: integer
+      text:
         type: string
     type: object
   schemas.PaymentResponseSchema:
@@ -2126,6 +2148,39 @@ paths:
       summary: Reactivate/Deactivate User
       tags:
       - Admin | Users
+  /admin/users/admins/invite:
+    post:
+      consumes:
+      - application/json
+      description: Updates the account type of a specified user ot an admin and/or
+        author.
+      parameters:
+      - description: Role update data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.InviteAdminSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated user details
+          schema:
+            $ref: '#/definitions/schemas.UserProfileResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Invite Admin
+      tags:
+      - Admin | Users
   /auth/facebook:
     post:
       description: |-
@@ -2998,7 +3053,7 @@ paths:
       summary: Add A Comment To A Paragraph In A Book Chapter
       tags:
       - Books
-  /books/book/chapters/chapter/{slug}/paragraph-comments/{index}:
+  /books/book/chapters/chapter/{slug}/paragraph/{index}/comments:
     get:
       description: |-
         `This endpoint view comments of a single paragraph of a chapter`
