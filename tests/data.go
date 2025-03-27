@@ -98,25 +98,25 @@ func BookData(db *gorm.DB, user models.User) models.Book {
 }
 
 func ChapterData(db *gorm.DB, book models.Book) models.Chapter {
-	chapter := models.Chapter{BookID: book.ID, Title: "Test Chapter", Text: "Stop doing that"}
+	chapter := models.Chapter{BookID: book.ID, Title: "Test Chapter"}
 	db.FirstOrCreate(&chapter, chapter)
 	return chapter
 }
 
-func ReviewData(db *gorm.DB, book models.Book, user models.User) models.Review {
-	review := models.Review{BookID: book.ID, UserID: user.ID, Rating: choices.RC_1, Text: "This is a test review"}
-	db.FirstOrCreate(&review, models.Review{BookID: book.ID, UserID: user.ID})
+func ReviewData(db *gorm.DB, book models.Book, user models.User) models.Comment {
+	review := models.Comment{BookID: &book.ID, UserID: user.ID, Rating: choices.RC_1, Text: "This is a test review"}
+	db.FirstOrCreate(&review, models.Comment{BookID: &book.ID, UserID: user.ID})
 	return review
 }
 
-func ReplyData(db *gorm.DB, review models.Review, user models.User) models.Reply {
-	reply := models.Reply{ReviewID: &review.ID, UserID: user.ID, Text: "This is a test reply"}
+func ReplyData(db *gorm.DB, review models.Comment, user models.User) models.Reply {
+	reply := models.Reply{CommentID: &review.ID, UserID: user.ID, Text: "This is a test reply"}
 	db.FirstOrCreate(&reply, reply)
 	return reply
 }
 
-func ParagraphCommentData(db *gorm.DB, chapter models.Chapter, user models.User) models.ParagraphComment {
-	comment := models.ParagraphComment{ChapterID: chapter.ID, Index: 2, UserID: user.ID, Text: "This is a test comment"}
+func ParagraphCommentData(db *gorm.DB, paragraph models.Paragraph, user models.User) models.Comment {
+	comment := models.Comment{ParagraphID: &paragraph.ID, UserID: user.ID, Text: "This is a test comment"}
 	db.FirstOrCreate(&comment, comment)
 	return comment
 }

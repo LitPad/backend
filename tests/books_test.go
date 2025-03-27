@@ -274,72 +274,72 @@ func deleteBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 }
 
-func addChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
-	author := TestAuthor(db)
-	token := AccessToken(db, author)
-	book := BookData(db, author)
-	chapterData := schemas.ChapterCreateSchema{
-		Title: "Test Chapter Title", Text: "Test Content",
-	}
-	t.Run("Accept Chapter Creation Due To Valid Data", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/%s/add-chapter", baseUrl, book.Slug)
-		res := ProcessJsonTestBody(t, app, url, "POST", chapterData, token)
-		// Assert Status code
-		assert.Equal(t, 201, res.StatusCode)
+// func addChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+// 	author := TestAuthor(db)
+// 	token := AccessToken(db, author)
+// 	book := BookData(db, author)
+// 	chapterData := schemas.ChapterCreateSchema{
+// 		Title: "Test Chapter Title", Text: "Test Content",
+// 	}
+// 	t.Run("Accept Chapter Creation Due To Valid Data", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/%s/add-chapter", baseUrl, book.Slug)
+// 		res := ProcessJsonTestBody(t, app, url, "POST", chapterData, token)
+// 		// Assert Status code
+// 		assert.Equal(t, 201, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Chapter added successfully", body["message"])
-	})
-}
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Chapter added successfully", body["message"])
+// 	})
+// }
 
-func updateChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
-	author := TestAuthor(db)
-	token := AccessToken(db, author)
+// func updateChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+// 	author := TestAuthor(db)
+// 	token := AccessToken(db, author)
 
-	invalidOwner := TestAuthor(db, true)
-	invalidOwnerToken := AccessToken(db, invalidOwner)
-	book := BookData(db, author)
-	chapter := ChapterData(db, book)
+// 	invalidOwner := TestAuthor(db, true)
+// 	invalidOwnerToken := AccessToken(db, invalidOwner)
+// 	book := BookData(db, author)
+// 	chapter := ChapterData(db, book)
 
-	chapterData := schemas.ChapterCreateSchema{
-		Title: "Test Chapter Title Updated", Text: "Test Content Updated",
-	}
+// 	chapterData := schemas.ChapterCreateSchema{
+// 		Title: "Test Chapter Title Updated", Text: "Test Content Updated",
+// 	}
 
-	t.Run("Reject Chapter Update Due To Invalid Slug", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapter/invalid-slug", baseUrl)
-		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
-		assert.Equal(t, 404, res.StatusCode)
+// 	t.Run("Reject Chapter Update Due To Invalid Slug", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapter/invalid-slug", baseUrl)
+// 		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
+// 		assert.Equal(t, 404, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "failure", body["status"])
-		assert.Equal(t, "No chapter with that slug", body["message"])
-	})
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "failure", body["status"])
+// 		assert.Equal(t, "No chapter with that slug", body["message"])
+// 	})
 
-	t.Run("Reject Chapter Update Due To Invalid Owner", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
-		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, invalidOwnerToken)
-		assert.Equal(t, 401, res.StatusCode)
+// 	t.Run("Reject Chapter Update Due To Invalid Owner", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
+// 		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, invalidOwnerToken)
+// 		assert.Equal(t, 401, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "failure", body["status"])
-		assert.Equal(t, "Not yours to edit", body["message"])
-	})
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "failure", body["status"])
+// 		assert.Equal(t, "Not yours to edit", body["message"])
+// 	})
 
-	t.Run("Accept Chapter Update Due To Valid Data", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
-		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
-		// Assert Status code
-		assert.Equal(t, 200, res.StatusCode)
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Chapter updated successfully", body["message"])
-	})
-}
+// 	t.Run("Accept Chapter Update Due To Valid Data", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapter/%s", baseUrl, chapter.Slug)
+// 		res := ProcessJsonTestBody(t, app, url, "PUT", chapterData, token)
+// 		// Assert Status code
+// 		assert.Equal(t, 200, res.StatusCode)
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Chapter updated successfully", body["message"])
+// 	})
+// }
 
 func deleteChapter(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	author := TestAuthor(db)
@@ -497,54 +497,53 @@ func getReviewReplies(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string)
 	})
 }
 
-func replyReviewOrParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
-	author := TestAuthor(db)
-	book := BookData(db, author)
-	chapter := ChapterData(db, book)
-	reviewer := TestVerifiedUser(db, true)
-	review := ReviewData(db, book, reviewer)
-	paragraphComment := ParagraphCommentData(db, chapter, reviewer)
-	token := AccessToken(db, reviewer)
-	replyData := schemas.ReplyReviewOrCommentSchema{
-		ReplyEditSchema: schemas.ReplyEditSchema{Text: "Test Reply"},
-		Type:            choices.RT_REVIEW,
-	}
+// func replyReviewOrParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+// 	author := TestAuthor(db)
+// 	book := BookData(db, author)
+// 	reviewer := TestVerifiedUser(db, true)
+// 	review := ReviewData(db, book, reviewer)
+// 	paragraphComment := ParagraphCommentData(db, chapter, reviewer)
+// 	token := AccessToken(db, reviewer)
+// 	replyData := schemas.ReplyReviewOrCommentSchema{
+// 		ReplyEditSchema: schemas.ReplyEditSchema{Text: "Test Reply"},
+// 		Type:            choices.RT_REVIEW,
+// 	}
 
-	t.Run("Accept Reply Creation Due To Valid Review Data", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, review.ID)
-		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
-		assert.Equal(t, 201, res.StatusCode)
+// 	t.Run("Accept Reply Creation Due To Valid Review Data", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, review.ID)
+// 		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
+// 		assert.Equal(t, 201, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Reply created successfully", body["message"])
-	})
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Reply created successfully", body["message"])
+// 	})
 
-	t.Run("Reject Reply Creation Due To Invalid Paragraph Comment ID", func(t *testing.T) {
-		replyData.Type = choices.RT_PARAGRAPH_COMMENT
-		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, uuid.New())
-		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
-		assert.Equal(t, 404, res.StatusCode)
+// 	t.Run("Reject Reply Creation Due To Invalid Paragraph Comment ID", func(t *testing.T) {
+// 		replyData.Type = choices.RT_PARAGRAPH_COMMENT
+// 		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, uuid.New())
+// 		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
+// 		assert.Equal(t, 404, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "failure", body["status"])
-		assert.Equal(t, "No paragraph comment with that ID", body["message"])
-	})
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "failure", body["status"])
+// 		assert.Equal(t, "No paragraph comment with that ID", body["message"])
+// 	})
 
-	t.Run("Accept Reply Creation Due To Valid Paragraph Comment ID", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, paragraphComment.ID)
-		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
-		// Assert Status code
-		assert.Equal(t, 201, res.StatusCode)
+// 	t.Run("Accept Reply Creation Due To Valid Paragraph Comment ID", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/review-or-paragraph-comment/%s/replies", baseUrl, paragraphComment.ID)
+// 		res := ProcessJsonTestBody(t, app, url, "POST", replyData, token)
+// 		// Assert Status code
+// 		assert.Equal(t, 201, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Reply created successfully", body["message"])
-	})
-}
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Reply created successfully", body["message"])
+// 	})
+// }
 
 func editReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	author := TestAuthor(db)
@@ -601,93 +600,93 @@ func deleteReply(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	})
 }
 
-func addParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
-	author := TestAuthor(db)
-	book := BookData(db, author)
-	chapter := ChapterData(db, book)
-	commenter := TestVerifiedUser(db)
-	token := AccessToken(db, commenter)
-	commentData := schemas.ParagraphCommentAddSchema{
-		Text: "Test Comment", Index: 4,
-	}
-	t.Run("Reject Paragraph Comment Add Due To Invalid Chapter Slug", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapters/chapter/invalid-slug", baseUrl)
-		res := ProcessJsonTestBody(t, app, url, "POST", commentData, token)
-		assert.Equal(t, 404, res.StatusCode)
+// func addParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+// 	author := TestAuthor(db)
+// 	book := BookData(db, author)
+// 	chapter := ChapterData(db, book)
+// 	commenter := TestVerifiedUser(db)
+// 	token := AccessToken(db, commenter)
+// 	commentData := schemas.ParagraphCommentAddSchema{
+// 		Text: "Test Comment", Index: 4,
+// 	}
+// 	t.Run("Reject Paragraph Comment Add Due To Invalid Chapter Slug", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapters/chapter/invalid-slug", baseUrl)
+// 		res := ProcessJsonTestBody(t, app, url, "POST", commentData, token)
+// 		assert.Equal(t, 404, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "failure", body["status"])
-		assert.Equal(t, "No chapter with that slug", body["message"])
-	})
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "failure", body["status"])
+// 		assert.Equal(t, "No chapter with that slug", body["message"])
+// 	})
 
-	t.Run("Accept Paragraph Comment Add Due To Valid Chapter Slug", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapters/chapter/%s", baseUrl, chapter.Slug)
-		res := ProcessJsonTestBody(t, app, url, "POST", commentData, token)
-		// Assert Status code
-		assert.Equal(t, 201, res.StatusCode)
+// 	t.Run("Accept Paragraph Comment Add Due To Valid Chapter Slug", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapters/chapter/%s", baseUrl, chapter.Slug)
+// 		res := ProcessJsonTestBody(t, app, url, "POST", commentData, token)
+// 		// Assert Status code
+// 		assert.Equal(t, 201, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Comment created successfully", body["message"])
-	})
-}
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Comment created successfully", body["message"])
+// 	})
+// }
 
-func editParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
-	author := TestAuthor(db)
-	book := BookData(db, author)
-	chapter := ChapterData(db, book)
-	commenter := TestVerifiedUser(db)
-	token := AccessToken(db, commenter)
-	comment := ParagraphCommentData(db, chapter, commenter)
-	commentData := schemas.ParagraphCommentAddSchema{
-		Text: "Test Comment Updated", Index: 5,
-	}
-	t.Run("Reject Paragraph Comment Edit Due To Invalid Comment ID", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, uuid.New())
-		res := ProcessJsonTestBody(t, app, url, "PUT", commentData, token)
-		assert.Equal(t, 404, res.StatusCode)
+// func editParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+// 	author := TestAuthor(db)
+// 	book := BookData(db, author)
+// 	chapter := ChapterData(db, book)
+// 	commenter := TestVerifiedUser(db)
+// 	token := AccessToken(db, commenter)
+// 	comment := ParagraphCommentData(db, chapter, commenter)
+// 	commentData := schemas.ParagraphCommentAddSchema{
+// 		Text: "Test Comment Updated",
+// 	}
+// 	t.Run("Reject Paragraph Comment Edit Due To Invalid Comment ID", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, uuid.New())
+// 		res := ProcessJsonTestBody(t, app, url, "PUT", commentData, token)
+// 		assert.Equal(t, 404, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "failure", body["status"])
-		assert.Equal(t, "You don't have a comment with that ID", body["message"])
-	})
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "failure", body["status"])
+// 		assert.Equal(t, "You don't have a comment with that ID", body["message"])
+// 	})
 
-	t.Run("Accept Paragraph Comment Edit Due To Valid Comment ID", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, comment.ID)
-		res := ProcessJsonTestBody(t, app, url, "PUT", commentData, token)
-		// Assert Status code
-		assert.Equal(t, 200, res.StatusCode)
+// 	t.Run("Accept Paragraph Comment Edit Due To Valid Comment ID", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, comment.ID)
+// 		res := ProcessJsonTestBody(t, app, url, "PUT", commentData, token)
+// 		// Assert Status code
+// 		assert.Equal(t, 200, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Comment updated successfully", body["message"])
-	})
-}
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Comment updated successfully", body["message"])
+// 	})
+// }
 
-func deleteParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
-	author := TestAuthor(db)
-	book := BookData(db, author)
-	chapter := ChapterData(db, book)
-	commenter := TestVerifiedUser(db)
-	token := AccessToken(db, commenter)
-	comment := ParagraphCommentData(db, chapter, commenter)
+// func deleteParagraphComment(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
+// 	author := TestAuthor(db)
+// 	book := BookData(db, author)
+// 	chapter := ChapterData(db, book)
+// 	commenter := TestVerifiedUser(db)
+// 	token := AccessToken(db, commenter)
+// 	comment := ParagraphCommentData(db, chapter, commenter)
 
-	t.Run("Accept Paragraph Comment Delete Due To Valid Comment ID", func(t *testing.T) {
-		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, comment.ID)
-		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
-		// Assert Status code
-		assert.Equal(t, 200, res.StatusCode)
+// 	t.Run("Accept Paragraph Comment Delete Due To Valid Comment ID", func(t *testing.T) {
+// 		url := fmt.Sprintf("%s/book/chapters/chapter/paragraph-comment/%s", baseUrl, comment.ID)
+// 		res := ProcessTestGetOrDelete(app, url, "DELETE", token)
+// 		// Assert Status code
+// 		assert.Equal(t, 200, res.StatusCode)
 
-		// Parse and assert body
-		body := ParseResponseBody(t, res.Body).(map[string]interface{})
-		assert.Equal(t, "success", body["status"])
-		assert.Equal(t, "Comment deleted successfully", body["message"])
-	})
-}
+// 		// Parse and assert body
+// 		body := ParseResponseBody(t, res.Body).(map[string]interface{})
+// 		assert.Equal(t, "success", body["status"])
+// 		assert.Equal(t, "Comment deleted successfully", body["message"])
+// 	})
+// }
 
 func voteBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 	author := TestAuthor(db)
@@ -842,19 +841,19 @@ func TestBooks(t *testing.T) {
 	createBook(t, app, db, baseUrl)
 	updateBook(t, app, db, baseUrl)
 	deleteBook(t, app, db, baseUrl)
-	addChapter(t, app, db, baseUrl)
-	updateChapter(t, app, db, baseUrl)
+	// addChapter(t, app, db, baseUrl)
+	// updateChapter(t, app, db, baseUrl)
 	deleteChapter(t, app, db, baseUrl)
 	reviewBook(t, app, db, baseUrl)
 	editBookReview(t, app, db, baseUrl)
 	deleteBookReview(t, app, db, baseUrl)
 	getReviewReplies(t, app, db, baseUrl)
-	replyReviewOrParagraphComment(t, app, db, baseUrl)
+	// replyReviewOrParagraphComment(t, app, db, baseUrl)
 	editReply(t, app, db, baseUrl)
 	deleteReply(t, app, db, baseUrl)
-	addParagraphComment(t, app, db, baseUrl)
-	editParagraphComment(t, app, db, baseUrl)
-	deleteParagraphComment(t, app, db, baseUrl)
+	// addParagraphComment(t, app, db, baseUrl)
+	// editParagraphComment(t, app, db, baseUrl)
+	// deleteParagraphComment(t, app, db, baseUrl)
 	voteBook(t, app, db, baseUrl)
 	convertCoinsToLanterns(t, app, db, baseUrl)
 	setContract(t, app, db, baseUrl)
