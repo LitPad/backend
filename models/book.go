@@ -42,6 +42,10 @@ type Book struct {
 	Slug          string `gorm:"unique"`
 	Blurb         string `gorm:"type: varchar(255)"`
 	AgeDiscretion choices.AgeType
+	Synopsis      string
+	CharacterBio  string
+	Outline       string
+	Settings      string
 
 	GenreID    uuid.UUID `json:"genre_id"`
 	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
@@ -74,8 +78,6 @@ type Book struct {
 	PlannedLength        uint
 	AverageChapter       uint
 	UpdateRate           uint
-	Synopsis             string
-	Outline              string
 	IntendedContract     choices.ContractTypeChoice
 	FullPrice            *int
 	ChapterPrice         int

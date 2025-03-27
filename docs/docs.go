@@ -1562,8 +1562,36 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "character_bio",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "name": "genre_slug",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "outline",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "settings",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "synopsis",
                         "in": "formData",
                         "required": true
                     },
@@ -2337,8 +2365,36 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "character_bio",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "name": "genre_slug",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "outline",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "settings",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 5000,
+                        "type": "string",
+                        "name": "synopsis",
                         "in": "formData",
                         "required": true
                     },
@@ -3975,6 +4031,9 @@ const docTemplate = `{
                 "chapters_count": {
                     "type": "integer"
                 },
+                "character_bio": {
+                    "type": "string"
+                },
                 "cover_image": {
                     "type": "string"
                 },
@@ -3988,13 +4047,22 @@ const docTemplate = `{
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
+                "outline": {
+                    "type": "string"
+                },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
                 },
+                "settings": {
+                    "type": "string"
+                },
                 "slug": {
+                    "type": "string"
+                },
+                "synopsis": {
                     "type": "string"
                 },
                 "tags": {
@@ -4055,6 +4123,9 @@ const docTemplate = `{
                 "chapters_count": {
                     "type": "integer"
                 },
+                "character_bio": {
+                    "type": "string"
+                },
                 "cover_image": {
                     "type": "string"
                 },
@@ -4068,10 +4139,19 @@ const docTemplate = `{
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
+                "outline": {
+                    "type": "string"
+                },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
+                "settings": {
+                    "type": "string"
+                },
                 "slug": {
+                    "type": "string"
+                },
+                "synopsis": {
                     "type": "string"
                 },
                 "tags": {

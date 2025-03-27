@@ -160,6 +160,10 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 		GenreID: genre.ID, Genre: genre,
 		Tags:       Tags,
 		CoverImage: coverImage,
+		Synopsis: data.Synopsis,
+		CharacterBio: data.CharacterBio,
+		Outline: data.Outline,
+		Settings: data.Settings,
 	}
 	db.Omit("Tags.*").Create(&book)
 	return book
@@ -172,6 +176,11 @@ func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCrea
 	book.GenreID = genre.ID
 	book.Genre = genre
 	book.Tags = Tags
+	book.Synopsis = data.Synopsis
+	book.CharacterBio = data.CharacterBio
+	book.Outline = data.Outline
+	book.Settings = data.Settings
+	
 	if coverImage != "" {
 		book.CoverImage = coverImage
 	}

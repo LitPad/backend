@@ -224,6 +224,8 @@ definitions:
         type: integer
       chapters_count:
         type: integer
+      character_bio:
+        type: string
       cover_image:
         type: string
       created_at:
@@ -233,11 +235,17 @@ definitions:
         type: integer
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
+      outline:
+        type: string
       partial_view_chapter:
         $ref: '#/definitions/schemas.ChapterListSchema'
       reviews:
         $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
+      settings:
+        type: string
       slug:
+        type: string
+      synopsis:
         type: string
       tags:
         items:
@@ -278,6 +286,8 @@ definitions:
         type: integer
       chapters_count:
         type: integer
+      character_bio:
+        type: string
       cover_image:
         type: string
       created_at:
@@ -287,9 +297,15 @@ definitions:
         type: integer
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
+      outline:
+        type: string
       partial_view_chapter:
         $ref: '#/definitions/schemas.ChapterListSchema'
+      settings:
+        type: string
       slug:
+        type: string
+      synopsis:
         type: string
       tags:
         items:
@@ -2523,7 +2539,27 @@ paths:
         required: true
         type: string
       - in: formData
+        maxLength: 5000
+        name: character_bio
+        required: true
+        type: string
+      - in: formData
         name: genre_slug
+        required: true
+        type: string
+      - in: formData
+        maxLength: 5000
+        name: outline
+        required: true
+        type: string
+      - in: formData
+        maxLength: 5000
+        name: settings
+        required: true
+        type: string
+      - in: formData
+        maxLength: 5000
+        name: synopsis
         required: true
         type: string
       - collectionFormat: csv
@@ -2703,7 +2739,27 @@ paths:
         required: true
         type: string
       - in: formData
+        maxLength: 5000
+        name: character_bio
+        required: true
+        type: string
+      - in: formData
         name: genre_slug
+        required: true
+        type: string
+      - in: formData
+        maxLength: 5000
+        name: outline
+        required: true
+        type: string
+      - in: formData
+        maxLength: 5000
+        name: settings
+        required: true
+        type: string
+      - in: formData
+        maxLength: 5000
+        name: synopsis
         required: true
         type: string
       - collectionFormat: csv
