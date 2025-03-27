@@ -58,18 +58,14 @@ func TestAuthor(db *gorm.DB, another ...bool) models.User {
 	return user
 }
 
-func JwtData(db *gorm.DB, user models.User) models.User {
-	access := routes.GenerateAccessToken(user)
-	refresh := routes.GenerateRefreshToken()
-	user.Access = &access
-	user.Refresh = &refresh
-	db.Save(&user)
-	return user
+func JwtData(db *gorm.DB, user models.User) models.AuthToken {
+	token := userManager.GenerateAuthTokens(db, user, routes.GenerateAccessToken(user), routes.GenerateRefreshToken())
+	return token
 }
 
 func AccessToken(db *gorm.DB, user models.User) string {
-	user = JwtData(db, user)
-	return *user.Access
+	token := JwtData(db, user)
+	return token.Access
 }
 
 // BOOKS TEST DATA

@@ -170,6 +170,20 @@ func (u UserManager) GetUserGrowthData(db *gorm.DB, choice choices.UserGrowthCho
 	return results
 }
 
+func (u UserManager) GenerateAuthTokens(db *gorm.DB, user models.User, access string, refresh string) models.AuthToken {
+	tokens := models.AuthToken{UserID: user.ID, Access: access, Refresh: refresh}
+	db.Create(&tokens)
+	return tokens
+}
+
+func (u UserManager) DeleteToken(db *gorm.DB, token string) {
+	db.Where("access = ?", token).Delete(&models.AuthToken{})
+}
+
+func (u UserManager) DeleteAllToken(db *gorm.DB, user models.User) {
+	db.Where("user_id = ?", user.ID).Delete(&models.AuthToken{})
+}
+
 type NotificationManager struct{}
 
 func (n NotificationManager) GetAllByUser(db *gorm.DB, user *models.User) []models.Notification {

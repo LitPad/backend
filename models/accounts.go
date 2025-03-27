@@ -16,13 +16,13 @@ import (
 type User struct {
 	BaseModel
 	Name            *string `gorm:"type: varchar(255);null"`
-	Username        string `gorm:"type: varchar(1000);not null;unique;"`
-	Email           string `gorm:"not null;unique;"`
-	Password        string `gorm:"not null"`
-	IsEmailVerified bool   `gorm:"default:false"`
-	IsSuperuser     bool   `gorm:"default:false"`
-	IsStaff         bool   `gorm:"default:false"`
-	IsActive        bool   `gorm:"default:true"`
+	Username        string  `gorm:"type: varchar(1000);not null;unique;"`
+	Email           string  `gorm:"not null;unique;"`
+	Password        string  `gorm:"not null"`
+	IsEmailVerified bool    `gorm:"default:false"`
+	IsSuperuser     bool    `gorm:"default:false"`
+	IsStaff         bool    `gorm:"default:false"`
+	IsActive        bool    `gorm:"default:true"`
 
 	Otp         *uint      `gorm:"null"`
 	OtpExpiry   *time.Time `gorm:"null"`
@@ -30,8 +30,6 @@ type User struct {
 	TokenExpiry *time.Time `gorm:"null"`
 
 	Avatar            string          `gorm:"type:varchar(1000);null;"`
-	Access            *string         `gorm:"type:varchar(1000);null;"`
-	Refresh           *string         `gorm:"type:varchar(1000);null;"`
 	SocialLogin       bool            `gorm:"default:false"`
 	Bio               *string         `gorm:"type:varchar(1000);null;"`
 	AccountType       choices.AccType `gorm:"type:varchar(100); default:READER"`
@@ -69,12 +67,16 @@ func (u *User) GenerateToken(db *gorm.DB) {
 }
 
 func (u User) IsTokenExpired() bool {
-	if u.TokenExpiry == nil { return true }
+	if u.TokenExpiry == nil {
+		return true
+	}
 	return time.Now().UTC().After((*u.TokenExpiry).UTC())
 }
 
 func (u User) IsOtpExpired() bool {
-	if u.OtpExpiry == nil { return true }
+	if u.OtpExpiry == nil {
+		return true
+	}
 	return time.Now().UTC().After((*u.OtpExpiry).UTC())
 }
 
@@ -125,6 +127,14 @@ func (user *User) GenerateUsername(db *gorm.DB, email string, username *string) 
 		uniqueUsername = slug.Make(emailSubstr) + randomStr
 	}
 	return uniqueUsername
+}
+
+type AuthToken struct {
+	BaseModel
+	UserID  uuid.UUID `gorm:"index"`
+	User    User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+	Access  string    `gorm:"unique"`
+	Refresh string    `gorm:"unique"`
 }
 
 type Notification struct {

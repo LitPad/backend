@@ -49,7 +49,7 @@ func (ep Endpoint) HandleLogsLogin(c *fiber.Ctx) error {
 	}
 	
 	accessToken := GenerateAccessToken(*user)
-	user.Access = &accessToken
+	userManager.GenerateAuthTokens(db, *user, GenerateAccessToken(*user), utils.GetRandomString(15))
 	// Hash password
 	if user.Password == password {
 		user.Password = utils.HashPassword(password)
@@ -71,9 +71,7 @@ func (ep Endpoint) HandleLogsLogout(c *fiber.Ctx) error {
 	if user == nil {
 		return c.Redirect("/logs/login")
 	}
-	user.Access = nil
-	user.Refresh = nil
-	db.Save(&user)
+	userManager.DeleteAllToken(db, *user)
 	session.Set("access", nil)
 	session.Set("success", "Logged out successfully!")
 	session.Save()

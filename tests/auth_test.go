@@ -425,7 +425,7 @@ func refresh(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		token := JwtData(db, user)
 
 		url := fmt.Sprintf("%s/refresh", baseUrl)
-		refreshData := schemas.RefreshTokenSchema{Refresh: *token.Refresh}
+		refreshData := schemas.RefreshTokenSchema{Refresh: token.Refresh}
 		res := ProcessJsonTestBody(t, app, url, "POST", refreshData)
 
 		// Assert Status code

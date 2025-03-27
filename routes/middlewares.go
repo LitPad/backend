@@ -68,7 +68,7 @@ func (ep Endpoint) AuthorMiddleware(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
 	}
-	if user.AccountType != choices.ACCTYPE_AUTHOR {
+	if user.AccountType != choices.ACCTYPE_AUTHOR && !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Authors only!"))
 	}
 	c.Locals("user", user)

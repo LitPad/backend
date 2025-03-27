@@ -1187,6 +1187,34 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/logout/all": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint logs a user out from every device",
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout a user from all devices",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "description": "This endpoint refresh tokens by generating new access and refresh tokens for a user",

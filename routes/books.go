@@ -133,7 +133,7 @@ func (ep Endpoint) GetBookChapters(c *fiber.Ctx) error {
 
 	user := RequestUser(c)
 	var chapters []models.Chapter
-	if (user.ID == uuid.Nil || user.SubscriptionExpired()) && len(book.Chapters) > 0 && user.ID != book.AuthorID {
+	if (user.ID == uuid.Nil || user.SubscriptionExpired()) && len(book.Chapters) > 0 && user.ID != book.AuthorID && !user.IsStaff {
 		chapters = book.Chapters[:1]
 	} else {
 		chapters = book.Chapters
@@ -171,7 +171,7 @@ func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 	chapterIsFirst := chapterManager.IsFirstChapter(db, *chapter)
-	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst {
+	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst && !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Renew your subscription to view this chapter"))
 	}
 	response := schemas.ChapterResponseSchema{
@@ -202,7 +202,7 @@ func (ep Endpoint) GetParagraphComments(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 	chapterIsFirst := chapterManager.IsFirstChapter(db, *chapter)
-	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst {
+	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst && !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Renew your subscription to view this chapter"))
 	}
 

@@ -18,10 +18,15 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/database"
+	"github.com/LitPad/backend/managers"
 	"github.com/LitPad/backend/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
+)
+
+var (
+	userManager = managers.UserManager{}
 )
 
 func CreateSingleTable(db *gorm.DB, model interface{}) {

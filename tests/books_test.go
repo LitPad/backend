@@ -384,7 +384,7 @@ func reviewBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		ReviewData(db, book, reviewer) // Get or create review
 		expiry := time.Now().AddDate(0, 0, 1)
 		reviewer.SubscriptionExpiry = &expiry
-		reviewer.Access = &token
+		userManager.GenerateAuthTokens(db, reviewer, token, "test")
 		db.Save(&reviewer)
 
 		url := fmt.Sprintf("%s/book/%s", baseUrl, book.Slug)
@@ -708,7 +708,7 @@ func voteBook(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 
 	t.Run("Accept Book Vote Due To Sufficient Lanterns", func(t *testing.T) {
 		voter.Lanterns = 10
-		voter.Access = &token
+		userManager.GenerateAuthTokens(db, voter, token, "test")
 		db.Save(&voter)
 
 		url := fmt.Sprintf("%s/book/%s/vote", baseUrl, book.Slug)
@@ -765,7 +765,7 @@ func convertCoinsToLanterns(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl s
 
 	t.Run("Accept Coins Conversion Due To Sufficient Coins", func(t *testing.T) {
 		user.Coins = 10
-		user.Access = &token
+		userManager.GenerateAuthTokens(db, user, token, "test")
 		db.Save(&user)
 
 		url := fmt.Sprintf("%s/lanterns-generation/%s", baseUrl, "2")

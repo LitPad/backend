@@ -31,9 +31,13 @@ type RefreshTokenPayload struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(user models.User) string {
+func GenerateAccessToken(user models.User, admin...bool) string {
 	cfg := config.GetConfig()
-	expirationTime := time.Now().Add(time.Duration(cfg.AccessTokenExpireMinutes) * time.Minute)
+	expiryMins := cfg.AccessTokenExpireMinutes
+	if len(admin) > 0 {
+		expiryMins = 35
+	}
+	expirationTime := time.Now().Add(time.Duration(expiryMins) * time.Minute)
 	payload := AccessTokenPayload{
 		UserId: user.ID,
 		Username: user.Username,
@@ -93,13 +97,12 @@ func DecodeAccessToken(token string, db *gorm.DB) (*models.User, *string) {
 	if !tkn.Valid {
 		return nil, &tokenErr
 	}
-	user := models.User{BaseModel: models.BaseModel{ID: claims.UserId}, Access: &token}
-	// Fetch Jwt model object
-	result := db.Take(&user, user)
+	tokenObj := models.AuthToken{UserID: claims.UserId, Access: token}
+	result := db.Joins("User").Take(&tokenObj, tokenObj)
 	if result.Error != nil {
 		return nil, &tokenErr
 	}
-	return &user, nil
+	return &tokenObj.User, nil
 }
 
 func DecodeRefreshToken(token string) bool {
@@ -195,7 +198,7 @@ func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorRes
 	return &data, nil
 }
 
-func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *utils.ErrorResponse) {
+func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *models.AuthToken, *utils.ErrorResponse) {
 	cfg := config.GetConfig()
 
 	user := models.User{Email: email}
@@ -206,14 +209,10 @@ func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) 
 	} else {
 		if !user.SocialLogin {
 			errData := utils.RequestErr(utils.ERR_INVALID_AUTH, "Requires password to login")
-			return nil, &errData
+			return nil, nil, &errData
 		}
 	}
 	// Generate tokens
-	access := GenerateAccessToken(user)
-	user.Access = &access
-	refresh := GenerateRefreshToken()
-	user.Refresh = &refresh
-	db.Save(&user)
-	return &user, nil
+	token := userManager.GenerateAuthTokens(db, user, GenerateAccessToken(user), GenerateRefreshToken())
+	return &user, &token, nil
 }

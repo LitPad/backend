@@ -246,14 +246,10 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 	}
 
 	// Create Auth Tokens
-	access := GenerateAccessToken(user)
-	user.Access = &access
-	refresh := GenerateRefreshToken()
-	user.Refresh = &refresh
-	db.Save(&user)
+	tokens := userManager.GenerateAuthTokens(db, user, GenerateAccessToken(user), GenerateRefreshToken())
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh}.Init(user),
+		Data:           schemas.TokensResponseSchema{Access: tokens.Access, Refresh: tokens.Refresh}.Init(user),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -286,13 +282,13 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 	name := userGoogleData.Name
 	avatar := userGoogleData.Picture
 
-	user, err := RegisterSocialUser(db, email, name, &avatar)
+	user, token, err := RegisterSocialUser(db, email, name, &avatar)
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}
 	response := schemas.LoginResponseSchema{
-		ResponseSchema: ResponseMessage("Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
+		ResponseSchema: ResponseMessage("Social Login successful"),
+		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(*user),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -324,13 +320,13 @@ func (ep Endpoint) FacebookLogin(c *fiber.Ctx) error {
 	email := userFacebookData.Email
 	name := userFacebookData.Name
 
-	user, err := RegisterSocialUser(db, email, name, nil)
+	user, token, err := RegisterSocialUser(db, email, name, nil)
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: *user.Access, Refresh: *user.Refresh},
+		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(*user),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -354,24 +350,23 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 		return c.Status(*errCode).JSON(errData)
 	}
 
-	token := data.Refresh
-	user := models.User{Refresh: &token}
-	db.Scopes(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
-	if user.ID == uuid.Nil || !DecodeRefreshToken(token) {
+	refreshToken := data.Refresh
+	token := models.AuthToken{Refresh: refreshToken}
+	db.Take(&token, token)
+	if token.ID == uuid.Nil || !DecodeRefreshToken(refreshToken) {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, "Refresh token is invalid or expired"))
-
 	}
+	user := models.User{BaseModel: models.BaseModel{ID: token.UserID}}
+	db.Find(scopes.FollowerFollowingPreloaderScope).Take(&user, user)
 
 	// Create and Update Auth Tokens
-	access := GenerateAccessToken(user)
-	user.Access = &access
-	refresh := GenerateRefreshToken()
-	user.Refresh = &refresh
-	db.Save(&user)
+	token.Access = GenerateAccessToken(user)
+	token.Refresh = GenerateRefreshToken()
+	db.Save(&token)
 
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Tokens refresh successful"),
-		Data:           schemas.TokensResponseSchema{Access: access, Refresh: refresh}.Init(user),
+		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(user),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -384,10 +379,23 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 // @Router /auth/logout [get]
 // @Security BearerAuth
 func (ep Endpoint) Logout(c *fiber.Ctx) error {
+	token := c.Get("Authorization")[7:]
 	db := ep.DB
-	user := RequestUser(c)
-	user.Access = nil
-	user.Refresh = nil
-	db.Save(user)
+	userManager.DeleteToken(db, token)
 	return c.Status(200).JSON(ResponseMessage("Logout successful"))
+}
+
+
+// @Summary Logout a user from all devices
+// @Description This endpoint logs a user out from every device
+// @Tags Auth
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /auth/logout/all [get]
+// @Security BearerAuth
+func (ep Endpoint) LogoutAll(c *fiber.Ctx) error {
+	user := RequestUser(c)
+	db := ep.DB
+	userManager.DeleteAllToken(db, *user)
+	return c.Status(200).JSON(ResponseMessage("Logout from all devices successful"))
 }

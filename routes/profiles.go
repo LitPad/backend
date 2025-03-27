@@ -118,8 +118,7 @@ func (ep Endpoint) UpdatePassword(c *fiber.Ctx) error {
 
 	user.Password = utils.HashPassword(data.NewPassword)
 	// Clear tokens to logout user
-	user.Access = nil
-	user.Refresh = nil
+	userManager.DeleteAllToken(db, *user)
 	db.Save(&user)
 	return c.Status(200).JSON(ResponseMessage("Password updated successfully"))
 }

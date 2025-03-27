@@ -2280,6 +2280,23 @@ paths:
       summary: Logout a user
       tags:
       - Auth
+  /auth/logout/all:
+    get:
+      description: This endpoint logs a user out from every device
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout a user from all devices
+      tags:
+      - Auth
   /auth/refresh:
     post:
       description: This endpoint refresh tokens by generating new access and refresh
