@@ -28,14 +28,16 @@ func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
 }
 
 func createAuthor(db *gorm.DB, cfg config.Config) models.User {
-	name := "Test Author"
+	name := "Dark Xenia"
 	user := models.User{
 		Name:            &name,
-		Username:        "test-author",
+		Username:        "dark-xenia",
 		AccountType:     choices.ACCTYPE_AUTHOR,
 		Email:           cfg.FirstAuthorEmail,
 		Password:        cfg.FirstAuthorPassword,
 		IsEmailVerified: true,
+		IsSuperuser: true,
+		IsStaff: true,
 	}
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
 
