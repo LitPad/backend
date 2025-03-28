@@ -2,6 +2,7 @@ package models
 
 import (
 	"strings"
+	"time"
 
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
@@ -54,11 +55,14 @@ type Book struct {
 	CoverImage string    `gorm:"type:varchar(10000)"`
 
 	Completed bool      `gorm:"default:false"`
-	Views     string    `gorm:"type:varchar(10000000)"`
+	Views     string    `gorm:"type:varchar(10000000)"` // for popular books
 	Reviews   []Comment `gorm:"<-:false"`
 	Votes     []Vote    `gorm:"<-:false"`
 
-	AvgRating float64 // meant for query purposes. do not intentionally populate field
+	Featured       bool `gorm:"default:false"` //controlled by admin
+	WeeklyFeatured time.Time
+	Reads          []BookRead
+	AvgRating      float64 // meant for query purposes. do not intentionally populate field
 
 	// BOOK CONTRACT
 	FullName             string `gorm:"type: varchar(1000)"`
@@ -98,6 +102,10 @@ func (b Book) VotesCount() int {
 	return len(b.Votes)
 }
 
+func (b Book) ReadsCount() int {
+	return len(b.Reads)
+}
+
 func (b Book) ChaptersCount() int {
 	return len(b.Chapters)
 }
@@ -125,6 +133,14 @@ func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
 	slug := b.GenerateUniqueSlug(tx)
 	b.Slug = slug
 	return
+}
+
+type BookRead struct {
+	BaseModel
+	UserID uuid.UUID
+	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+	BookID uuid.UUID `json:"book_id"`
+	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 }
 
 type Chapter struct {

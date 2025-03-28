@@ -68,6 +68,7 @@ type BookWithStats struct {
 	AuthorName string  `json:"author_name"`
 	AvgRating  float64 `json:"avg_rating"`
 	VotesCount int     `json:"votes_count"`
+	ReadsCount int     `json:"reads_count"`
 	GenreName  string  `json:"genre_name"`
 	GenreSlug  string  `json:"genre_slug"`
 }
