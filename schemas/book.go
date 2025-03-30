@@ -84,10 +84,6 @@ type BookSchema struct {
 	Slug               string                `json:"slug"`
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
-	Synopsis           string                `json:"synopsis"`
-	CharacterBio       string                `json:"character_bio"`
-	Outline            string                `json:"outline"`
-	Settings           string                `json:"settings"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
@@ -289,10 +285,6 @@ type BookCreateSchema struct {
 	GenreSlug     string          `form:"genre_slug" validate:"required"`
 	TagSlugs      []string        `form:"tag_slugs" validate:"required"`
 	AgeDiscretion choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
-	Synopsis      string          `form:"synopsis" validate:"required,max=5000"`
-	CharacterBio  string          `form:"character_bio" validate:"required,max=5000"`
-	Outline       string          `form:"outline" validate:"required,max=5000"`
-	Settings      string          `form:"settings" validate:"required,max=5000"`
 }
 
 type ChapterCreateSchema struct {
@@ -348,8 +340,6 @@ type ContractSchema struct {
 	PlannedLength        uint                         `json:"planned_length"`
 	AverageChapter       uint                         `json:"average_chapter"`
 	UpdateRate           uint                         `json:"update_rate"`
-	Synopsis             string                       `json:"synopsis"`
-	Outline              string                       `json:"outline"`
 	IntendedContract     choices.ContractTypeChoice   `json:"intended_contract"`
 	FullPurchaseMode     bool                         `json:"full_purchase_mode"`
 	ContractStatus       choices.ContractStatusChoice `json:"contract_status"`
@@ -373,8 +363,6 @@ func (c ContractSchema) Init(book models.Book) ContractSchema {
 	c.PlannedLength = book.PlannedLength
 	c.AverageChapter = book.AverageChapter
 	c.UpdateRate = book.UpdateRate
-	c.Synopsis = book.Synopsis
-	c.Outline = book.Outline
 	c.IntendedContract = book.IntendedContract
 	c.FullPurchaseMode = book.FullPurchaseMode
 	c.ContractStatus = book.ContractStatus
@@ -401,8 +389,6 @@ type ContractCreateSchema struct {
 	PlannedLength        uint                         `form:"planned_length" validate:"required"`
 	AverageChapter       uint                         `form:"average_chapter" validate:"required"`
 	UpdateRate           uint                         `form:"update_rate" validate:"required"`
-	Synopsis             string                       `form:"synopsis" validate:"required"`
-	Outline              string                       `form:"outline" validate:"required"`
 	IntendedContract     choices.ContractTypeChoice   `form:"intended_contract" validate:"required,contract_type_validator"`
 	FullPurchaseMode     bool                         `form:"full_purchase_mode"`
 }

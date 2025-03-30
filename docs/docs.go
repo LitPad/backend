@@ -1562,36 +1562,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "character_bio",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "string",
                         "name": "genre_slug",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "outline",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "settings",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "synopsis",
                         "in": "formData",
                         "required": true
                     },
@@ -2365,36 +2337,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "character_bio",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "string",
                         "name": "genre_slug",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "outline",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "settings",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 5000,
-                        "type": "string",
-                        "name": "synopsis",
                         "in": "formData",
                         "required": true
                     },
@@ -2722,12 +2666,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "name": "outline",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "maxLength": 1000,
                         "type": "string",
                         "name": "pen_name",
@@ -2750,12 +2688,6 @@ const docTemplate = `{
                         "maxLength": 1000,
                         "type": "string",
                         "name": "state",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "name": "synopsis",
                         "in": "formData",
                         "required": true
                     },
@@ -4031,9 +3963,6 @@ const docTemplate = `{
                 "chapters_count": {
                     "type": "integer"
                 },
-                "character_bio": {
-                    "type": "string"
-                },
                 "cover_image": {
                     "type": "string"
                 },
@@ -4047,22 +3976,16 @@ const docTemplate = `{
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
-                "outline": {
-                    "type": "string"
-                },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterListSchema"
+                },
+                "reads": {
+                    "type": "integer"
                 },
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
                 },
-                "settings": {
-                    "type": "string"
-                },
                 "slug": {
-                    "type": "string"
-                },
-                "synopsis": {
                     "type": "string"
                 },
                 "tags": {
@@ -4123,9 +4046,6 @@ const docTemplate = `{
                 "chapters_count": {
                     "type": "integer"
                 },
-                "character_bio": {
-                    "type": "string"
-                },
                 "cover_image": {
                     "type": "string"
                 },
@@ -4139,19 +4059,13 @@ const docTemplate = `{
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
-                "outline": {
-                    "type": "string"
-                },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
-                "settings": {
-                    "type": "string"
+                "reads": {
+                    "type": "integer"
                 },
                 "slug": {
-                    "type": "string"
-                },
-                "synopsis": {
                     "type": "string"
                 },
                 "tags": {
@@ -4192,6 +4106,9 @@ const docTemplate = `{
                 },
                 "genre_slug": {
                     "type": "string"
+                },
+                "reads_count": {
+                    "type": "integer"
                 },
                 "slug": {
                     "type": "string"
@@ -4467,9 +4384,6 @@ const docTemplate = `{
                 "intended_contract": {
                     "$ref": "#/definitions/choices.ContractTypeChoice"
                 },
-                "outline": {
-                    "type": "string"
-                },
                 "pen_name": {
                     "type": "string"
                 },
@@ -4480,9 +4394,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "state": {
-                    "type": "string"
-                },
-                "synopsis": {
                     "type": "string"
                 },
                 "telephone_number": {

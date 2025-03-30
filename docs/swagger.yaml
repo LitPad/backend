@@ -224,8 +224,6 @@ definitions:
         type: integer
       chapters_count:
         type: integer
-      character_bio:
-        type: string
       cover_image:
         type: string
       created_at:
@@ -235,17 +233,13 @@ definitions:
         type: integer
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
-      outline:
-        type: string
       partial_view_chapter:
         $ref: '#/definitions/schemas.ChapterListSchema'
+      reads:
+        type: integer
       reviews:
         $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
-      settings:
-        type: string
       slug:
-        type: string
-      synopsis:
         type: string
       tags:
         items:
@@ -286,8 +280,6 @@ definitions:
         type: integer
       chapters_count:
         type: integer
-      character_bio:
-        type: string
       cover_image:
         type: string
       created_at:
@@ -297,15 +289,11 @@ definitions:
         type: integer
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
-      outline:
-        type: string
       partial_view_chapter:
         $ref: '#/definitions/schemas.ChapterListSchema'
-      settings:
-        type: string
+      reads:
+        type: integer
       slug:
-        type: string
-      synopsis:
         type: string
       tags:
         items:
@@ -333,6 +321,8 @@ definitions:
         type: string
       genre_slug:
         type: string
+      reads_count:
+        type: integer
       slug:
         type: string
       title:
@@ -521,8 +511,6 @@ definitions:
         $ref: '#/definitions/choices.ContractIDTypeChoice'
       intended_contract:
         $ref: '#/definitions/choices.ContractTypeChoice'
-      outline:
-        type: string
       pen_name:
         type: string
       planned_length:
@@ -530,8 +518,6 @@ definitions:
       postal_code:
         type: string
       state:
-        type: string
-      synopsis:
         type: string
       telephone_number:
         type: string
@@ -2539,27 +2525,7 @@ paths:
         required: true
         type: string
       - in: formData
-        maxLength: 5000
-        name: character_bio
-        required: true
-        type: string
-      - in: formData
         name: genre_slug
-        required: true
-        type: string
-      - in: formData
-        maxLength: 5000
-        name: outline
-        required: true
-        type: string
-      - in: formData
-        maxLength: 5000
-        name: settings
-        required: true
-        type: string
-      - in: formData
-        maxLength: 5000
-        name: synopsis
         required: true
         type: string
       - collectionFormat: csv
@@ -2739,27 +2705,7 @@ paths:
         required: true
         type: string
       - in: formData
-        maxLength: 5000
-        name: character_bio
-        required: true
-        type: string
-      - in: formData
         name: genre_slug
-        required: true
-        type: string
-      - in: formData
-        maxLength: 5000
-        name: outline
-        required: true
-        type: string
-      - in: formData
-        maxLength: 5000
-        name: settings
-        required: true
-        type: string
-      - in: formData
-        maxLength: 5000
-        name: synopsis
         required: true
         type: string
       - collectionFormat: csv
@@ -2928,10 +2874,6 @@ paths:
         - CT_NON_EXCLUSIVE
         - CT_ONLY_EXCLUSIVE
       - in: formData
-        name: outline
-        required: true
-        type: string
-      - in: formData
         maxLength: 1000
         name: pen_name
         required: true
@@ -2947,10 +2889,6 @@ paths:
       - in: formData
         maxLength: 1000
         name: state
-        required: true
-        type: string
-      - in: formData
-        name: synopsis
         required: true
         type: string
       - in: formData

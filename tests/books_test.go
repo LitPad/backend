@@ -790,7 +790,6 @@ func setContract(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string) {
 		City: "Example City", State: "Example State", PostalCode: "123456",
 		TelephoneNumber: "+123456778", IDType: choices.CID_DRIVERS_LICENSE,
 		PlannedLength: 1000, AverageChapter: 100, UpdateRate: 20,
-		Synopsis: "The Example Synopsis", Outline: "Example Outline",
 		IntendedContract: choices.CT_EXCLUSIVE, FullPurchaseMode: true,
 		BookAvailabilityLink: nil,
 	}

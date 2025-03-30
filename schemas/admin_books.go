@@ -23,8 +23,6 @@ type ContractSchema2 struct {
 	PlannedLength        uint                         `json:"planned_length"`
 	AverageChapter       uint                         `json:"average_chapter"`
 	UpdateRate           uint                         `json:"update_rate"`
-	Synopsis             string                       `json:"synopsis"`
-	Outline              string                       `json:"outline"`
 	IntendedContract     choices.ContractTypeChoice   `json:"intended_contract"`
 	FullPrice            *int                         `json:"full_price"`
 	ChapterPrice         int                          `json:"chapter_price"`
