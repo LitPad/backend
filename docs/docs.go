@@ -4073,9 +4073,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
-                "views": {
-                    "type": "integer"
-                },
                 "votes": {
                     "type": "integer"
                 }
@@ -4152,9 +4149,6 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "views": {
-                    "type": "integer"
                 },
                 "votes": {
                     "type": "integer"

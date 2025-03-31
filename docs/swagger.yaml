@@ -250,8 +250,6 @@ definitions:
       updated_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
-      views:
-        type: integer
       votes:
         type: integer
     type: object
@@ -304,8 +302,6 @@ definitions:
       updated_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
-      views:
-        type: integer
       votes:
         type: integer
     type: object

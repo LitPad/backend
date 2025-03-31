@@ -91,7 +91,6 @@ type BookSchema struct {
 	CoverImage         string                `json:"cover_image"`
 	FullPrice          *int                  `json:"full_price"`
 	ChapterPrice       int                   `json:"chapter_price"`
-	Views              int                   `json:"views"`
 	Votes              int                   `json:"votes"`
 	Reads              int                   `json:"reads"`
 	AvgRating          float64               `json:"avg_rating"`
