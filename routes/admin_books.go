@@ -208,6 +208,9 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
+// @Param featured query bool false "Filter by Featured"
+// @Param weeklyFeatured query bool false "Filter by Weekly Featured"
+// @Param trending query bool false "Filter by Trending"
 // @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books [get]
@@ -219,8 +222,11 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 	nameQuery := c.Query("name", "")
 	genreSlug := c.Query("genre_slug", "")
 	tagSlug := c.Query("tag_slug", "")
+	featured := c.QueryBool("featured")
+	weeklyFeatured := c.QueryBool("weekly_featured")
+	trending := c.QueryBool("trending")
 
-	books, _ := bookManager.GetLatest(db, genreSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery)
+	books, _ := bookManager.GetLatest(db, genreSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery, featured, weeklyFeatured, trending)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
@@ -248,6 +254,9 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
+// @Param featured query bool false "Filter by Featured"
+// @Param weeklyFeatured query bool false "Filter by Weekly Featured"
+// @Param trending query bool false "Filter by Trending"
 // @Success 200 {object} schemas.BooksResponseSchema "Successfully retrieved list of books"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/books/by-username/{username} [get]
@@ -259,6 +268,9 @@ func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug", "")
 	tagSlug := c.Query("tag_slug", "")
+	featured := c.QueryBool("featured")
+	weeklyFeatured := c.QueryBool("weekly_featured")
+	trending := c.QueryBool("trending")
 
 	author := models.User{Username: username, AccountType: choices.ACCTYPE_AUTHOR}
 	db.Take(&author, author)
@@ -267,7 +279,7 @@ func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.NotFoundErr("Author does not exist!"))
 	}
 
-	books, _ := bookManager.GetLatest(db, genreSlug, tagSlug, titleQuery, ratingQuery, username, "")
+	books, _ := bookManager.GetLatest(db, genreSlug, tagSlug, titleQuery, ratingQuery, username, "", featured, weeklyFeatured, trending)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)

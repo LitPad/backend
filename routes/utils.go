@@ -12,6 +12,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/paymentintent"
@@ -146,18 +147,10 @@ func CheckTagStrings(db *gorm.DB, submittedList []string) ([]models.Tag, *string
 	return tagsToReturn, nil
 }
 
-func ViewBook(c *fiber.Ctx, db *gorm.DB, book models.Book) *models.Book {
-	views := book.Views
-	ip := c.IP()
-	if !strings.Contains(views, ip) {
-		if views != "" {
-			book.Views = fmt.Sprintf("%s, %s", views, ip)
-		} else {
-			book.Views = ip
-		}
-		db.Save(&book)
-	}
-	return &book
+func ReadBook(db *gorm.DB, bookID uuid.UUID, user *models.User) models.BookRead {
+	bookRead := models.BookRead{UserID: user.ID, BookID: bookID}
+	db.FirstOrCreate(&bookRead, bookRead)
+	return bookRead
 }
 
 func IsAmongUserType(target string) bool {

@@ -28,7 +28,6 @@ var (
 		AgeDiscretion: choices.ATYPE_EIGHTEEN,
 		CoverImage: "https://example.com/cover.jpg",
 		Completed:  false,
-		Views:      "1 0 0 1 1 6 9 2 5 4 1 1 1 9 2 1 6 8 1 1 1 0 0 0 1 1 7 2 1 6 0.1 192.0.2.1 1.1.1.1 8.8.8.8 222 333 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3",
 	}
 
 	PARAGRAPHS = []string{

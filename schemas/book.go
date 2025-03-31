@@ -128,7 +128,6 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	}
 
 	b.CoverImage = book.CoverImage
-	b.Views = book.ViewsCount()
 	b.CreatedAt = book.CreatedAt
 	b.UpdatedAt = book.UpdatedAt
 	return b

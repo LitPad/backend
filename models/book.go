@@ -1,7 +1,6 @@
 package models
 
 import (
-	"strings"
 	"time"
 
 	"github.com/LitPad/backend/models/choices"
@@ -51,7 +50,6 @@ type Book struct {
 	CoverImage string    `gorm:"type:varchar(10000)"`
 
 	Completed bool      `gorm:"default:false"`
-	Views     string    `gorm:"type:varchar(10000000)"` // for popular books
 	Reviews   []Comment `gorm:"<-:false"`
 	Votes     []Vote    `gorm:"<-:false"`
 
@@ -83,15 +81,6 @@ type Book struct {
 	ChapterPrice         int
 	FullPurchaseMode     bool                         `gorm:"default:false"`
 	ContractStatus       choices.ContractStatusChoice `gorm:"default:PENDING"`
-}
-
-func (b Book) ViewsCount() int {
-	views := b.Views
-	if len(views) > 0 {
-		addresses := strings.Split(b.Views, ", ")
-		return len(addresses)
-	}
-	return 0
 }
 
 func (b Book) VotesCount() int {

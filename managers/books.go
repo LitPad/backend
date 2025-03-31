@@ -1,6 +1,9 @@
 package managers
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/models/scopes"
@@ -8,7 +11,6 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"fmt"
 )
 
 type BookManager struct {
@@ -16,7 +18,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, title string, byRating bool, username string, nameContains string) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -57,11 +59,29 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 			Where("users.username ILIKE ? OR users.name ILIKE ?", "%"+nameContains+"%", "%"+nameContains+"%")
 	}
 
+	// 📌 Filter by Featured
+	if featured {
+		query = query.Where("featured = ?", true)
+	}
+
+	// 📌 Filter by Weekly Featured (Check if it's within this week)
+	if weeklyFeatured {
+		query = query.Where("weekly_featured >= ? AND weekly_featured <= ?", 
+			time.Now().Truncate(7*24*time.Hour), time.Now().Add(7*24*time.Hour))
+	}
+
+	// 📌 Select books and average rating
 	query = query.Select("books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating").
-		Joins("left join comments on comments.book_id = books.id").
+		Joins("LEFT JOIN comments ON comments.book_id = books.id").
 		Group("books.id")
 
-	if byRating {
+	// 📌 Sorting Logic
+	if trending {
+		// Order by most read books
+		query = query.Joins("LEFT JOIN book_reads ON book_reads.book_id = books.id").
+			Group("books.id").
+			Order("COUNT(book_reads.id) DESC")
+	} else if byRating {
 		query = query.Order("COALESCE(AVG(comments.rating), 0) DESC")
 	} else {
 		query = query.Order("books.created_at DESC")
@@ -91,6 +111,7 @@ func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.Book
 			users.username AS author_name, 
 			COALESCE(AVG(comments.rating), 0) AS avg_rating, 
 			COUNT(votes.id) AS votes_count, 
+			COUNT(book_reads.id) AS reads_count, 
 			genres.name AS genre_name, 
 			genres.slug AS genre_slug
 		`).
@@ -99,7 +120,7 @@ func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.Book
 		Joins("LEFT JOIN votes ON votes.book_id = books.id").
 		Joins("LEFT JOIN genres ON genres.id = books.genre_id"). // Adjust `genre_id` if necessary
 		Group("books.slug, books.title, books.cover_image, users.username, genres.name, genres.slug").
-		Order("avg_rating DESC, votes_count DESC").
+		Order("avg_rating DESC, votes_count DESC, reads_count DESC").
 		Limit(10).
 		Scan(&books)
 

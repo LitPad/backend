@@ -49,14 +49,21 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 // @Param page query int false "Current Page" default(1)
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
+// @Param featured query bool false "Filter by Featured"
+// @Param weeklyFeatured query bool false "Filter by Weekly Featured"
+// @Param trending query bool false "Filter by Trending"
 // @Success 200 {object} schemas.BooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books [get]
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
+	fmt.Println("Featured: ")
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, "", "")
+	featured := c.QueryBool("featured")
+	weeklyFeatured := c.QueryBool("weekly_featured")
+	trending := c.QueryBool("trending")
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -83,6 +90,9 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 // @Param username path string true "Filter by Author Username"
 // @Param genre_slug query string false "Filter by Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
+// @Param featured query bool false "Filter by Featured"
+// @Param weeklyFeatured query bool false "Filter by Weekly Featured"
+// @Param trending query bool false "Filter by Trending"
 // @Success 200 {object} schemas.BooksResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books/author/{username} [get]
@@ -91,7 +101,10 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, username, "")
+	featured := c.QueryBool("featured")
+	weeklyFeatured := c.QueryBool("weekly_featured")
+	trending := c.QueryBool("trending")
+	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -174,6 +187,7 @@ func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
 	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst && !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Renew your subscription to view this chapter"))
 	}
+	ReadBook(db, chapter.BookID, user)
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter fetched successfully"),
 		Data:           schemas.ChapterDetailSchema{}.Init(*chapter),
@@ -242,8 +256,6 @@ func (ep Endpoint) GetSingleBook(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
-
-	book = ViewBook(c, db, *book)
 
 	reviews := paginatedReviews.([]models.Comment)
 	response := schemas.BookDetailResponseSchema{

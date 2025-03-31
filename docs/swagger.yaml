@@ -1590,6 +1590,18 @@ paths:
         in: query
         name: tag_slug
         type: string
+      - description: Filter by Featured
+        in: query
+        name: featured
+        type: boolean
+      - description: Filter by Weekly Featured
+        in: query
+        name: weeklyFeatured
+        type: boolean
+      - description: Filter by Trending
+        in: query
+        name: trending
+        type: boolean
       produces:
       - application/json
       responses:
@@ -1667,6 +1679,18 @@ paths:
         in: query
         name: tag_slug
         type: string
+      - description: Filter by Featured
+        in: query
+        name: featured
+        type: boolean
+      - description: Filter by Weekly Featured
+        in: query
+        name: weeklyFeatured
+        type: boolean
+      - description: Filter by Trending
+        in: query
+        name: trending
+        type: boolean
       produces:
       - application/json
       responses:
@@ -2490,6 +2514,18 @@ paths:
         in: query
         name: tag_slug
         type: string
+      - description: Filter by Featured
+        in: query
+        name: featured
+        type: boolean
+      - description: Filter by Weekly Featured
+        in: query
+        name: weeklyFeatured
+        type: boolean
+      - description: Filter by Trending
+        in: query
+        name: trending
+        type: boolean
       responses:
         "200":
           description: OK
@@ -2581,6 +2617,18 @@ paths:
         in: query
         name: tag_slug
         type: string
+      - description: Filter by Featured
+        in: query
+        name: featured
+        type: boolean
+      - description: Filter by Weekly Featured
+        in: query
+        name: weeklyFeatured
+        type: boolean
+      - description: Filter by Trending
+        in: query
+        name: trending
+        type: boolean
       responses:
         "200":
           description: OK

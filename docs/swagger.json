@@ -122,6 +122,24 @@
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -239,6 +257,24 @@
                         "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
                         "in": "query"
                     }
                 ],
@@ -1500,6 +1536,24 @@
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1633,6 +1687,24 @@
                         "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
                         "in": "query"
                     }
                 ],

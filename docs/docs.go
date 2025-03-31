@@ -129,6 +129,24 @@ const docTemplate = `{
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -246,6 +264,24 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
                         "in": "query"
                     }
                 ],
@@ -1507,6 +1543,24 @@ const docTemplate = `{
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1640,6 +1694,24 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Featured",
+                        "name": "featured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Weekly Featured",
+                        "name": "weeklyFeatured",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by Trending",
+                        "name": "trending",
                         "in": "query"
                     }
                 ],
