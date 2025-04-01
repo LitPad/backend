@@ -58,6 +58,7 @@ func (c ChapterListSchema) Init(chapter models.Chapter) ChapterListSchema {
 }
 
 type ParagraphSchema struct {
+	Index   uint `json:"index"`
 	Text          string `json:"text"`
 	CommentsCount int    `json:"comments_count"`
 }
@@ -72,7 +73,7 @@ func (c ChapterDetailSchema) Init(chapter models.Chapter) ChapterDetailSchema {
 	c.Slug = chapter.Slug
 	paragraphs := []ParagraphSchema{}
 	for _, p := range chapter.Paragraphs {
-		paragraphs = append(paragraphs, ParagraphSchema{Text: p.Text, CommentsCount: p.CommentsCount()})
+		paragraphs = append(paragraphs, ParagraphSchema{Text: p.Text, CommentsCount: p.CommentsCount(), Index: p.Index})
 	}
 	c.Paragraphs = paragraphs
 	return c

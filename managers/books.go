@@ -257,6 +257,11 @@ func (c ChapterManager) GetBySlugWithComments(db *gorm.DB, slug string, index ui
 	}
 	paragraph := models.Paragraph{ChapterID: chapter.ID, Index: index}
 	comments := []models.Comment{}
+	db.First(&paragraph)
+	if paragraph.ID == uuid.Nil {
+		errD := utils.NotFoundErr("That chapter has no paragraph with that index")
+		return nil, nil, &errD
+	}
 	db.Joins("User").Joins("Replies").Joins("Likes").Where("paragraph_id = ?", paragraph.ID).Find(&comments)
 	return &chapter, comments, nil
 }
@@ -357,6 +362,14 @@ func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas
 	return chapter
 }
 
+func (c ChapterManager) GetParagraph (db *gorm.DB, chapter models.Chapter, index uint) *models.Paragraph {
+	paragraph := models.Paragraph{ChapterID: chapter.ID, Index: index}
+	db.First(&paragraph)
+	if paragraph.ID == uuid.Nil {
+		return nil
+	}
+	return &paragraph
+}
 type TagManager struct {
 	Model     models.Tag
 	ModelList []models.Tag

@@ -85,7 +85,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	bookRouter.Get("/book/chapters/chapter/:slug", endpoint.AuthMiddleware, endpoint.GetBookChapter)
 	bookRouter.Get("/book/chapters/chapter/:slug/paragraph/:index/comments", endpoint.AuthMiddleware, endpoint.GetParagraphComments)
-	bookRouter.Post("/book/chapters/chapter/:slug", endpoint.AuthMiddleware, endpoint.AddParagraphComment)
+	bookRouter.Post("/book/chapters/chapter/:slug/paragraph/:index/comments", endpoint.AuthMiddleware, endpoint.AddParagraphComment)
 	bookRouter.Put("/book/chapters/chapter/paragraph-comment/:id", endpoint.AuthMiddleware, endpoint.EditParagraphComment)
 	bookRouter.Delete("/book/chapters/chapter/paragraph-comment/:id", endpoint.AuthMiddleware, endpoint.DeleteParagraphComment)
 

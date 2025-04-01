@@ -1940,56 +1940,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "` + "`" + `This endpoint allows a user to add a comment in a paragraph to a book chapter.` + "`" + `",
-                "tags": [
-                    "Books"
-                ],
-                "summary": "Add A Comment To A Paragraph In A Book Chapter",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Chapter slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Paragraph Comment object",
-                        "name": "review",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ParagraphCommentAddSchema"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.ParagraphCommentResponseSchema"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/utils.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/books/book/chapters/chapter/{slug}/paragraph/{index}/comments": {
@@ -2036,6 +1986,56 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to add a comment in a paragraph to a book chapter.` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Add A Comment To A Paragraph In A Book Chapter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Chapter slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Paragraph Comment object",
+                        "name": "review",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ParagraphCommentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -4992,6 +4992,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "comments_count": {
+                    "type": "integer"
+                },
+                "index": {
                     "type": "integer"
                 },
                 "text": {

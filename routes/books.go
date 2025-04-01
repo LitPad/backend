@@ -739,22 +739,31 @@ func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 // @Success 201 {object} schemas.ParagraphCommentResponseSchema
 // @Failure 404 {object} utils.ErrorResponse
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /books/book/chapters/chapter/{slug} [post]
+// @Router /books/book/chapters/chapter/{slug}/paragraph/{index}/comments [post]
 // @Security BearerAuth
 func (ep Endpoint) AddParagraphComment(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	slug := c.Params("slug")
+	index, _ := c.ParamsInt("index", 1)
+	if index < 1 {
+		return c.Status(400).JSON(utils.InvalidParamErr("Enter a valid index"))
+	}
+
 	chapter, err := chapterManager.GetBySlug(db, slug)
 	if err != nil {
 		return c.Status(404).JSON(err)
+	}
+	paragraph := chapterManager.GetParagraph(db, *chapter, uint(index))
+	if paragraph == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Paragraph does not exist"))
 	}
 
 	data := schemas.ParagraphCommentAddSchema{}
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	paragraphComment := paragraphCommentManager.Create(db, user, chapter.ID, data)
+	paragraphComment := paragraphCommentManager.Create(db, user, paragraph.ID, data)
 	response := schemas.ParagraphCommentResponseSchema{
 		ResponseSchema: ResponseMessage("Comment created successfully"),
 		Data:           schemas.ParagraphCommentSchema{}.Init(paragraphComment),
