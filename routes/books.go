@@ -144,19 +144,11 @@ func (ep Endpoint) GetBookChapters(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 
-	user := RequestUser(c)
-	var chapters []models.Chapter
-	if (user.ID == uuid.Nil || user.SubscriptionExpired()) && len(book.Chapters) > 0 && user.ID != book.AuthorID && !user.IsStaff {
-		chapters = book.Chapters[:1]
-	} else {
-		chapters = book.Chapters
-	}
-	// Paginate and return chapters
-	paginatedData, paginatedChapters, err := PaginateQueryset(chapters, c, 50)
+	paginatedData, paginatedChapters, err := PaginateQueryset(book.Chapters, c, 50)
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
-	chapters = paginatedChapters.([]models.Chapter)
+	chapters := paginatedChapters.([]models.Chapter)
 	response := schemas.ChaptersResponseSchema{
 		ResponseSchema: ResponseMessage("Chapters fetched successfully"),
 		Data: schemas.ChaptersResponseDataSchema{
