@@ -57,7 +57,6 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 // @Router /books [get]
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
-	fmt.Println("Featured: ")
 	genreSlug := c.Query("genre_slug")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
@@ -735,6 +734,7 @@ func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 // @Description `This endpoint allows a user to add a comment in a paragraph to a book chapter.`
 // @Tags Books
 // @Param slug path string true "Chapter slug"
+// @Param index query int false "Paragraph Index of the chapter"
 // @Param review body schemas.ParagraphCommentAddSchema true "Paragraph Comment object"
 // @Success 201 {object} schemas.ParagraphCommentResponseSchema
 // @Failure 404 {object} utils.ErrorResponse
@@ -954,4 +954,52 @@ func (ep Endpoint) SetContract(c *fiber.Ctx) error {
 		Data:           schemas.ContractSchema{}.Init(updatedBook),
 	}
 	return c.Status(200).JSON(response)
+}
+
+// @Summary View Bookmarked Books
+// @Description This endpoint allows a user to view his/her bookmarked books
+// @Tags Books
+// @Param page query int false "Current Page" default(1)
+// @Success 200 {object} schemas.BooksResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/bookmarked [get]
+// @Security BearerAuth
+func (ep Endpoint) GetBookmarkedBooks(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	books := bookManager.GetUserBookmarkedBooks(db, *user)
+	// Paginate and return books
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	books = paginatedBooks.([]models.Book)
+	response := schemas.BooksResponseSchema{
+		ResponseSchema: ResponseMessage("Books fetched successfully"),
+		Data: schemas.BooksResponseDataSchema{
+			PaginatedResponseDataSchema: *paginatedData,
+		}.Init(books),
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Bookmark A Book
+// @Description This endpoint allows a user to bookmark a book
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/bookmark [get]
+// @Security BearerAuth
+func (ep Endpoint) BookmarkBook(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	book, err := bookManager.GetBySlug(db, slug)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	status := bookmarkManager.AddOrDelete(db, *user, *book)
+	return c.Status(200).JSON(ResponseMessage(status + " successfully"))
 }

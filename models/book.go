@@ -57,6 +57,7 @@ type Book struct {
 	WeeklyFeatured time.Time
 	Reads          []BookRead
 	AvgRating      float64 // meant for query purposes. do not intentionally populate field
+	Bookmark   []Bookmark
 
 	// BOOK CONTRACT
 	FullName             string `gorm:"type: varchar(1000)"`
@@ -215,6 +216,16 @@ func (r Reply) LikesCount() int {
 }
 
 type Vote struct {
+	BaseModel
+	UserID uuid.UUID
+	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+
+	BookID uuid.UUID
+	Book   Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+}
+
+
+type Bookmark struct {
 	BaseModel
 	UserID uuid.UUID
 	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`

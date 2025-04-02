@@ -17,4 +17,5 @@ var (
 	voteManager             = managers.VoteManager{}
 	paragraphCommentManager = managers.ParagraphCommentManager{}
 	notificationManager     = managers.NotificationManager{}
+	bookmarkManager         = managers.BookmarkManager{}
 )

@@ -90,6 +90,15 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 	return books, nil
 }
 
+func (b BookManager) GetUserBookmarkedBooks (db *gorm.DB, user models.User) []models.Book {
+	books := b.ModelList
+	db.Joins("JOIN bookmarks ON bookmarks.book_id = books.id").
+		Where("bookmarks.user_id = ?", user.ID).
+		Scopes(scopes.AuthorGenreTagBookPreloadScope).
+		Find(&books)
+	return books
+} 
+
 func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Take(&book, book)
@@ -566,4 +575,20 @@ func (v VoteManager) Create(db *gorm.DB, user *models.User, book *models.Book) m
 	vote := models.Vote{UserID: user.ID, User: *user, Book: *book, BookID: book.ID}
 	db.Create(&vote)
 	return vote
+}
+
+type BookmarkManager struct {
+	Model     models.Bookmark
+	ModelList []models.Bookmark
+}
+
+func (b BookmarkManager) AddOrDelete (db *gorm.DB, user models.User, book models.Book) string {
+	bookmark := models.Bookmark{UserID: user.ID, BookID: book.ID}
+	db.First(&bookmark)
+	if bookmark.ID == uuid.Nil {
+		db.Create(&bookmark)
+		return "Bookmarked"
+	}
+	db.Delete(&bookmark)
+	return "Unbookmarked"
 }

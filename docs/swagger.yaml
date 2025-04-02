@@ -2815,6 +2815,33 @@ paths:
       summary: Add A Chapter to a Book
       tags:
       - Books
+  /books/book/{slug}/bookmark:
+    get:
+      description: This endpoint allows a user to bookmark a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Bookmark A Book
+      tags:
+      - Books
   /books/book/{slug}/chapters:
     get:
       description: |-
@@ -3121,6 +3148,10 @@ paths:
         name: slug
         required: true
         type: string
+      - description: Paragraph Index of the chapter
+        in: query
+        name: index
+        type: integer
       - description: Paragraph Comment object
         in: body
         name: review
@@ -3383,6 +3414,29 @@ paths:
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       summary: Get Review Replies
+      tags:
+      - Books
+  /books/bookmarked:
+    get:
+      description: This endpoint allows a user to view his/her bookmarked books
+      parameters:
+      - default: 1
+        description: Current Page
+        in: query
+        name: page
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BooksResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Bookmarked Books
       tags:
       - Books
   /books/genres:
