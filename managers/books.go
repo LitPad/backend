@@ -120,7 +120,6 @@ func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.Book
 			users.username AS author_name, 
 			COALESCE(AVG(comments.rating), 0) AS avg_rating, 
 			COUNT(votes.id) AS votes_count, 
-			COUNT(book_reads.id) AS reads_count, 
 			genres.name AS genre_name, 
 			genres.slug AS genre_slug
 		`).
@@ -129,7 +128,7 @@ func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.Book
 		Joins("LEFT JOIN votes ON votes.book_id = books.id").
 		Joins("LEFT JOIN genres ON genres.id = books.genre_id"). // Adjust `genre_id` if necessary
 		Group("books.slug, books.title, books.cover_image, users.username, genres.name, genres.slug").
-		Order("avg_rating DESC, votes_count DESC, reads_count DESC").
+		Order("avg_rating DESC, votes_count DESC").
 		Limit(10).
 		Scan(&books)
 
