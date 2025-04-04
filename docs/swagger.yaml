@@ -3149,8 +3149,9 @@ paths:
         required: true
         type: string
       - description: Paragraph Index of the chapter
-        in: query
+        in: path
         name: index
+        required: true
         type: integer
       - description: Paragraph Comment object
         in: body

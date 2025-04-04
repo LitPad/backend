@@ -2015,7 +2015,8 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Paragraph Index of the chapter",
                         "name": "index",
-                        "in": "query"
+                        "in": "path",
+                        "required": true
                     },
                     {
                         "description": "Paragraph Comment object",

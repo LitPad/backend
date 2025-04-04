@@ -734,7 +734,7 @@ func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 // @Description `This endpoint allows a user to add a comment in a paragraph to a book chapter.`
 // @Tags Books
 // @Param slug path string true "Chapter slug"
-// @Param index query int false "Paragraph Index of the chapter"
+// @Param index path int true "Paragraph Index of the chapter"
 // @Param review body schemas.ParagraphCommentAddSchema true "Paragraph Comment object"
 // @Success 201 {object} schemas.ParagraphCommentResponseSchema
 // @Failure 404 {object} utils.ErrorResponse
