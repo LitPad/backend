@@ -105,8 +105,8 @@ func ReviewData(db *gorm.DB, book models.Book, user models.User) models.Comment 
 	return review
 }
 
-func ReplyData(db *gorm.DB, review models.Comment, user models.User) models.Reply {
-	reply := models.Reply{CommentID: &review.ID, UserID: user.ID, Text: "This is a test reply"}
+func ReplyData(db *gorm.DB, review models.Comment, user models.User) models.Comment {
+	reply := models.Comment{ParentID: &review.ID, UserID: user.ID, Text: "This is a test reply"}
 	db.FirstOrCreate(&reply, reply)
 	return reply
 }

@@ -187,7 +187,7 @@ func (ep Endpoint) FollowUser(c *fiber.Ctx) error {
 		notification := notificationManager.Create(
 			db, user, toFollowUser, choices.NT_FOLLOWING,
 			fmt.Sprintf("%s started following you.", user.Username),
-			nil, nil, nil, nil,
+			nil, nil, nil,
 		)
 		SendNotificationInSocket(c, notification)
 	}

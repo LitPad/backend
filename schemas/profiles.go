@@ -104,8 +104,7 @@ type NotificationSchema struct {
 	Ntype      choices.NotificationTypeChoice `json:"ntype"`
 	Text       string                         `json:"text"`
 	Book       *NotificationBookSchema        `json:"book"`                                                        // Bought book, vote, comment and reply
-	ReviewID   *uuid.UUID                     `json:"review_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`    // reviewed, reply, like
-	ReplyID    *uuid.UUID                     `json:"reply_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`     // If someone liked your reply
+	CommentID  *uuid.UUID                     `json:"comment_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`   // reviewed, reply, like
 	SentGiftID *uuid.UUID                     `json:"sent_gift_id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"` // If someone sent you a gift
 	IsRead     bool                           `json:"is_read"`
 	CreatedAt  time.Time                      `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
@@ -123,8 +122,7 @@ func (n NotificationSchema) Init(notification models.Notification, showReceiver 
 			CoverImage: notification.Book.CoverImage,
 		}
 	}
-	n.ReviewID = notification.ReviewID
-	n.ReplyID = notification.ReplyID
+	n.CommentID = notification.CommentID
 	n.SentGiftID = notification.SentGiftID
 	n.IsRead = notification.IsRead
 	n.CreatedAt = notification.CreatedAt

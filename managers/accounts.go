@@ -217,10 +217,10 @@ func (n NotificationManager) ReadOne(db *gorm.DB, user *models.User, id uuid.UUI
 	return nil
 }
 
-func (n NotificationManager) Create(db *gorm.DB, sender *models.User, receiver models.User, ntype choices.NotificationTypeChoice, text string, book *models.Book, reviewID *uuid.UUID, replyID *uuid.UUID, sentGiftID *uuid.UUID) models.Notification {
+func (n NotificationManager) Create(db *gorm.DB, sender *models.User, receiver models.User, ntype choices.NotificationTypeChoice, text string, book *models.Book, commentID *uuid.UUID, sentGiftID *uuid.UUID) models.Notification {
 	notification := models.Notification{
 		SenderID: sender.ID, Sender: *sender, ReceiverID: receiver.ID,
-		Ntype: ntype, ReviewID: reviewID, ReplyID: replyID, SentGiftID: sentGiftID, Text: text,
+		Ntype: ntype, CommentID: commentID, SentGiftID: sentGiftID, Text: text,
 	}
 	if book != nil {
 		notification.Book = book

@@ -6,16 +6,15 @@ import (
 )
 
 var (
-	truthy                  = true
-	userManager             = managers.UserManager{Model: models.User{}}
-	bookManager             = managers.BookManager{Model: models.Book{}}
-	chapterManager          = managers.ChapterManager{}
-	tagManager              = managers.TagManager{}
-	genreManager            = managers.GenreManager{}
-	reviewManager           = managers.ReviewManager{}
-	replyManager            = managers.ReplyManager{}
-	voteManager             = managers.VoteManager{}
-	paragraphCommentManager = managers.ParagraphCommentManager{}
-	notificationManager     = managers.NotificationManager{}
-	bookmarkManager         = managers.BookmarkManager{}
+	truthy              = true
+	userManager         = managers.UserManager{Model: models.User{}}
+	bookManager         = managers.BookManager{Model: models.Book{}}
+	chapterManager      = managers.ChapterManager{}
+	tagManager          = managers.TagManager{}
+	genreManager        = managers.GenreManager{}
+	reviewManager       = managers.ReviewManager{}
+	voteManager         = managers.VoteManager{}
+	commentManager      = managers.CommentManager{}
+	notificationManager = managers.NotificationManager{}
+	bookmarkManager     = managers.BookmarkManager{}
 )

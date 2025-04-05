@@ -32,7 +32,6 @@ func Models() []interface{} {
 		&models.Gift{},
 		&models.SentGift{},
 		&models.Comment{},
-		&models.Reply{},
 		&models.Vote{},
 
 		// wallet
@@ -107,6 +106,7 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 	result := db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
 	if result.Error != nil {
 		log.Fatal("failed to create extension: " + result.Error.Error())
+		os.Exit(2)
 	}
 
 	// Add Migrations

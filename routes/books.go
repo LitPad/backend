@@ -509,7 +509,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 
 	// Create and Send Notification in socket
 	text := fmt.Sprintf("%s reviewed your book", user.Username)
-	notification := notificationManager.Create(db, user, book.Author, choices.NT_REVIEW, text, book, &createdReview.ID, nil, nil)
+	notification := notificationManager.Create(db, user, book.Author, choices.NT_REVIEW, text, book, &createdReview.ID, nil)
 	SendNotificationInSocket(c, notification)
 
 	response := schemas.ReviewResponseSchema{
@@ -607,7 +607,7 @@ func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
-	replies := paginatedReplies.([]models.Reply)
+	replies := paginatedReplies.([]models.Comment)
 	response := schemas.RepliesResponseSchema{
 		ResponseSchema: ResponseMessage("Replies fetched successfully"),
 		Data: schemas.RepliesResponseDataSchema{
@@ -640,25 +640,25 @@ func (ep Endpoint) ReplyReviewOrParagraphComment(c *fiber.Ctx) error {
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	var reply models.Reply
+	var reply models.Comment
 	if data.Type == choices.RT_REVIEW {
 		review := reviewManager.GetByID(db, *parsedID)
 		if review == nil {
 			return c.Status(404).JSON(utils.NotFoundErr("No review with that ID"))
 		}
-		reply = replyManager.Create(db, user, review, data)
+		reply = commentManager.CreateReply(db, user, review, data)
 		// Create and Send Notification in socket
 		if user.ID != review.User.ID {
 			text := fmt.Sprintf("%s replied your review", user.Username)
-			notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, review.Book, &review.ID, &reply.ID, nil)
+			notification := notificationManager.Create(db, user, review.User, choices.NT_REPLY, text, review.Book, &review.ID, nil)
 			SendNotificationInSocket(c, notification)
 		}
 	} else {
-		paragraphComment := paragraphCommentManager.GetByID(db, *parsedID)
+		paragraphComment := commentManager.GetByID(db, *parsedID)
 		if paragraphComment == nil {
 			return c.Status(404).JSON(utils.NotFoundErr("No paragraph comment with that ID"))
 		}
-		reply = replyManager.Create(db, user, paragraphComment, data)
+		reply = commentManager.CreateReply(db, user, paragraphComment, data)
 	}
 
 	response := schemas.ReplyResponseSchema{
@@ -687,7 +687,7 @@ func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
-	reply := replyManager.GetByUserAndID(db, user, *parsedID)
+	reply := commentManager.GetReplyByUserAndID(db, user, *parsedID)
 	if reply == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("You don't have a reply with that ID"))
 	}
@@ -696,7 +696,7 @@ func (ep Endpoint) EditReply(c *fiber.Ctx) error {
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	updatedReply := replyManager.Update(db, *reply, data)
+	updatedReply := commentManager.UpdateReply(db, *reply, data)
 	response := schemas.ReplyResponseSchema{
 		ResponseSchema: ResponseMessage("Reply updated successfully"),
 		Data:           schemas.ReplySchema{}.Init(updatedReply),
@@ -722,7 +722,7 @@ func (ep Endpoint) DeleteReply(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
-	reply := replyManager.GetByUserAndID(db, user, *parsedID)
+	reply := commentManager.GetReplyByUserAndID(db, user, *parsedID)
 	if reply == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("You don't have a reply with that ID"))
 	}
@@ -763,7 +763,7 @@ func (ep Endpoint) AddParagraphComment(c *fiber.Ctx) error {
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	paragraphComment := paragraphCommentManager.Create(db, user, paragraph.ID, data)
+	paragraphComment := commentManager.Create(db, user, paragraph.ID, data)
 	response := schemas.ParagraphCommentResponseSchema{
 		ResponseSchema: ResponseMessage("Comment created successfully"),
 		Data:           schemas.ParagraphCommentSchema{}.Init(paragraphComment),
@@ -790,7 +790,7 @@ func (ep Endpoint) EditParagraphComment(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
-	paragraphComment := paragraphCommentManager.GetByUserAndID(db, user, *parsedID)
+	paragraphComment := commentManager.GetByUserAndID(db, user, *parsedID)
 	if paragraphComment == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("You don't have a comment with that ID"))
 	}
@@ -798,7 +798,7 @@ func (ep Endpoint) EditParagraphComment(c *fiber.Ctx) error {
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	updatedComment := paragraphCommentManager.Update(db, *paragraphComment, data)
+	updatedComment := commentManager.Update(db, *paragraphComment, data)
 	response := schemas.ParagraphCommentResponseSchema{
 		ResponseSchema: ResponseMessage("Comment updated successfully"),
 		Data:           schemas.ParagraphCommentSchema{}.Init(updatedComment),
@@ -824,7 +824,7 @@ func (ep Endpoint) DeleteParagraphComment(c *fiber.Ctx) error {
 		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
-	comment := paragraphCommentManager.GetByUserAndID(db, user, *parsedID)
+	comment := commentManager.GetByUserAndID(db, user, *parsedID)
 	if comment == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("You don't have a comment with that ID"))
 	}
@@ -858,7 +858,7 @@ func (ep Endpoint) VoteBook(c *fiber.Ctx) error {
 	// Create and Send Notification in socket
 	if user.ID != createdVote.UserID {
 		text := fmt.Sprintf("%s voted your book", user.Username)
-		notification := notificationManager.Create(db, user, book.Author, choices.NT_VOTE, text, book, nil, nil, nil)
+		notification := notificationManager.Create(db, user, book.Author, choices.NT_VOTE, text, book, nil, nil)
 		SendNotificationInSocket(c, notification)
 	}
 	user.Lanterns -= 1

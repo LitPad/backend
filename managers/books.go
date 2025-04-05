@@ -479,59 +479,54 @@ func (r ReviewManager) Update(db *gorm.DB, review models.Comment, data schemas.R
 	return review
 }
 
-type ParagraphCommentManager struct {
+type CommentManager struct {
 	Model     models.Comment
 	ModelList []models.Comment
 }
 
-func (p ParagraphCommentManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Comment {
-	paragraphComment := p.Model
-	db.Where("comments.id = ?", id).Joins("User").Joins("Paragraph").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&paragraphComment, paragraphComment)
-	if paragraphComment.ID == uuid.Nil {
+func (c CommentManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Comment {
+	comment := c.Model
+	db.Where("comments.id = ?", id).Joins("User").Joins("Paragraph").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&comment, comment)
+	if comment.ID == uuid.Nil {
 		return nil
 	}
-	return &paragraphComment
+	return &comment
 }
 
-func (p ParagraphCommentManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Comment {
-	paragraphComment := p.Model
-	db.Where("user_id = ?", user.ID).Joins("Chapter").Joins("User").Preload("Replies").Preload("Likes").Take(&paragraphComment, id)
-	if paragraphComment.ID == uuid.Nil {
+func (c CommentManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Comment {
+	comment := c.Model
+	db.Where("user_id = ?", user.ID).Joins("Chapter").Joins("User").Preload("Replies").Preload("Likes").Take(&comment, id)
+	if comment.ID == uuid.Nil {
 		return nil
 	}
-	return &paragraphComment
+	return &comment
 }
 
-func (p ParagraphCommentManager) GetByParagraphID(db *gorm.DB, paragraphId uuid.UUID) []models.Comment {
-	paragraphComments := p.ModelList
-	db.Where("paragraph_id = ?", paragraphId).Find(&paragraphComments)
-	return paragraphComments
+func (c CommentManager) GetByParagraphID(db *gorm.DB, paragraphId uuid.UUID) []models.Comment {
+	comments := c.ModelList
+	db.Where("paragraph_id = ?", paragraphId).Find(&comments)
+	return comments
 }
 
-func (p ParagraphCommentManager) Create(db *gorm.DB, user *models.User, paragraphID uuid.UUID, data schemas.ParagraphCommentAddSchema) models.Comment {
-	paragraphComment := models.Comment{
+func (c CommentManager) Create(db *gorm.DB, user *models.User, paragraphID uuid.UUID, data schemas.ParagraphCommentAddSchema) models.Comment {
+	comment := models.Comment{
 		UserID:    user.ID,
 		User:      *user,
 		ParagraphID: &paragraphID,
 		Text:      data.Text,
 	}
-	db.Create(&paragraphComment)
-	return paragraphComment
+	db.Create(&comment)
+	return comment
 }
 
-func (p ParagraphCommentManager) Update(db *gorm.DB, paragraphComment models.Comment, data schemas.ParagraphCommentAddSchema) models.Comment {
-	paragraphComment.Text = data.Text
-	db.Save(&paragraphComment)
-	return paragraphComment
+func (c CommentManager) Update(db *gorm.DB, comment models.Comment, data schemas.ParagraphCommentAddSchema) models.Comment {
+	comment.Text = data.Text
+	db.Save(&comment)
+	return comment
 }
 
-type ReplyManager struct {
-	Model     models.Reply
-	ModelList []models.Reply
-}
-
-func (r ReplyManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Reply {
-	reply := models.Reply{}
+func (c CommentManager) GetReplyByUserAndID(db *gorm.DB, user *models.User, id uuid.UUID) *models.Comment {
+	reply := c.Model
 	db.Where("user_id = ?", user.ID).Joins("User").Preload("Likes").Take(&reply, id)
 	if reply.ID == uuid.Nil {
 		return nil
@@ -539,18 +534,18 @@ func (r ReplyManager) GetByUserAndID(db *gorm.DB, user *models.User, id uuid.UUI
 	return &reply
 }
 
-func (r ReplyManager) Create(db *gorm.DB, user *models.User, reviewOrParagraphComment *models.Comment, data schemas.ReplyReviewOrCommentSchema) models.Reply {
-	reply := models.Reply{
+func (c CommentManager) CreateReply(db *gorm.DB, user *models.User, reviewOrParagraphComment *models.Comment, data schemas.ReplyReviewOrCommentSchema) models.Comment {
+	reply := models.Comment{
 		UserID: user.ID,
 		User:   *user,
 		Text:   data.Text,
+		ParentID: &reviewOrParagraphComment.ID,
 	}
-	reply.CommentID = &reviewOrParagraphComment.ID
 	db.Create(&reply)
 	return reply
 }
 
-func (r ReplyManager) Update(db *gorm.DB, reply models.Reply, data schemas.ReplyEditSchema) models.Reply {
+func (c CommentManager) UpdateReply(db *gorm.DB, reply models.Comment, data schemas.ReplyEditSchema) models.Comment {
 	reply.Text = data.Text
 	db.Save(&reply)
 	return reply

@@ -230,7 +230,7 @@ type RepliesResponseDataSchema struct {
 	Items []ReplySchema `json:"replies"`
 }
 
-func (r RepliesResponseDataSchema) Init(replies []models.Reply) RepliesResponseDataSchema {
+func (r RepliesResponseDataSchema) Init(replies []models.Comment) RepliesResponseDataSchema {
 	// Set Initial Data
 	replyItems := make([]ReplySchema, 0)
 	for _, reply := range replies {
@@ -466,7 +466,7 @@ type ReplySchema struct {
 	UpdatedAt  time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
-func (r ReplySchema) Init(reply models.Reply) ReplySchema {
+func (r ReplySchema) Init(reply models.Comment) ReplySchema {
 	r.ID = reply.ID
 	r.User = r.User.Init(reply.User)
 	r.Text = reply.Text

@@ -169,9 +169,9 @@ func createParagraphComment(db *gorm.DB, user models.User, paragraph models.Para
 	return comment
 }
 
-func createReply(db *gorm.DB, paragraphComment models.Comment, user models.User) models.Reply {
-	reply := models.Reply{
-		UserID: user.ID, CommentID: &paragraphComment.ID,
+func createReply(db *gorm.DB, comment models.Comment, user models.User) models.Comment {
+	reply := models.Comment{
+		UserID: user.ID, ParentID: &comment.ID,
 		Likes: []models.User{user}, Text: "Wow, you're right",
 	}
 	db.Omit("Likes.*").FirstOrCreate(&reply, reply)
