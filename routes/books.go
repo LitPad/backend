@@ -138,7 +138,7 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 func (ep Endpoint) GetBookChapters(c *fiber.Ctx) error {
 	db := ep.DB
 	slug := c.Params("slug")
-	book, err := bookManager.GetBySlug(db, slug)
+	book, err := bookManager.GetBySlug(db, slug, true)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -406,6 +406,10 @@ func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
 	}
 
 	chapter := chapterManager.Create(db, *book, data)
+	if data.IsLast {
+		book.Completed = true
+		db.Save(&book)
+	}
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter added successfully"),
 		Data:           schemas.ChapterDetailSchema{}.Init(chapter),
@@ -487,7 +491,7 @@ func (ep Endpoint) ReviewBook(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	slug := c.Params("slug")
-	book, err := bookManager.GetBySlug(db, slug)
+	book, err := bookManager.GetBySlug(db, slug, true)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -580,10 +584,10 @@ func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Review deleted successfully"))
 }
 
-// @Summary Get Review Replies
-// @Description `This endpoint returns replies of a book review.`
+// @Summary Get Comment/Review Replies
+// @Description `This endpoint returns replies of a book review or paragraph comment`
 // @Tags Books
-// @Param id path string true "Review id (uuid)"
+// @Param id path string true "Comment/Review id (uuid)"
 // @Param page query int false "Current Page" default(1)
 // @Success 200 {object} schemas.RepliesResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
@@ -591,15 +595,15 @@ func (ep Endpoint) DeleteBookReview(c *fiber.Ctx) error {
 // @Router /books/book/review/{id}/replies [get]
 func (ep Endpoint) GetReviewReplies(c *fiber.Ctx) error {
 	db := ep.DB
-	reviewID := c.Params("id")
-	parsedID := ParseUUID(reviewID)
+	commentID := c.Params("id")
+	parsedID := ParseUUID(commentID)
 	if parsedID == nil {
 		return c.Status(400).JSON(utils.InvalidParamErr("You entered an invalid uuid"))
 	}
 
 	review := reviewManager.GetByID(db, *parsedID)
 	if review == nil {
-		return c.Status(404).JSON(utils.NotFoundErr("No review with that ID"))
+		return c.Status(404).JSON(utils.NotFoundErr("No review or comment with that ID"))
 	}
 
 	// Paginate and return replies
@@ -654,7 +658,7 @@ func (ep Endpoint) ReplyReviewOrParagraphComment(c *fiber.Ctx) error {
 			SendNotificationInSocket(c, notification)
 		}
 	} else {
-		paragraphComment := commentManager.GetByID(db, *parsedID)
+		paragraphComment := commentManager.GetByID(db, *parsedID, false)
 		if paragraphComment == nil {
 			return c.Status(404).JSON(utils.NotFoundErr("No paragraph comment with that ID"))
 		}
@@ -766,7 +770,7 @@ func (ep Endpoint) AddParagraphComment(c *fiber.Ctx) error {
 	paragraphComment := commentManager.Create(db, user, paragraph.ID, data)
 	response := schemas.ParagraphCommentResponseSchema{
 		ResponseSchema: ResponseMessage("Comment created successfully"),
-		Data:           schemas.ParagraphCommentSchema{}.Init(paragraphComment),
+		Data:           schemas.CommentSchema{}.Init(paragraphComment),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -801,7 +805,7 @@ func (ep Endpoint) EditParagraphComment(c *fiber.Ctx) error {
 	updatedComment := commentManager.Update(db, *paragraphComment, data)
 	response := schemas.ParagraphCommentResponseSchema{
 		ResponseSchema: ResponseMessage("Comment updated successfully"),
-		Data:           schemas.ParagraphCommentSchema{}.Init(updatedComment),
+		Data:           schemas.CommentSchema{}.Init(updatedComment),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -845,7 +849,7 @@ func (ep Endpoint) VoteBook(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	slug := c.Params("slug")
-	book, err := bookManager.GetBySlug(db, slug)
+	book, err := bookManager.GetBySlug(db, slug, true)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -996,10 +1000,60 @@ func (ep Endpoint) BookmarkBook(c *fiber.Ctx) error {
 	db := ep.DB
 	user := RequestUser(c)
 	slug := c.Params("slug")
-	book, err := bookManager.GetBySlug(db, slug)
+	book, err := bookManager.GetBySlug(db, slug, false)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
 	status := bookmarkManager.AddOrDelete(db, *user, *book)
+	return c.Status(200).JSON(ResponseMessage(status + " successfully"))
+}
+
+// @Summary Report A Book
+// @Description This endpoint allows a user to report a book
+// @Tags Books
+// @Param slug path string true "Book slug"
+// @Param report body schemas.BookReportSchema true "Report object"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/{slug}/report [post]
+// @Security BearerAuth
+func (ep Endpoint) ReportBook(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	slug := c.Params("slug")
+	book, err := bookManager.GetBySlug(db, slug, false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	data := schemas.BookReportSchema{}
+	if errCode, errData := ValidateRequest(c, &data); errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	bookReportManager.Create(db, *user, *book, data.Reason)
+	return c.Status(200).JSON(ResponseMessage("Report submitted successfully"))
+}
+
+// @Summary Like/Unlike A Comment/Reply
+// @Description `This endpoint allows a user to like/unlike a comment or a reply (a kind of toggle)`
+// @Tags Books
+// @Param id path string true "Comment or reply id (uuid)"
+// @Success 200 {object} schemas.ResponseSchema
+// @Failure 404 {object} utils.ErrorResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/book/chapters/chapter/comment/{id} [get]
+// @Security BearerAuth
+func (ep Endpoint) LikeAComment(c *fiber.Ctx) error {
+	db := ep.DB
+	user := RequestUser(c)
+	id := ParseUUID(c.Params("id"))
+	if id == nil {
+		return c.Status(400).JSON(utils.InvalidParamErr("Enter a valid uuid"))
+	}
+	commentOrReply := commentManager.GetByID(db, *id, false)
+	if commentOrReply == nil {
+		return c.Status(404).JSON(err)
+	}
+	status := likeManager.AddOrDelete(db, *user, *commentOrReply)
 	return c.Status(200).JSON(ResponseMessage(status + " successfully"))
 }

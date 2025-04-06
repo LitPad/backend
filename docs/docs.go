@@ -1812,6 +1812,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/books/book/chapters/chapter/comment/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "` + "`" + `This endpoint allows a user to like/unlike a comment or a reply (a kind of toggle)` + "`" + `",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Like/Unlike A Comment/Reply",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comment or reply id (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books/book/chapters/chapter/paragraph-comment/{id}": {
             "put": {
                 "security": [
@@ -2290,15 +2333,15 @@ const docTemplate = `{
         },
         "/books/book/review/{id}/replies": {
             "get": {
-                "description": "` + "`" + `This endpoint returns replies of a book review.` + "`" + `",
+                "description": "` + "`" + `This endpoint returns replies of a book review or paragraph comment` + "`" + `",
                 "tags": [
                     "Books"
                 ],
-                "summary": "Get Review Replies",
+                "summary": "Get Comment/Review Replies",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Review id (uuid)",
+                        "description": "Comment/Review id (uuid)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2672,6 +2715,58 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/book/{slug}/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows a user to report a book",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "Report A Book",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Report object",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookReportSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/utils.ErrorResponse"
                         }
@@ -4165,6 +4260,18 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BookReportSchema": {
+            "type": "object",
+            "required": [
+                "reason"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string",
+                    "maxLength": 1000
+                }
+            }
+        },
         "schemas.BookResponseSchema": {
             "type": "object",
             "properties": {
@@ -4338,6 +4445,9 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
+                "is_last": {
+                    "type": "boolean"
+                },
                 "paragraphs": {
                     "type": "array",
                     "maxItems": 400,
@@ -4467,6 +4577,39 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.CommentSchema": {
+            "type": "object",
+            "required": [
+                "text"
+            ],
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "replies_count": {
+                    "type": "integer"
+                },
+                "text": {
+                    "type": "string",
+                    "maxLength": 10000
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-06-05T02:32:34.462196+01:00"
+                },
+                "user": {
+                    "$ref": "#/definitions/schemas.UserDataSchema"
                 }
             }
         },
@@ -4896,6 +5039,11 @@ const docTemplate = `{
                         }
                     ]
                 },
+                "comment_id": {
+                    "description": "reviewed, reply, like",
+                    "type": "string",
+                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
+                },
                 "created_at": {
                     "type": "string",
                     "example": "2024-06-05T02:32:34.462196+01:00"
@@ -4912,16 +5060,6 @@ const docTemplate = `{
                 },
                 "receiver_id": {
                     "type": "string"
-                },
-                "reply_id": {
-                    "description": "If someone liked your reply",
-                    "type": "string",
-                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
-                },
-                "review_id": {
-                    "description": "reviewed, reply, like",
-                    "type": "string",
-                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
                 },
                 "sender": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
@@ -4991,7 +5129,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/schemas.ParagraphCommentSchema"
+                    "$ref": "#/definitions/schemas.CommentSchema"
                 },
                 "message": {
                     "type": "string",
@@ -5003,42 +5141,15 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.ParagraphCommentSchema": {
-            "type": "object",
-            "required": [
-                "text"
-            ],
-            "properties": {
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "id": {
-                    "type": "string",
-                    "example": "2b3bd817-135e-41bd-9781-33807c92ff40"
-                },
-                "likes_count": {
-                    "type": "integer"
-                },
-                "replies_count": {
-                    "type": "integer"
-                },
-                "text": {
-                    "type": "string",
-                    "maxLength": 10000
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2024-06-05T02:32:34.462196+01:00"
-                },
-                "user": {
-                    "$ref": "#/definitions/schemas.UserDataSchema"
-                }
-            }
-        },
         "schemas.ParagraphCommentsResponseDataSchema": {
             "type": "object",
             "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.CommentSchema"
+                    }
+                },
                 "current_page": {
                     "type": "integer",
                     "example": 1
@@ -5050,12 +5161,6 @@ const docTemplate = `{
                 "per_page": {
                     "type": "integer",
                     "example": 100
-                },
-                "replies": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/schemas.ParagraphCommentSchema"
-                    }
                 }
             }
         },

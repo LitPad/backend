@@ -66,6 +66,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	bookRouter.Post("", endpoint.AuthorMiddleware, endpoint.CreateBook)
 	bookRouter.Get("/bookmarked", endpoint.AuthMiddleware, endpoint.GetBookmarkedBooks)
 	bookRouter.Get("/book/:slug/bookmark", endpoint.AuthMiddleware, endpoint.BookmarkBook)
+	bookRouter.Post("/book/:slug/report", endpoint.AuthMiddleware, endpoint.ReportBook)
 	bookRouter.Get("/book/:slug", endpoint.GetSingleBook)
 	bookRouter.Get("/book/:slug/chapters", endpoint.AuthOrGuestMiddleware, endpoint.GetBookChapters)
 	bookRouter.Post("/book/:slug", endpoint.AuthMiddleware, endpoint.ReviewBook)
@@ -90,6 +91,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	bookRouter.Post("/book/chapters/chapter/:slug/paragraph/:index/comments", endpoint.AuthMiddleware, endpoint.AddParagraphComment)
 	bookRouter.Put("/book/chapters/chapter/paragraph-comment/:id", endpoint.AuthMiddleware, endpoint.EditParagraphComment)
 	bookRouter.Delete("/book/chapters/chapter/paragraph-comment/:id", endpoint.AuthMiddleware, endpoint.DeleteParagraphComment)
+
+	bookRouter.Get("/book/chapters/chapter/comment/:id", endpoint.AuthMiddleware, endpoint.LikeAComment)
 
 	bookRouter.Get("/author/:username", endpoint.GetLatestAuthorBooks)
 	bookRouter.Get("/genres", endpoint.GetAllBookGenres)

@@ -253,6 +253,14 @@ definitions:
       votes:
         type: integer
     type: object
+  schemas.BookReportSchema:
+    properties:
+      reason:
+        maxLength: 1000
+        type: string
+    required:
+    - reason
+    type: object
   schemas.BookResponseSchema:
     properties:
       data:
@@ -369,6 +377,8 @@ definitions:
     type: object
   schemas.ChapterCreateSchema:
     properties:
+      is_last:
+        type: boolean
       paragraphs:
         items:
           type: string
@@ -461,6 +471,29 @@ definitions:
       status:
         example: success
         type: string
+    type: object
+  schemas.CommentSchema:
+    properties:
+      created_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      id:
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
+      likes_count:
+        type: integer
+      replies_count:
+        type: integer
+      text:
+        maxLength: 10000
+        type: string
+      updated_at:
+        example: "2024-06-05T02:32:34.462196+01:00"
+        type: string
+      user:
+        $ref: '#/definitions/schemas.UserDataSchema'
+    required:
+    - text
     type: object
   schemas.ContractResponseSchema:
     properties:
@@ -748,6 +781,10 @@ definitions:
         allOf:
         - $ref: '#/definitions/schemas.NotificationBookSchema'
         description: Bought book, vote, comment and reply
+      comment_id:
+        description: reviewed, reply, like
+        example: 2b3bd817-135e-41bd-9781-33807c92ff40
+        type: string
       created_at:
         example: "2024-06-05T02:32:34.462196+01:00"
         type: string
@@ -759,14 +796,6 @@ definitions:
       ntype:
         $ref: '#/definitions/choices.NotificationTypeChoice'
       receiver_id:
-        type: string
-      reply_id:
-        description: If someone liked your reply
-        example: 2b3bd817-135e-41bd-9781-33807c92ff40
-        type: string
-      review_id:
-        description: reviewed, reply, like
-        example: 2b3bd817-135e-41bd-9781-33807c92ff40
         type: string
       sender:
         $ref: '#/definitions/schemas.UserDataSchema'
@@ -815,7 +844,7 @@ definitions:
   schemas.ParagraphCommentResponseSchema:
     properties:
       data:
-        $ref: '#/definitions/schemas.ParagraphCommentSchema'
+        $ref: '#/definitions/schemas.CommentSchema'
       message:
         example: Data fetched/created/updated/deleted
         type: string
@@ -823,31 +852,12 @@ definitions:
         example: success
         type: string
     type: object
-  schemas.ParagraphCommentSchema:
-    properties:
-      created_at:
-        example: "2024-06-05T02:32:34.462196+01:00"
-        type: string
-      id:
-        example: 2b3bd817-135e-41bd-9781-33807c92ff40
-        type: string
-      likes_count:
-        type: integer
-      replies_count:
-        type: integer
-      text:
-        maxLength: 10000
-        type: string
-      updated_at:
-        example: "2024-06-05T02:32:34.462196+01:00"
-        type: string
-      user:
-        $ref: '#/definitions/schemas.UserDataSchema'
-    required:
-    - text
-    type: object
   schemas.ParagraphCommentsResponseDataSchema:
     properties:
+      comments:
+        items:
+          $ref: '#/definitions/schemas.CommentSchema'
+        type: array
       current_page:
         example: 1
         type: integer
@@ -857,10 +867,6 @@ definitions:
       per_page:
         example: 100
         type: integer
-      replies:
-        items:
-          $ref: '#/definitions/schemas.ParagraphCommentSchema'
-        type: array
     type: object
   schemas.ParagraphCommentsResponseSchema:
     properties:
@@ -2874,6 +2880,39 @@ paths:
       summary: View Book Chapters
       tags:
       - Books
+  /books/book/{slug}/report:
+    post:
+      description: This endpoint allows a user to report a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Report object
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.BookReportSchema'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Report A Book
+      tags:
+      - Books
   /books/book/{slug}/set-contract:
     post:
       description: '`This endpoint allows a user to create/update a contract for his/her
@@ -3177,6 +3216,34 @@ paths:
       summary: Add A Comment To A Paragraph In A Book Chapter
       tags:
       - Books
+  /books/book/chapters/chapter/comment/{id}:
+    get:
+      description: '`This endpoint allows a user to like/unlike a comment or a reply
+        (a kind of toggle)`'
+      parameters:
+      - description: Comment or reply id (uuid)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Like/Unlike A Comment/Reply
+      tags:
+      - Books
   /books/book/chapters/chapter/paragraph-comment/{id}:
     delete:
       description: '`This endpoint allows a user to delete his/her paragraph comment.`'
@@ -3389,9 +3456,9 @@ paths:
       - Books
   /books/book/review/{id}/replies:
     get:
-      description: '`This endpoint returns replies of a book review.`'
+      description: '`This endpoint returns replies of a book review or paragraph comment`'
       parameters:
-      - description: Review id (uuid)
+      - description: Comment/Review id (uuid)
         in: path
         name: id
         required: true
@@ -3414,7 +3481,7 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
-      summary: Get Review Replies
+      summary: Get Comment/Review Replies
       tags:
       - Books
   /books/bookmarked:

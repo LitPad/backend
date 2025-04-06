@@ -36,8 +36,8 @@ func createAuthor(db *gorm.DB, cfg config.Config) models.User {
 		Email:           cfg.FirstAuthorEmail,
 		Password:        cfg.FirstAuthorPassword,
 		IsEmailVerified: true,
-		IsSuperuser: true,
-		IsStaff: true,
+		IsSuperuser:     true,
+		IsStaff:         true,
 	}
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
 
@@ -152,7 +152,7 @@ func createParagraphs(db *gorm.DB, chapter models.Chapter) models.Paragraph {
 	if len(paragraphs) < 1 {
 		paragraphsToCreate := []models.Paragraph{}
 		for idx, paragraph := range PARAGRAPHS {
-			paragraphsToCreate = append(paragraphsToCreate, models.Paragraph{ChapterID: chapter.ID, Index: uint(idx+1), Text: paragraph})
+			paragraphsToCreate = append(paragraphsToCreate, models.Paragraph{ChapterID: chapter.ID, Index: uint(idx + 1), Text: paragraph})
 		}
 		db.Create(&paragraphsToCreate)
 		paragraphs = paragraphsToCreate
@@ -163,27 +163,27 @@ func createParagraphs(db *gorm.DB, chapter models.Chapter) models.Paragraph {
 func createParagraphComment(db *gorm.DB, user models.User, paragraph models.Paragraph) models.Comment {
 	comment := models.Comment{
 		UserID: user.ID, ParagraphID: &paragraph.ID,
-		Likes: []models.User{user}, Text: "Wow, he's in trouble",
+		Text: "Wow, he's in trouble",
 	}
-	db.Omit("Likes.*").FirstOrCreate(&comment, comment)
+	db.FirstOrCreate(&comment, comment)
 	return comment
 }
 
 func createReply(db *gorm.DB, comment models.Comment, user models.User) models.Comment {
 	reply := models.Comment{
 		UserID: user.ID, ParentID: &comment.ID,
-		Likes: []models.User{user}, Text: "Wow, you're right",
+		Text: "Wow, you're right",
 	}
-	db.Omit("Likes.*").FirstOrCreate(&reply, reply)
+	db.FirstOrCreate(&reply, reply)
 	return reply
 }
 
 func createReview(db *gorm.DB, book models.Book, user models.User) models.Comment {
 	review := models.Comment{
 		UserID: user.ID, BookID: &book.ID, Rating: choices.RC_5,
-		Likes: []models.User{user}, Text: "This is the best book I've ever read.",
+		Text: "This is the best book I've ever read.",
 	}
-	db.Omit("Likes.*").FirstOrCreate(&review, review)
+	db.FirstOrCreate(&review, review)
 	return review
 }
 

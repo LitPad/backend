@@ -130,11 +130,20 @@ type BookRead struct {
 	Completed bool      `gorm:"default:false"`
 }
 
+type BookReport struct {
+	BaseModel
+	UserID uuid.UUID
+	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+	BookID uuid.UUID `json:"book_id"`
+	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+	Reason string    `gorm:"type: varchar(1000)"`
+}
+
 type Chapter struct {
 	BaseModel
-	BookID     uuid.UUID   `json:"book_id"`
+	BookID     uuid.UUID
 	Book       Book        `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
-	Title      string      `json:"title" gorm:"type: varchar(255)"`
+	Title      string      `gorm:"type: varchar(255)"`
 	Slug       string      `gorm:"unique"`
 	Paragraphs []Paragraph `gorm:"<-:false"`
 }
@@ -166,10 +175,10 @@ func (c *Chapter) BeforeSave(tx *gorm.DB) (err error) {
 type Paragraph struct {
 	BaseModel
 	ChapterID uuid.UUID
-	Chapter   Chapter   `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
+	Chapter   Chapter `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
 	Index     uint
 	Text      string    `gorm:"type:text"`
-	Comments  []Comment `gorm:"<-:false"`
+	Comments  []Comment `gorm:"foreignKey:ParagraphID;<-:false"`
 }
 
 func (p Paragraph) CommentsCount() int {
@@ -187,13 +196,12 @@ type Comment struct {
 
 	ParagraphID *uuid.UUID // For praragrapj
 	Paragraph   *Paragraph `gorm:"foreignKey:ParagraphID;constraint:OnDelete:CASCADE;<-:false"`
-	Likes       []User     `gorm:"many2many:comment_likes;<-:false"`
-	Text        string     `gorm:"type:varchar(10000)"`
-	
+	Likes       []Like
+	Text        string `gorm:"type:varchar(10000)"`
+
 	ParentID *uuid.UUID
-	Parent   *Comment   `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;<-:false"`
-	
-	Replies  []Comment  `gorm:"foreignKey:ParentID"`
+
+	Replies []Comment `gorm:"foreignKey:ParentID"`
 }
 
 func (c Comment) LikesCount() int {
@@ -202,6 +210,15 @@ func (c Comment) LikesCount() int {
 
 func (c Comment) RepliesCount() int {
 	return len(c.Replies)
+}
+
+type Like struct {
+	BaseModel
+	UserID uuid.UUID
+	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+
+	CommentID *uuid.UUID
+	Comment   *Comment `gorm:"foreignKey:CommentID;constraint:OnDelete:CASCADE;<-:false"`
 }
 
 type Vote struct {

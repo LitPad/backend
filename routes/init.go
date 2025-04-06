@@ -17,4 +17,6 @@ var (
 	commentManager      = managers.CommentManager{}
 	notificationManager = managers.NotificationManager{}
 	bookmarkManager     = managers.BookmarkManager{}
+	bookReportManager     = managers.BookReportManager{}
+	likeManager     = managers.LikeManager{}
 )

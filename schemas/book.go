@@ -58,7 +58,7 @@ func (c ChapterListSchema) Init(chapter models.Chapter) ChapterListSchema {
 }
 
 type ParagraphSchema struct {
-	Index   uint `json:"index"`
+	Index         uint   `json:"index"`
 	Text          string `json:"text"`
 	CommentsCount int    `json:"comments_count"`
 }
@@ -174,7 +174,7 @@ type ParagraphCommentAddSchema struct {
 	Text string `json:"text" validate:"required,max=10000"`
 }
 
-type ParagraphCommentSchema struct {
+type CommentSchema struct {
 	ParagraphCommentAddSchema
 	ID           uuid.UUID      `json:"id" example:"2b3bd817-135e-41bd-9781-33807c92ff40"`
 	User         UserDataSchema `json:"user"`
@@ -184,7 +184,7 @@ type ParagraphCommentSchema struct {
 	UpdatedAt    time.Time      `json:"updated_at" example:"2024-06-05T02:32:34.462196+01:00"`
 }
 
-func (p ParagraphCommentSchema) Init(paragraphComment models.Comment) ParagraphCommentSchema {
+func (p CommentSchema) Init(paragraphComment models.Comment) CommentSchema {
 	p.ID = paragraphComment.ID
 	p.User = p.User.Init(paragraphComment.User)
 	p.Text = paragraphComment.Text
@@ -197,24 +197,24 @@ func (p ParagraphCommentSchema) Init(paragraphComment models.Comment) ParagraphC
 
 type ParagraphCommentResponseDataSchema struct {
 	PaginatedResponseDataSchema
-	Items []ParagraphCommentSchema `json:"items"`
+	Items []CommentSchema `json:"items"`
 }
 
 type ParagraphCommentResponseSchema struct {
 	ResponseSchema
-	Data ParagraphCommentSchema `json:"data"`
+	Data CommentSchema `json:"data"`
 }
 
 type ParagraphCommentsResponseDataSchema struct {
 	PaginatedResponseDataSchema
-	Items []ParagraphCommentSchema `json:"replies"`
+	Items []CommentSchema `json:"comments"`
 }
 
 func (p ParagraphCommentsResponseDataSchema) Init(comments []models.Comment) ParagraphCommentsResponseDataSchema {
 	// Set Initial Data
-	commentItems := make([]ParagraphCommentSchema, 0)
+	commentItems := make([]CommentSchema, 0)
 	for _, comment := range comments {
-		commentItems = append(commentItems, ParagraphCommentSchema{}.Init(comment))
+		commentItems = append(commentItems, CommentSchema{}.Init(comment))
 	}
 	p.Items = commentItems
 	return p
@@ -289,6 +289,7 @@ type BookCreateSchema struct {
 type ChapterCreateSchema struct {
 	Title      string   `json:"title" validate:"required,max=100"`
 	Paragraphs []string `json:"paragraphs" validate:"required,max=400"`
+	IsLast     bool     `json:"is_last"`
 }
 
 type TagsResponseSchema struct {
@@ -474,4 +475,8 @@ func (r ReplySchema) Init(reply models.Comment) ReplySchema {
 	r.CreatedAt = reply.CreatedAt
 	r.UpdatedAt = reply.UpdatedAt
 	return r
+}
+
+type BookReportSchema struct {
+	Reason string `json:"reason" validate:"required,max=1000"`
 }

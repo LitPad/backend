@@ -2,6 +2,7 @@ package managers
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/LitPad/backend/models"
@@ -99,9 +100,13 @@ func (b BookManager) GetUserBookmarkedBooks (db *gorm.DB, user models.User) []mo
 	return books
 } 
 
-func (b BookManager) GetBySlug(db *gorm.DB, slug string) (*models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetBySlug(db *gorm.DB, slug string, preload bool) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
-	db.Scopes(scopes.AuthorGenreTagBookScope).Take(&book, book)
+	query := db
+	if preload {
+		query = query.Scopes(scopes.AuthorGenreTagBookScope)
+	}
+	query.Take(&book, book)
 	if book.ID == uuid.Nil {
 		errD := utils.NotFoundErr("No book with that slug")
 		return nil, &errD
@@ -248,10 +253,13 @@ type ChapterManager struct {
 
 func (c ChapterManager) GetBySlug(db *gorm.DB, slug string) (*models.Chapter, *utils.ErrorResponse) {
 	chapter := models.Chapter{Slug: slug}
-	db.Joins("Book").Preload("Paragraphs").Preload("Paragraphs.Comments").Take(&chapter, chapter)
+	db.Joins("Book").Preload("Paragraphs.Comments").Take(&chapter, chapter)
 	if chapter.ID == uuid.Nil {
 		errD := utils.NotFoundErr("No chapter with that slug")
 		return nil, &errD
+	}
+	for _, p := range chapter.Paragraphs {
+		log.Println(p.Comments)
 	}
 	return &chapter, nil
 }
@@ -265,12 +273,12 @@ func (c ChapterManager) GetBySlugWithComments(db *gorm.DB, slug string, index ui
 	}
 	paragraph := models.Paragraph{ChapterID: chapter.ID, Index: index}
 	comments := []models.Comment{}
-	db.First(&paragraph)
+	db.Take(&paragraph, paragraph)
 	if paragraph.ID == uuid.Nil {
 		errD := utils.NotFoundErr("That chapter has no paragraph with that index")
 		return nil, nil, &errD
 	}
-	db.Joins("User").Joins("Replies").Joins("Likes").Where("paragraph_id = ?", paragraph.ID).Find(&comments)
+	db.Joins("User").Preload("Replies").Preload("Likes").Where("comments.paragraph_id = ?", paragraph.ID).Find(&comments)
 	return &chapter, comments, nil
 }
 
@@ -372,7 +380,7 @@ func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas
 
 func (c ChapterManager) GetParagraph (db *gorm.DB, chapter models.Chapter, index uint) *models.Paragraph {
 	paragraph := models.Paragraph{ChapterID: chapter.ID, Index: index}
-	db.First(&paragraph)
+	db.Take(&paragraph, paragraph)
 	if paragraph.ID == uuid.Nil {
 		return nil
 	}
@@ -431,7 +439,7 @@ type ReviewManager struct {
 
 func (r ReviewManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Comment {
 	review := r.Model
-	db.Where("comments.id = ?", id).Joins("User").Joins("Book").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
+	db.Where("comments.id = ? AND comments.parent_id IS NULL", id).Joins("User").Joins("Book").Preload("Replies.User").Preload("Replies.Likes").Take(&review, review)
 	if review.ID == uuid.Nil {
 		return nil
 	}
@@ -484,9 +492,13 @@ type CommentManager struct {
 	ModelList []models.Comment
 }
 
-func (c CommentManager) GetByID(db *gorm.DB, id uuid.UUID) *models.Comment {
+func (c CommentManager) GetByID(db *gorm.DB, id uuid.UUID, preload bool) *models.Comment {
 	comment := c.Model
-	db.Where("comments.id = ?", id).Joins("User").Joins("Paragraph").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes").Take(&comment, comment)
+	query := db.Where("comments.id = ?", id)
+	if preload {
+		query = query.Joins("User").Joins("Paragraph").Preload("Replies").Preload("Replies.User").Preload("Replies.Likes")
+	}
+	query.Take(&comment, comment)
 	if comment.ID == uuid.Nil {
 		return nil
 	}
@@ -578,11 +590,37 @@ type BookmarkManager struct {
 
 func (b BookmarkManager) AddOrDelete (db *gorm.DB, user models.User, book models.Book) string {
 	bookmark := models.Bookmark{UserID: user.ID, BookID: book.ID}
-	db.First(&bookmark)
+	db.Take(&bookmark, bookmark)
 	if bookmark.ID == uuid.Nil {
 		db.Create(&bookmark)
 		return "Bookmarked"
 	}
 	db.Delete(&bookmark)
 	return "Unbookmarked"
+}
+
+type BookReportManager struct {
+	Model     models.BookReport
+	ModelList []models.BookReport
+}
+
+func (b BookReportManager) Create (db *gorm.DB, user models.User, book models.Book, reason string) {
+	bookReport := models.BookReport{UserID: user.ID, BookID: book.ID, Reason: reason}
+	db.Create(&bookReport)
+}
+
+type LikeManager struct {
+	Model     models.Bookmark
+	ModelList []models.Bookmark
+}
+
+func (l LikeManager) AddOrDelete (db *gorm.DB, user models.User, comment models.Comment) string {
+	like := models.Like{UserID: user.ID, CommentID: &comment.ID}
+	db.Take(&like, like)
+	if like.ID == uuid.Nil {
+		db.Create(&like)
+		return "Liked"
+	}
+	db.Delete(&like)
+	return "Unliked"
 }
