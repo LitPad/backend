@@ -126,6 +126,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Filter by Sub Genre slug",
+                        "name": "sub_genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"
@@ -258,6 +264,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Genre slug",
                         "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Sub Genre slug",
+                        "name": "sub_genre_slug",
                         "in": "query"
                     },
                     {
@@ -1540,6 +1552,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Filter by Sub Genre slug",
+                        "name": "sub_genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Filter by Tag slug",
                         "name": "tag_slug",
                         "in": "query"
@@ -1688,6 +1706,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Genre slug",
                         "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Sub Genre slug",
+                        "name": "sub_genre_slug",
                         "in": "query"
                     },
                     {
@@ -3102,6 +3126,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/books/sub-genres": {
+            "get": {
+                "description": "This endpoint views available book sub genres",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Available Book Sub Genres",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubGenresResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/books/tags": {
             "get": {
                 "description": "This endpoint views available book tags",
@@ -4242,6 +4289,9 @@ const docTemplate = `{
                 "slug": {
                     "type": "string"
                 },
+                "sub_genre": {
+                    "$ref": "#/definitions/schemas.SubGenreSchema"
+                },
                 "tags": {
                     "type": "array",
                     "items": {
@@ -4330,6 +4380,9 @@ const docTemplate = `{
                 },
                 "slug": {
                     "type": "string"
+                },
+                "sub_genre": {
+                    "$ref": "#/definitions/schemas.SubGenreSchema"
                 },
                 "tags": {
                     "type": "array",
@@ -5619,6 +5672,36 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 10,
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"
+                }
+            }
+        },
+        "schemas.SubGenreSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.SubGenresResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SubGenreSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },

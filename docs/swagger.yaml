@@ -241,6 +241,8 @@ definitions:
         $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
       slug:
         type: string
+      sub_genre:
+        $ref: '#/definitions/schemas.SubGenreSchema'
       tags:
         items:
           $ref: '#/definitions/schemas.TagSchema'
@@ -301,6 +303,8 @@ definitions:
         type: integer
       slug:
         type: string
+      sub_genre:
+        $ref: '#/definitions/schemas.SubGenreSchema'
       tags:
         items:
           $ref: '#/definitions/schemas.TagSchema'
@@ -1186,6 +1190,26 @@ definitions:
     required:
     - token
     type: object
+  schemas.SubGenreSchema:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  schemas.SubGenresResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.SubGenreSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.SubscriberResponseSchema:
     properties:
       data:
@@ -1590,6 +1614,10 @@ paths:
         in: query
         name: genre_slug
         type: string
+      - description: Filter by Sub Genre slug
+        in: query
+        name: sub_genre_slug
+        type: string
       - description: Filter by Tag slug
         in: query
         name: tag_slug
@@ -1678,6 +1706,10 @@ paths:
       - description: Filter by Genre slug
         in: query
         name: genre_slug
+        type: string
+      - description: Filter by Sub Genre slug
+        in: query
+        name: sub_genre_slug
         type: string
       - description: Filter by Tag slug
         in: query
@@ -2514,6 +2546,10 @@ paths:
         in: query
         name: genre_slug
         type: string
+      - description: Filter by Sub Genre slug
+        in: query
+        name: sub_genre_slug
+        type: string
       - description: Filter by Tag slug
         in: query
         name: tag_slug
@@ -2616,6 +2652,10 @@ paths:
       - description: Filter by Genre slug
         in: query
         name: genre_slug
+        type: string
+      - description: Filter by Sub Genre slug
+        in: query
+        name: sub_genre_slug
         type: string
       - description: Filter by Tag slug
         in: query
@@ -3547,6 +3587,21 @@ paths:
       security:
       - BearerAuth: []
       summary: Convert Coins To Lanterns
+      tags:
+      - Books
+  /books/sub-genres:
+    get:
+      description: This endpoint views available book sub genres
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SubGenresResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View Available Book Sub Genres
       tags:
       - Books
   /books/tags:

@@ -19,7 +19,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subGenreSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -31,6 +31,15 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, tagSlug string, ti
 			return books, &errData
 		}
 		query = query.Where(models.Book{GenreID: genre.ID})
+	}
+	if subGenreSlug != "" {
+		subGenre := models.SubGenre{Slug: subGenreSlug}
+		db.Take(&subGenre, subGenre)
+		if subGenre.ID == uuid.Nil {
+			errData := utils.NotFoundErr("Invalid book sub genre")
+			return books, &errData
+		}
+		query = query.Where(models.Book{SubGenreID: subGenre.ID})
 	}
 	if tagSlug != "" {
 		tag := models.Tag{Slug: tagSlug}
@@ -417,6 +426,12 @@ type GenreManager struct {
 func (g GenreManager) GetAll(db *gorm.DB) []models.Genre {
 	genres := g.ModelList
 	db.Preload("Tags").Find(&genres)
+	return genres
+}
+
+func (g GenreManager) GetAllSubGenres(db *gorm.DB) []models.SubGenre {
+	genres := []models.SubGenre{}
+	db.Find(&genres)
 	return genres
 }
 

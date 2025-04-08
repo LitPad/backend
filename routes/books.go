@@ -43,11 +43,28 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
+// @Summary View Available Book Sub Genres
+// @Description This endpoint views available book sub genres
+// @Tags Books
+// @Success 200 {object} schemas.SubGenresResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/sub-genres [get]
+func (ep Endpoint) GetAllBookSubGenres(c *fiber.Ctx) error {
+	db := ep.DB
+	genres := genreManager.GetAllSubGenres(db)
+
+	response := schemas.SubGenresResponseSchema{
+		ResponseSchema: ResponseMessage("Sub Genres fetched successfully"),
+	}.Init(genres)
+	return c.Status(200).JSON(response)
+}
+
 // @Summary View Latest Books
 // @Description This endpoint views a latest books
 // @Tags Books
 // @Param page query int false "Current Page" default(1)
 // @Param genre_slug query string false "Filter by Genre slug"
+// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -58,11 +75,12 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	genreSlug := c.Query("genre_slug")
+	subGenreSlug := c.Query("sub_genre_slug")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending)
+	books, err := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -88,6 +106,7 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 // @Param page query int false "Current Page" default(1)
 // @Param username path string true "Filter by Author Username"
 // @Param genre_slug query string false "Filter by Genre slug"
+// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -99,11 +118,12 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug")
+	subGenreSlug := c.Query("sub_genre_slug")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
-	books, err := bookManager.GetLatest(db, genreSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending)
+	books, err := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}

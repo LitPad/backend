@@ -8,6 +8,7 @@ import (
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -103,6 +104,20 @@ func createGenres(db *gorm.DB, tags []models.Tag) []models.Genre {
 	return genres
 }
 
+func createSubGenres(db *gorm.DB) []models.SubGenre {
+	subGenres := []models.SubGenre{}
+	db.Find(&subGenres)
+
+	if len(subGenres) < 1 {
+		for _, item := range SUBGENRES {
+			subGenre := models.SubGenre{Name: item}
+			subGenres = append(subGenres, subGenre)
+		}
+		db.Create(&subGenres)
+	}
+	return subGenres
+}
+
 func createGifts(db *gorm.DB) {
 	gifts := []models.Gift{}
 	db.Find(&gifts)
@@ -129,13 +144,26 @@ func createSubscriptionPlans(db *gorm.DB) {
 	}
 }
 
-func createBook(db *gorm.DB, author models.User, genre models.Genre, tag models.Tag) models.Book {
+func createBook(db *gorm.DB, author models.User, genre models.Genre, tag models.Tag, subGenres []models.SubGenre) models.Book {
 	book := models.Book{}
 	bookToCreate := BOOK
 	bookToCreate.AuthorID = author.ID
 	bookToCreate.GenreID = genre.ID
+	bookToCreate.SubGenreID = subGenres[0].ID
 	bookToCreate.Tags = []models.Tag{tag}
 	db.Omit("Tags.*").FirstOrCreate(&book, bookToCreate)
+
+	booksWithoutSubGenres := []models.Book{}
+	db.Where("sub_genre_id IS NULL OR sub_genre_id = ?", uuid.Nil).Find(&booksWithoutSubGenres)
+	for _, book := range booksWithoutSubGenres {
+		// Shuffle the list
+		rand.New(rand.NewSource(time.Now().UnixNano()))
+		rand.Shuffle(len(subGenres), func(i, j int) {
+			subGenres[i], subGenres[j] = subGenres[j], subGenres[i]
+		})
+		book.SubGenreID = subGenres[0].ID
+		db.Save(&book)
+	}
 	return book
 }
 
@@ -195,9 +223,10 @@ func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	createCoins(db)
 	tags := createTags(db)
 	genres := createGenres(db, tags)
+	subGenres := createSubGenres(db)
 	createGifts(db)
 	createSubscriptionPlans(db)
-	book := createBook(db, author, genres[0], tags[0])
+	book := createBook(db, author, genres[0], tags[0], subGenres)
 	chapter := createChapter(db, book)
 	paragraph := createParagraphs(db, chapter)
 	comment := createParagraphComment(db, author, paragraph)

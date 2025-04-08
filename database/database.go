@@ -25,6 +25,7 @@ func Models() []interface{} {
 		// book
 		&models.Tag{},
 		&models.Genre{},
+		&models.SubGenre{},
 		&models.Book{},
 		&models.BookRead{},
 		&models.BookReport{},
@@ -111,7 +112,6 @@ func ConnectDb(cfg config.Config, loggedOpts ...bool) *gorm.DB {
 		os.Exit(2)
 	}
 
-	db.Migrator().CreateTable(&models.Like{})
 	// Add Migrations
 	if os.Getenv("ENVIRONMENT") != "test" {
 		log.Println("Running Migrations")

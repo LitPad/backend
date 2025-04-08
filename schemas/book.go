@@ -30,6 +30,17 @@ func (g GenreWithoutTagSchema) Init(genre models.Genre) GenreWithoutTagSchema {
 	return g
 }
 
+type SubGenreSchema struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
+func (s SubGenreSchema) Init(subGenre models.SubGenre) SubGenreSchema {
+	s.Name = subGenre.Name
+	s.Slug = subGenre.Slug
+	return s
+}
+
 type GenreSchema struct {
 	GenreWithoutTagSchema
 	Tags []TagSchema `json:"tags"`
@@ -86,6 +97,7 @@ type BookSchema struct {
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
+	SubGenre           SubGenreSchema        `json:"sub_genre"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
@@ -116,6 +128,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
+	b.SubGenre = b.SubGenre.Init(book.SubGenre)
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()
 	b.Reads = book.ReadsCount()
@@ -320,6 +333,21 @@ func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	}
 	g.Data = genreItems
 	return g
+}
+
+type SubGenresResponseSchema struct {
+	ResponseSchema
+	Data []SubGenreSchema `json:"data"`
+}
+
+func (s SubGenresResponseSchema) Init(subGenres []models.SubGenre) SubGenresResponseSchema {
+	// Set Initial Data
+	genreItems := s.Data
+	for _, genre := range subGenres {
+		genreItems = append(genreItems, SubGenreSchema{}.Init(genre))
+	}
+	s.Data = genreItems
+	return s
 }
 
 type ContractSchema struct {

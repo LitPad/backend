@@ -20,6 +20,14 @@ var (
 		"Historical", "YA/Teen", "Paranormal", "Urban", "Sci-fi", "Chicklit",
 	}
 
+	SUBGENRES []string = []string{
+		"Steamy Read", "Enemy to Lovers", "Editor's Pick", "Rising Stars", "Steamy & Wholesome",
+		"Forbidden Love", "Bestselling Romances", "Werewolf Tales", "Vampire Chronicles", "Fated Mates", "Shapeshifter & Beasts",
+		"Paranormal Romance", "Dark Magic", "Twisted Love", "Billonaire Dark Romances", "Dangerous Affair", "Revenge & Redemption",
+		"Possessive Lovers", "Teen Drama", "Coming Of Age", "Young love", "Fantasy Adventures", "Epic Adventures",
+		"Series You Can't Put Down", "Binge-Worthy Romances", "Complete Sagas", "Fantasy Epics", "Ultimate Page-Turners",
+	}
+
 	GIFTNAMES []string = []string{"Red rose", "Black dahlia", "Scroll", "Magic wand", "Wolf", "Baby Dragon"}
 
 	BOOK = models.Book{

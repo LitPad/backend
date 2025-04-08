@@ -34,6 +34,17 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 	return
 }
 
+type SubGenre struct {
+	BaseModel
+	Name string `gorm:"unique"`
+	Slug string `gorm:"unique"`
+}
+
+func (subGenre *SubGenre) BeforeSave(tx *gorm.DB) (err error) {
+	subGenre.Slug = slug.Make(subGenre.Name)
+	return
+}
+
 type Book struct {
 	BaseModel
 	AuthorID      uuid.UUID
@@ -43,8 +54,12 @@ type Book struct {
 	Blurb         string `gorm:"type: varchar(255)"`
 	AgeDiscretion choices.AgeType
 
-	GenreID    uuid.UUID `json:"genre_id"`
-	Genre      Genre     `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
+	GenreID uuid.UUID
+	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
+
+	SubGenreID uuid.UUID
+	SubGenre   SubGenre `gorm:"foreignKey:SubGenreID;constraint:OnDelete:SET NULL;<-:false"`
+
 	Tags       []Tag     `gorm:"many2many:book_tags;<-:false"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`
