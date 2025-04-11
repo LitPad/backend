@@ -22,6 +22,7 @@ func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
 		IsSuperuser:     true,
 		IsStaff:         true,
 		IsEmailVerified: true,
+		AccountType: choices.ACCTYPE_AUTHOR,
 	}
 	db.FirstOrCreate(&user, models.User{Email: user.Email})
 	return user

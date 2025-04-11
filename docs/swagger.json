@@ -3461,6 +3461,11 @@
         },
         "/profiles/profile/{username}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "This endpoint views a user profile",
                 "tags": [
                     "Profiles"
@@ -5869,6 +5874,9 @@
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
+                "is_following": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -6074,6 +6082,9 @@
                     "items": {
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
+                },
+                "is_following": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

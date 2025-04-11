@@ -39,21 +39,24 @@ type UserProfile struct {
 	Followings   []FollowerData                  `json:"followings"`
 	CreatedAt    time.Time                       `json:"created_at" example:"2024-06-05T02:32:34.462196+01:00"`
 	CurrentPlan  *choices.SubscriptionTypeChoice `json:"current_plan"`
+	IsFollowing bool `json:"is_following"`
 }
 
-func (u UserProfile) Init(user models.User) UserProfile {
+func (u UserProfile) Init(user models.User, currentUser *models.User) UserProfile {
 	followers := []FollowerData{}
 	followings := []FollowerData{}
+	isFollowing := false
 	for _, follower := range user.Followers {
 		followerData := FollowerData{}.FromModel(follower)
 		followers = append(followers, followerData)
+		if currentUser != nil && follower.ID == currentUser.ID {
+			isFollowing = true
+		} 
 	}
-
 	for _, following := range user.Followings {
 		followingData := FollowerData{}.FromModel(following)
 		followings = append(followings, followingData)
 	}
-
 	u = UserProfile{
 		Name:         user.Name,
 		Username:     user.Username,
@@ -66,6 +69,7 @@ func (u UserProfile) Init(user models.User) UserProfile {
 		StoriesCount: user.BooksCount(),
 		CreatedAt:    user.CreatedAt,
 		CurrentPlan:  user.CurrentPlan,
+		IsFollowing: isFollowing,
 	}
 	return u
 }

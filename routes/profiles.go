@@ -20,18 +20,19 @@ import (
 // @Success 200 {object} schemas.UserProfileResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /profiles/profile/{username} [get]
+// @Security BearerAuth
 func (ep Endpoint) GetProfile(c *fiber.Ctx) error {
 	db := ep.DB
-
+	user := RequestUser(c)
 	username := c.Params("username")
-	user := userManager.GetByUsername(db, username)
-	if user == nil {
+	fetchedUser := userManager.GetByUsername(db, username)
+	if fetchedUser == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("User does not exist!"))
 	}
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: ResponseMessage("Profile fetched successfully"),
-		Data:           schemas.UserProfile{}.Init(*user),
+		Data:           schemas.UserProfile{}.Init(*fetchedUser, user),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -84,7 +85,7 @@ func (ep Endpoint) UpdateProfile(c *fiber.Ctx) error {
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: ResponseMessage("User details updated successfully"),
-		Data:           schemas.UserProfile{}.Init(*user),
+		Data:           schemas.UserProfile{}.Init(*user, nil),
 	}
 	return c.Status(200).JSON(response)
 }

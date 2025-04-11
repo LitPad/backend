@@ -3468,6 +3468,11 @@ const docTemplate = `{
         },
         "/profiles/profile/{username}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "This endpoint views a user profile",
                 "tags": [
                     "Profiles"
@@ -5876,6 +5881,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
+                "is_following": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -6081,6 +6089,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
+                },
+                "is_following": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

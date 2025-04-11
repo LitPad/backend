@@ -53,7 +53,7 @@ type TokensResponseSchema struct {
 }
 
 func (t TokensResponseSchema) Init(user models.User) TokensResponseSchema {
-	t.UserProfile = t.UserProfile.Init(user)
+	t.UserProfile = t.UserProfile.Init(user, nil)
 	return t
 }
 

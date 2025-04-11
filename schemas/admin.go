@@ -12,7 +12,7 @@ func (u UserProfilesResponseDataSchema) Init(users []models.User) UserProfilesRe
 	userItems := make([]UserProfile, 0)
 
 	for _, user := range users {
-		userItems = append(userItems, UserProfile{}.Init(user))
+		userItems = append(userItems, UserProfile{}.Init(user, nil))
 	}
 	u.Items = userItems
 	return u

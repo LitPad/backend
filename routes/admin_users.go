@@ -93,7 +93,7 @@ func (ep Endpoint) AdminUpdateUser(c *fiber.Ctx) error {
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: ResponseMessage("User details updated successfully!"),
-		Data: schemas.UserProfile{}.Init(user),
+		Data: schemas.UserProfile{}.Init(user, nil),
 	}
 	return c.Status(200).JSON(response)
 }
@@ -132,7 +132,7 @@ func (ep Endpoint) InviteAdmin(c *fiber.Ctx) error {
 
 	response := schemas.UserProfileResponseSchema{
 		ResponseSchema: ResponseMessage("User upgraded successfully!"),
-		Data: schemas.UserProfile{}.Init(user),
+		Data: schemas.UserProfile{}.Init(user, nil),
 	}
 	return c.Status(200).JSON(response)
 }

@@ -1317,6 +1317,8 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
+      is_following:
+        type: boolean
       name:
         type: string
       refresh:
@@ -1455,6 +1457,8 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
+      is_following:
+        type: boolean
       name:
         type: string
       stories_count:
@@ -3824,6 +3828,8 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: View User Profile
       tags:
       - Profiles
