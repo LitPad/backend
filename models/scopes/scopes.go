@@ -10,7 +10,7 @@ func VerifiedUserScope(db *gorm.DB) *gorm.DB {
 }
 
 func FollowerFollowingPreloaderScope(db *gorm.DB) *gorm.DB {
-	return db.Scopes(VerifiedUserScope).Preload("Followers").Preload("Followers.Followers").Preload("Followings").Preload("Followings.Followers").Preload("Followings.Books")
+	return db.Scopes(VerifiedUserScope).Preload("Books").Preload("Followers").Preload("Followers.Followers").Preload("Followings").Preload("Followings.Followers").Preload("Followings.Books")
 }
 
 func FollowerFollowingUnVerifiedPreloaderScope(db *gorm.DB) *gorm.DB {
