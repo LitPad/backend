@@ -196,11 +196,11 @@ func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug s
 	return &book, nil
 }
 
-func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, coverImage string, Tags []models.Tag) models.Book {
+func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, subGenre models.SubGenre, coverImage string, Tags []models.Tag) models.Book {
 	book := models.Book{
 		AuthorID: author.ID, Author: author, Title: data.Title,
 		Blurb: data.Blurb, AgeDiscretion: data.AgeDiscretion,
-		GenreID: genre.ID, Genre: genre,
+		GenreID: genre.ID, SubGenreID: subGenre.ID, Genre: genre, SubGenre: subGenre,
 		Tags:       Tags,
 		CoverImage: coverImage,
 	}
@@ -208,12 +208,14 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, coverImage string, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, subGenre models.SubGenre, coverImage string, Tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
 	book.GenreID = genre.ID
 	book.Genre = genre
+	book.SubGenreID = subGenre.ID
+	book.SubGenre = subGenre
 	book.Tags = Tags
 	
 	if coverImage != "" {

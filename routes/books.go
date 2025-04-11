@@ -301,6 +301,14 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
 
+	// Validate Sub Genre
+	subGenreSlug := data.SubGenreSlug
+	subGenre := models.SubGenre{Slug: subGenreSlug}
+	db.Take(&subGenre, subGenre)
+	if subGenre.ID == uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("sub_genre_slug", "Invalid sub genre slug!"))
+	}
+
 	// Validate Tags
 	tagSlugs := data.TagSlugs
 	tags, errStr := CheckTagStrings(db, tagSlugs)
@@ -316,7 +324,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 
 	// Upload File
 	coverImage := UploadFile(file, string(choices.IF_BOOKS))
-	book := bookManager.Create(db, *author, data, genre, coverImage, tags)
+	book := bookManager.Create(db, *author, data, genre, subGenre, coverImage, tags)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
 		Data:           schemas.BookSchema{}.Init(book),
@@ -355,6 +363,14 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
 
+	// Validate Sub Genre
+	subGenreSlug := data.SubGenreSlug
+	subGenre := models.SubGenre{Slug: subGenreSlug}
+	db.Take(&subGenre, subGenre)
+	if subGenre.ID == uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("sub_genre_slug", "Invalid sub genre slug!"))
+	}
+
 	// Validate Tags
 	tagSlugs := data.TagSlugs
 	tags, errStr := CheckTagStrings(db, tagSlugs)
@@ -374,7 +390,7 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 		coverImage = UploadFile(file, string(choices.IF_BOOKS))
 	}
 
-	updatedBook := bookManager.Update(db, *book, data, genre, coverImage, tags)
+	updatedBook := bookManager.Update(db, *book, data, genre, subGenre, coverImage, tags)
 
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book updated successfully"),

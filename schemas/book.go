@@ -295,6 +295,7 @@ type BookCreateSchema struct {
 	Title         string          `form:"title" validate:"required,max=200"`
 	Blurb         string          `form:"blurb" validate:"required,max=200"`
 	GenreSlug     string          `form:"genre_slug" validate:"required"`
+	SubGenreSlug  string          `form:"sub_genre_slug" validate:"required"`
 	TagSlugs      []string        `form:"tag_slugs" validate:"required"`
 	AgeDiscretion choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
 }

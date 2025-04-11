@@ -1640,6 +1640,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "name": "sub_genre_slug",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
                         "type": "array",
                         "items": {
                             "type": "string"
@@ -2485,6 +2491,12 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "genre_slug",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "sub_genre_slug",
                         "in": "formData",
                         "required": true
                     },

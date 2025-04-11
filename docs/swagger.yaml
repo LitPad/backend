@@ -2604,6 +2604,10 @@ paths:
         name: genre_slug
         required: true
         type: string
+      - in: formData
+        name: sub_genre_slug
+        required: true
+        type: string
       - collectionFormat: csv
         in: formData
         items:
@@ -2798,6 +2802,10 @@ paths:
         type: string
       - in: formData
         name: genre_slug
+        required: true
+        type: string
+      - in: formData
+        name: sub_genre_slug
         required: true
         type: string
       - collectionFormat: csv
