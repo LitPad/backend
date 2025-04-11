@@ -196,12 +196,12 @@ func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug s
 	return &book, nil
 }
 
-func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, subGenre models.SubGenre, coverImage string, Tags []models.Tag) models.Book {
+func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, subGenre models.SubGenre, coverImage string, tags []models.Tag) models.Book {
 	book := models.Book{
 		AuthorID: author.ID, Author: author, Title: data.Title,
 		Blurb: data.Blurb, AgeDiscretion: data.AgeDiscretion,
 		GenreID: genre.ID, SubGenreID: subGenre.ID, Genre: genre, SubGenre: subGenre,
-		Tags:       Tags,
+		Tags:       tags,
 		CoverImage: coverImage,
 	}
 	db.Omit("Tags.*").Create(&book)

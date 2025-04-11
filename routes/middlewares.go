@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"log"
 	"strings"
 	"time"
 
@@ -142,19 +143,56 @@ func RequestLogger(db *gorm.DB) fiber.Handler {
 			return c.Next()
 		}
 
-		// Call the next middleware to capture response status
+		// Call the next middleware to capture the response status
 		err := c.Next()
 
-		// Parse the body
+		// Initialize bodyStr as empty
 		bodyStr := ""
-		bodyBytes := c.Body()
-		if len(bodyBytes) > 0 {
-			var bodyMap map[string]interface{}
-			if json.Unmarshal(bodyBytes, &bodyMap) == nil { // Valid JSON
-				parsedBody, _ := json.Marshal(bodyMap)
-				bodyStr = string(parsedBody)
+
+		// Get the Content-Type
+		contentType := c.Get("Content-Type")
+
+		// Handle multipart/form-data separately
+		if strings.HasPrefix(contentType, "multipart/form-data") {
+			// For multipart form data, log form fields and file metadata
+			form, err := c.MultipartForm()
+			if err != nil {
+				log.Println("Error reading multipart form:", err)
 			} else {
-				bodyStr = string(bodyBytes) // Fallback for non-JSON body
+				// Extract form fields (key-value pairs)
+				formData := make(map[string]string)
+				for key, values := range form.Value {
+					formData[key] = strings.Join(values, ",") // Join values if there are multiple for a key
+				}
+
+				// Log file metadata (size, filename, etc.)
+				for key, files := range form.File {
+					for _, file := range files {
+						log.Printf("Received file: %s, Size: %d bytes, Field: %s", file.Filename, file.Size, key)
+					}
+				}
+
+				// Marshal form data into a string for logging
+				parsedBody, _ := json.Marshal(formData)
+				bodyStr = string(parsedBody)
+			}
+		} else if strings.HasPrefix(contentType, "application/json") {
+			// For JSON, we can safely unmarshal
+			bodyBytes := c.Body()
+			if len(bodyBytes) > 0 {
+				var bodyMap map[string]interface{}
+				if json.Unmarshal(bodyBytes, &bodyMap) == nil { // Valid JSON
+					parsedBody, _ := json.Marshal(bodyMap)
+					bodyStr = string(parsedBody)
+				} else {
+					bodyStr = string(bodyBytes) // Fallback for invalid JSON
+				}
+			}
+		} else {
+			// Handle other content types as a fallback (plain text, etc.)
+			bodyBytes := c.Body()
+			if len(bodyBytes) > 0 {
+				bodyStr = string(bodyBytes)
 			}
 		}
 
@@ -166,7 +204,7 @@ func RequestLogger(db *gorm.DB) fiber.Handler {
 			StatusCode: c.Response().StatusCode(),
 			QueryParams: string(c.Request().URI().QueryString()),
 			PathParams: string(c.Params("*")),
-			Body:       bodyStr,
+			Body:       bodyStr, // Log the parsed body (or form data)
 		}
 
 		// Save the log
@@ -174,6 +212,7 @@ func RequestLogger(db *gorm.DB) fiber.Handler {
 		return err
 	}
 }
+
 
 func ParseUUID(input string) *uuid.UUID {
 	uuidVal, err := uuid.Parse(input)

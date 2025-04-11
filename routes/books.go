@@ -300,7 +300,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 	if genre.ID == uuid.Nil {
 		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
-
+	
 	// Validate Sub Genre
 	subGenreSlug := data.SubGenreSlug
 	subGenre := models.SubGenre{Slug: subGenreSlug}

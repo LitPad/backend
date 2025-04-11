@@ -60,7 +60,7 @@ type Book struct {
 	SubGenreID uuid.UUID
 	SubGenre   SubGenre `gorm:"foreignKey:SubGenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	Tags       []Tag     `gorm:"many2many:book_tags;<-:false"`
+	Tags       []Tag     `gorm:"many2many:book_tags"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`
 
