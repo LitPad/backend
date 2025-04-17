@@ -257,6 +257,9 @@ definitions:
     type: object
   schemas.BookReportSchema:
     properties:
+      additional_explanation:
+        maxLength: 1000
+        type: string
       reason:
         maxLength: 1000
         type: string

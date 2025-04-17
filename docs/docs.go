@@ -4333,6 +4333,10 @@ const docTemplate = `{
                 "reason"
             ],
             "properties": {
+                "additional_explanation": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
                 "reason": {
                     "type": "string",
                     "maxLength": 1000

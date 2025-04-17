@@ -147,11 +147,12 @@ type BookRead struct {
 
 type BookReport struct {
 	BaseModel
-	UserID uuid.UUID
-	User   User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
-	BookID uuid.UUID `json:"book_id"`
-	Book   Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
-	Reason string    `gorm:"type: varchar(1000)"`
+	UserID                uuid.UUID
+	User                  User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;<-:false"`
+	BookID                uuid.UUID `json:"book_id"`
+	Book                  Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+	Reason                string    `gorm:"type: varchar(1000)"`
+	AdditionalExplanation *string    `gorm:"type: varchar(1000)"`
 }
 
 type Chapter struct {

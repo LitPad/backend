@@ -507,5 +507,6 @@ func (r ReplySchema) Init(reply models.Comment) ReplySchema {
 }
 
 type BookReportSchema struct {
-	Reason string `json:"reason" validate:"required,max=1000"`
+	Reason                string  `json:"reason" validate:"required,max=1000"`
+	AdditionalExplanation *string `json:"additional_explanation" validate:"omitempty,max=1000"`
 }

@@ -621,8 +621,8 @@ type BookReportManager struct {
 	ModelList []models.BookReport
 }
 
-func (b BookReportManager) Create (db *gorm.DB, user models.User, book models.Book, reason string) {
-	bookReport := models.BookReport{UserID: user.ID, BookID: book.ID, Reason: reason}
+func (b BookReportManager) Create (db *gorm.DB, user models.User, book models.Book, reason string, additionalExplanation *string) {
+	bookReport := models.BookReport{UserID: user.ID, BookID: book.ID, Reason: reason, AdditionalExplanation: additionalExplanation}
 	db.Create(&bookReport)
 }
 

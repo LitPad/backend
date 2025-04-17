@@ -1066,7 +1066,7 @@ func (ep Endpoint) ReportBook(c *fiber.Ctx) error {
 	if errCode, errData := ValidateRequest(c, &data); errData != nil {
 		return c.Status(*errCode).JSON(errData)
 	}
-	bookReportManager.Create(db, *user, *book, data.Reason)
+	bookReportManager.Create(db, *user, *book, data.Reason, data.AdditionalExplanation)
 	return c.Status(200).JSON(ResponseMessage("Report submitted successfully"))
 }
 
