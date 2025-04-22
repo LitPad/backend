@@ -25,7 +25,8 @@ func Models() []interface{} {
 		// book
 		&models.Tag{},
 		&models.Genre{},
-		&models.SubGenre{},
+		&models.SubSection{},
+		&models.Section{},
 		&models.Book{},
 		&models.BookRead{},
 		&models.BookReport{},

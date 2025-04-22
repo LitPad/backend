@@ -96,7 +96,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	bookRouter.Get("/author/:username", endpoint.GetLatestAuthorBooks)
 	bookRouter.Get("/genres", endpoint.GetAllBookGenres)
-	bookRouter.Get("/sub-genres", endpoint.GetAllBookSubGenres)
+	bookRouter.Get("/sections", endpoint.GetAllBookSections)
+	bookRouter.Get("/sub-sections", endpoint.GetAllBookSubSections)
 	bookRouter.Get("/tags", endpoint.GetAllBookTags)
 
 	// Gifts Routes (4)

@@ -34,14 +34,24 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 	return
 }
 
-type SubGenre struct {
+type SubSection struct {
 	BaseModel
 	Name string `gorm:"unique"`
 	Slug string `gorm:"unique"`
 }
 
-func (subGenre *SubGenre) BeforeSave(tx *gorm.DB) (err error) {
-	subGenre.Slug = slug.Make(subGenre.Name)
+func (subSection *SubSection) BeforeSave(tx *gorm.DB) (err error) {
+	subSection.Slug = slug.Make(subSection.Name)
+	return
+}
+
+type Section struct {
+	BaseModel
+	Name string `gorm:"unique"`
+	Slug string `gorm:"unique"`
+}
+func (section *Section) BeforeSave(tx *gorm.DB) (err error) {
+	section.Slug = slug.Make(section.Name)
 	return
 }
 
@@ -57,9 +67,13 @@ type Book struct {
 	GenreID uuid.UUID
 	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	SubGenreID uuid.UUID
-	SubGenre   SubGenre `gorm:"foreignKey:SubGenreID;constraint:OnDelete:SET NULL;<-:false"`
+	SubSectionID uuid.UUID
+	SubSection   SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
 
+	SectionID uuid.UUID
+	Section   Section `gorm:"foreignKey:SectionID;constraint:OnDelete:SET NULL;<-:false"`
+
+	OrderInSection uint
 	Tags       []Tag     `gorm:"many2many:book_tags"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`

@@ -20,7 +20,9 @@ var (
 		"Historical", "YA/Teen", "Paranormal", "Urban", "Sci-fi", "Chicklit",
 	}
 
-	SUBGENRES []string = []string{
+	SECTIONS []string = []string{"New", "Romance", "Paranormal", "Dark Romance", "Young Adult", "Long Reads"}
+
+	SUBSECTIONS []string = []string{
 		"Steamy Read", "Enemy to Lovers", "Editor's Pick", "Rising Stars", "Steamy & Wholesome",
 		"Forbidden Love", "Bestselling Romances", "Werewolf Tales", "Vampire Chronicles", "Fated Mates", "Shapeshifter & Beasts",
 		"Paranormal Romance", "Dark Magic", "Twisted Love", "Billonaire Dark Romances", "Dangerous Affair", "Revenge & Redemption",

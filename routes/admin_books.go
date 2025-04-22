@@ -207,7 +207,7 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 // @Param name query string false "name or username of the book author to filter by"
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
-// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -222,13 +222,13 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 	ratingQuery := c.QueryBool("rating", false)
 	nameQuery := c.Query("name", "")
 	genreSlug := c.Query("genre_slug", "")
-	subGenreSlug := c.Query("sub_genre_slug", "")
+	sectionSlug := c.Query("section_slug", "")
 	tagSlug := c.Query("tag_slug", "")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
 
-	books, _ := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery, featured, weeklyFeatured, trending)
+	books, _ := bookManager.GetLatest(db, genreSlug, sectionSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery, featured, weeklyFeatured, trending)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
@@ -255,7 +255,7 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 // @Param title query string false "Title of the book to filter by"
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
-// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -270,7 +270,7 @@ func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
 	ratingQuery := c.QueryBool("rating", false)
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug", "")
-	subGenreSlug := c.Query("sub_genre_slug", "")
+	sectionSlug := c.Query("section_slug", "")
 	tagSlug := c.Query("tag_slug", "")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
@@ -283,7 +283,7 @@ func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.NotFoundErr("Author does not exist!"))
 	}
 
-	books, _ := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, titleQuery, ratingQuery, username, "", featured, weeklyFeatured, trending)
+	books, _ := bookManager.GetLatest(db, genreSlug, sectionSlug, tagSlug, titleQuery, ratingQuery, username, "", featured, weeklyFeatured, trending)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
