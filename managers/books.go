@@ -455,6 +455,30 @@ func (g GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
 	return &genre
 }
 
+func (g GenreManager) GetSectionBySlug(db *gorm.DB, slug string) *models.Section {
+
+	section := models.Section{Slug: slug}
+	db.Take(&section, section)
+
+	if section.ID == uuid.Nil {
+		return nil
+	}
+
+	return &section
+}
+
+func (g GenreManager) GetSubSectionBySlug(db *gorm.DB, slug string) *models.SubSection {
+
+	subSection := models.SubSection{Slug: slug}
+	db.Take(&subSection, subSection)
+
+	if subSection.ID == uuid.Nil {
+		return nil
+	}
+
+	return &subSection
+}
+
 type ReviewManager struct {
 	Model     models.Comment
 	ModelList []models.Comment

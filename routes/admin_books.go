@@ -44,6 +44,62 @@ func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 	return c.Status(201).JSON(ResponseMessage("Genre added successfully"))
 }
 
+// @Summary Add Section
+// @Description Add a new book section to the app.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param data body schemas.TagsAddSchema true "Section"
+// @Success 201 {object} schemas.ResponseSchema "Section Added Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections [post]
+// @Security BearerAuth
+func (ep Endpoint) AdminAddBookSection(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	name := data.Name
+	existingSection := models.Section{}
+	db.Where("LOWER(name) = LOWER(?)", name).First(&existingSection)
+	if existingSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "Section already exists"))
+	}
+	db.Create(&models.Section{Name: name})
+	return c.Status(201).JSON(ResponseMessage("Section added successfully"))
+}
+
+// @Summary Add SubSection
+// @Description Add a new book subsection to the app.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param data body schemas.TagsAddSchema true "SubSection"
+// @Success 201 {object} schemas.ResponseSchema "Sub Section Added Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections [post]
+// @Security BearerAuth
+func (ep Endpoint) AdminAddBookSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	name := data.Name
+	existingSubSection := models.SubSection{}
+	db.Where("LOWER(name) = LOWER(?)", name).First(&existingSubSection)
+	if existingSubSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "Sub Section already exists"))
+	}
+	db.Create(&models.SubSection{Name: name})
+	return c.Status(201).JSON(ResponseMessage("Sub Section added successfully"))
+}
+
 // @Summary Add Tag
 // @Description Add a new tag to the app.
 // @Tags Admin | Books
@@ -116,6 +172,78 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Genre updated successfully"))
 }
 
+// @Summary Update Section
+// @Description Update a section.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Section slug"
+// @Param data body schemas.TagsAddSchema true "Section"
+// @Success 200 {object} schemas.ResponseSchema "Section Updated Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections/{slug} [put]
+// @Security BearerAuth
+func (ep Endpoint) AdminUpdateBookSection(c *fiber.Ctx) error {
+	db := ep.DB
+	section := genreManager.GetSectionBySlug(db, c.Params("slug"))
+	if section == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Section does not exist"))
+	}
+
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	name := data.Name
+	existingSection := models.Section{}
+	db.Where("LOWER(name) = LOWER(?)", name).Not("id = ?", section.ID).First(&existingSection)
+	if existingSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "Section already exists with that name"))
+	}
+	section.Name = name
+	db.Save(&section)
+	return c.Status(200).JSON(ResponseMessage("Section updated successfully"))
+}
+
+// @Summary Update SubSection
+// @Description Update a subsection.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Param data body schemas.TagsAddSchema true "SubSection"
+// @Success 200 {object} schemas.ResponseSchema "SubSection Updated Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug} [put]
+// @Security BearerAuth
+func (ep Endpoint) AdminUpdateBookSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	name := data.Name
+	existingSubSection := models.SubSection{}
+	db.Where("LOWER(name) = LOWER(?)", name).Not("id = ?", subsection.ID).First(&existingSubSection)
+	if existingSubSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "SubSection already exists with that name"))
+	}
+	subsection.Name = name
+	db.Save(&subsection)
+	return c.Status(200).JSON(ResponseMessage("SubSection updated successfully"))
+}
+
 // @Summary Update Tag
 // @Description Update a tag to the app.
 // @Tags Admin | Books
@@ -173,6 +301,49 @@ func (ep Endpoint) AdminDeleteBookGenre(c *fiber.Ctx) error {
 	db.Delete(&genre)
 	return c.Status(200).JSON(ResponseMessage("Genre deleted successfully"))
 }
+
+// @Summary Delete Section
+// @Description Delete a book section.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Section slug"
+// @Success 200 {object} schemas.ResponseSchema "Section Deleted Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) AdminDeleteBookSection(c *fiber.Ctx) error {
+	db := ep.DB
+	section := genreManager.GetSectionBySlug(db, c.Params("slug"))
+	if section == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Section does not exist"))
+	}
+	db.Delete(&section)
+	return c.Status(200).JSON(ResponseMessage("Section deleted successfully"))
+}
+
+// @Summary Delete SubSection
+// @Description Delete a book subsection.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Success 200 {object} schemas.ResponseSchema "SubSection Deleted Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) AdminDeleteBookSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+	db.Delete(&subsection)
+	return c.Status(200).JSON(ResponseMessage("SubSection deleted successfully"))
+}
+
 
 // @Summary Delete Tag
 // @Description Delete a tag from the app.

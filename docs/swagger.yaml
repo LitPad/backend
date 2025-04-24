@@ -239,10 +239,12 @@ definitions:
         type: integer
       reviews:
         $ref: '#/definitions/schemas.ReviewsResponseDataSchema'
+      section:
+        $ref: '#/definitions/schemas.SectionSchema'
       slug:
         type: string
-      sub_genre:
-        $ref: '#/definitions/schemas.SubGenreSchema'
+      sub_section:
+        $ref: '#/definitions/schemas.SubSectionSchema'
       tags:
         items:
           $ref: '#/definitions/schemas.TagSchema'
@@ -304,10 +306,12 @@ definitions:
         $ref: '#/definitions/schemas.ChapterListSchema'
       reads:
         type: integer
+      section:
+        $ref: '#/definitions/schemas.SectionSchema'
       slug:
         type: string
-      sub_genre:
-        $ref: '#/definitions/schemas.SubGenreSchema'
+      sub_section:
+        $ref: '#/definitions/schemas.SubSectionSchema'
       tags:
         items:
           $ref: '#/definitions/schemas.TagSchema'
@@ -1097,6 +1101,26 @@ definitions:
         example: 100
         type: integer
     type: object
+  schemas.SectionSchema:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  schemas.SectionsResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.SectionSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
   schemas.SentGiftResponseSchema:
     properties:
       data:
@@ -1193,18 +1217,18 @@ definitions:
     required:
     - token
     type: object
-  schemas.SubGenreSchema:
+  schemas.SubSectionSchema:
     properties:
       name:
         type: string
       slug:
         type: string
     type: object
-  schemas.SubGenresResponseSchema:
+  schemas.SubSectionsResponseSchema:
     properties:
       data:
         items:
-          $ref: '#/definitions/schemas.SubGenreSchema'
+          $ref: '#/definitions/schemas.SubSectionSchema'
         type: array
       message:
         example: Data fetched/created/updated/deleted
@@ -1621,9 +1645,9 @@ paths:
         in: query
         name: genre_slug
         type: string
-      - description: Filter by Sub Genre slug
+      - description: Filter by Section slug
         in: query
-        name: sub_genre_slug
+        name: section_slug
         type: string
       - description: Filter by Tag slug
         in: query
@@ -1714,9 +1738,9 @@ paths:
         in: query
         name: genre_slug
         type: string
-      - description: Filter by Sub Genre slug
+      - description: Filter by Section slug
         in: query
-        name: sub_genre_slug
+        name: section_slug
         type: string
       - description: Filter by Tag slug
         in: query
@@ -1888,6 +1912,204 @@ paths:
       security:
       - BearerAuth: []
       summary: Update Genre
+      tags:
+      - Admin | Books
+  /admin/books/sections:
+    post:
+      consumes:
+      - application/json
+      description: Add a new book section to the app.
+      parameters:
+      - description: Section
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Section Added Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Section
+      tags:
+      - Admin | Books
+  /admin/books/sections/{slug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a book section.
+      parameters:
+      - description: Section slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Section Deleted Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Section
+      tags:
+      - Admin | Books
+    put:
+      consumes:
+      - application/json
+      description: Update a section.
+      parameters:
+      - description: Section slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Section
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Section Updated Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Section
+      tags:
+      - Admin | Books
+  /admin/books/subsections:
+    post:
+      consumes:
+      - application/json
+      description: Add a new book subsection to the app.
+      parameters:
+      - description: SubSection
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Sub Section Added Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add SubSection
+      tags:
+      - Admin | Books
+  /admin/books/subsections/{slug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a book subsection.
+      parameters:
+      - description: SubSection slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SubSection Deleted Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete SubSection
+      tags:
+      - Admin | Books
+    put:
+      consumes:
+      - application/json
+      description: Update a subsection.
+      parameters:
+      - description: SubSection slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: SubSection
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SubSection Updated Successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update SubSection
       tags:
       - Admin | Books
   /admin/books/tags:
@@ -2553,9 +2775,9 @@ paths:
         in: query
         name: genre_slug
         type: string
-      - description: Filter by Sub Genre slug
+      - description: Filter by Section slug
         in: query
-        name: sub_genre_slug
+        name: section_slug
         type: string
       - description: Filter by Tag slug
         in: query
@@ -2612,7 +2834,7 @@ paths:
         required: true
         type: string
       - in: formData
-        name: sub_genre_slug
+        name: sub_section_slug
         required: true
         type: string
       - collectionFormat: csv
@@ -2664,9 +2886,9 @@ paths:
         in: query
         name: genre_slug
         type: string
-      - description: Filter by Sub Genre slug
+      - description: Filter by Section slug
         in: query
-        name: sub_genre_slug
+        name: section_slug
         type: string
       - description: Filter by Tag slug
         in: query
@@ -2812,7 +3034,7 @@ paths:
         required: true
         type: string
       - in: formData
-        name: sub_genre_slug
+        name: sub_section_slug
         required: true
         type: string
       - collectionFormat: csv
@@ -3604,19 +3826,34 @@ paths:
       summary: Convert Coins To Lanterns
       tags:
       - Books
-  /books/sub-genres:
+  /books/sections:
     get:
-      description: This endpoint views available book sub genres
+      description: This endpoint views available book sections
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/schemas.SubGenresResponseSchema'
+            $ref: '#/definitions/schemas.SectionsResponseSchema'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
-      summary: View Available Book Sub Genres
+      summary: View Available Book Sections
+      tags:
+      - Books
+  /books/sub-sections:
+    get:
+      description: This endpoint views available book sub sections
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.SubSectionsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: View Available Book Sub Sections
       tags:
       - Books
   /books/tags:

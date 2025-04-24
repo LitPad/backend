@@ -126,8 +126,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by Sub Genre slug",
-                        "name": "sub_genre_slug",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
                         "in": "query"
                     },
                     {
@@ -268,8 +268,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by Sub Genre slug",
-                        "name": "sub_genre_slug",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
                         "in": "query"
                     },
                     {
@@ -511,6 +511,318 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Genre Deleted Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/sections": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new book section to the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Add Section",
+                "parameters": [
+                    {
+                        "description": "Section",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Section Added Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/sections/{slug}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a section.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Update Section",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Section slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Section",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Section Updated Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a book section.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Delete Section",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Section slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Section Deleted Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/subsections": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new book subsection to the app.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Add SubSection",
+                "parameters": [
+                    {
+                        "description": "SubSection",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Sub Section Added Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/subsections/{slug}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a subsection.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Update SubSection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "SubSection slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "SubSection",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SubSection Updated Successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a book subsection.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Delete SubSection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "SubSection slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SubSection Deleted Successfully",
                         "schema": {
                             "$ref": "#/definitions/schemas.ResponseSchema"
                         }
@@ -1552,8 +1864,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by Sub Genre slug",
-                        "name": "sub_genre_slug",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
                         "in": "query"
                     },
                     {
@@ -1641,7 +1953,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "name": "sub_genre_slug",
+                        "name": "sub_section_slug",
                         "in": "formData",
                         "required": true
                     },
@@ -1716,8 +2028,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter by Sub Genre slug",
-                        "name": "sub_genre_slug",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
                         "in": "query"
                     },
                     {
@@ -2496,7 +2808,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "name": "sub_genre_slug",
+                        "name": "sub_section_slug",
                         "in": "formData",
                         "required": true
                     },
@@ -3138,18 +3450,41 @@ const docTemplate = `{
                 }
             }
         },
-        "/books/sub-genres": {
+        "/books/sections": {
             "get": {
-                "description": "This endpoint views available book sub genres",
+                "description": "This endpoint views available book sections",
                 "tags": [
                     "Books"
                 ],
-                "summary": "View Available Book Sub Genres",
+                "summary": "View Available Book Sections",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/schemas.SubGenresResponseSchema"
+                            "$ref": "#/definitions/schemas.SectionsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/books/sub-sections": {
+            "get": {
+                "description": "This endpoint views available book sub sections",
+                "tags": [
+                    "Books"
+                ],
+                "summary": "View Available Book Sub Sections",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.SubSectionsResponseSchema"
                         }
                     },
                     "400": {
@@ -4303,11 +4638,14 @@ const docTemplate = `{
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
                 },
+                "section": {
+                    "$ref": "#/definitions/schemas.SectionSchema"
+                },
                 "slug": {
                     "type": "string"
                 },
-                "sub_genre": {
-                    "$ref": "#/definitions/schemas.SubGenreSchema"
+                "sub_section": {
+                    "$ref": "#/definitions/schemas.SubSectionSchema"
                 },
                 "tags": {
                     "type": "array",
@@ -4399,11 +4737,14 @@ const docTemplate = `{
                 "reads": {
                     "type": "integer"
                 },
+                "section": {
+                    "$ref": "#/definitions/schemas.SectionSchema"
+                },
                 "slug": {
                     "type": "string"
                 },
-                "sub_genre": {
-                    "$ref": "#/definitions/schemas.SubGenreSchema"
+                "sub_section": {
+                    "$ref": "#/definitions/schemas.SubSectionSchema"
                 },
                 "tags": {
                     "type": "array",
@@ -5559,6 +5900,36 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.SectionSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.SectionsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SectionSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "schemas.SentGiftResponseSchema": {
             "type": "object",
             "properties": {
@@ -5696,7 +6067,7 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.SubGenreSchema": {
+        "schemas.SubSectionSchema": {
             "type": "object",
             "properties": {
                 "name": {
@@ -5707,13 +6078,13 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.SubGenresResponseSchema": {
+        "schemas.SubSectionsResponseSchema": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.SubGenreSchema"
+                        "$ref": "#/definitions/schemas.SubSectionSchema"
                     }
                 },
                 "message": {
