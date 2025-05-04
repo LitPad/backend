@@ -30,14 +30,27 @@ func (g GenreWithoutTagSchema) Init(genre models.Genre) GenreWithoutTagSchema {
 	return g
 }
 
-type SubGenreSchema struct {
+type SectionSchema struct {
 	Name string `json:"name"`
 	Slug string `json:"slug"`
 }
 
-func (s SubGenreSchema) Init(subGenre models.SubGenre) SubGenreSchema {
-	s.Name = subGenre.Name
-	s.Slug = subGenre.Slug
+func (s SectionSchema) Init(section models.Section) SectionSchema {
+	s.Name = section.Name
+	s.Slug = section.Slug
+	return s
+}
+
+type SubSectionSchema struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+	BooksCount int `json:"books_count"`
+}
+
+func (s SubSectionSchema) Init(subSection models.SubSection) SubSectionSchema {
+	s.Name = subSection.Name
+	s.Slug = subSection.Slug
+	s.BooksCount = len(subSection.Books)
 	return s
 }
 
@@ -97,7 +110,8 @@ type BookSchema struct {
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
-	SubGenre           SubGenreSchema        `json:"sub_genre"`
+	Section            SectionSchema         `json:"section"`
+	SubSection         SubSectionSchema      `json:"sub_section"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
@@ -128,7 +142,8 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
-	b.SubGenre = b.SubGenre.Init(book.SubGenre)
+	b.Section = b.Section.Init(book.Section)
+	b.SubSection = b.SubSection.Init(book.SubSection)
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()
 	b.Reads = book.ReadsCount()
@@ -292,12 +307,12 @@ type BookChapterCreateSchema struct {
 }
 
 type BookCreateSchema struct {
-	Title         string          `form:"title" validate:"required,max=200"`
-	Blurb         string          `form:"blurb" validate:"required,max=200"`
-	GenreSlug     string          `form:"genre_slug" validate:"required"`
-	SubGenreSlug  string          `form:"sub_genre_slug" validate:"required"`
-	TagSlugs      []string        `form:"tag_slugs" validate:"required"`
-	AgeDiscretion choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
+	Title          string          `form:"title" validate:"required,max=200"`
+	Blurb          string          `form:"blurb" validate:"required,max=200"`
+	GenreSlug      string          `form:"genre_slug" validate:"required"`
+	SubSectionSlug string          `form:"sub_section_slug" validate:"required"`
+	TagSlugs       []string        `form:"tag_slugs" validate:"required"`
+	AgeDiscretion  choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
 }
 
 type ChapterCreateSchema struct {
@@ -336,18 +351,33 @@ func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	return g
 }
 
-type SubGenresResponseSchema struct {
+type SectionsResponseSchema struct {
 	ResponseSchema
-	Data []SubGenreSchema `json:"data"`
+	Data []SectionSchema `json:"data"`
 }
 
-func (s SubGenresResponseSchema) Init(subGenres []models.SubGenre) SubGenresResponseSchema {
+func (s SectionsResponseSchema) Init(sections []models.Section) SectionsResponseSchema {
 	// Set Initial Data
-	genreItems := s.Data
-	for _, genre := range subGenres {
-		genreItems = append(genreItems, SubGenreSchema{}.Init(genre))
+	sectionItems := s.Data
+	for _, section := range sections {
+		sectionItems = append(sectionItems, SectionSchema{}.Init(section))
 	}
-	s.Data = genreItems
+	s.Data = sectionItems
+	return s
+}
+
+type SubSectionsResponseSchema struct {
+	ResponseSchema
+	Data []SubSectionSchema `json:"data"`
+}
+
+func (s SubSectionsResponseSchema) Init(subSections []models.SubSection) SubSectionsResponseSchema {
+	// Set Initial Data
+	subSectionItems := s.Data
+	for _, subSection := range subSections {
+		subSectionItems = append(subSectionItems, SubSectionSchema{}.Init(subSection))
+	}
+	s.Data = subSectionItems
 	return s
 }
 

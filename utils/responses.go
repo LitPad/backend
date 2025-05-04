@@ -69,3 +69,7 @@ func ValidationErr(field string, message string) ErrorResponse {
 	data := map[string]string{field: message}
 	return RequestErr(ERR_INVALID_ENTRY, "Invalid Entry", data)
 }
+
+func ServerErr(message string) ErrorResponse {
+	return RequestErr(ERR_SERVER_ERROR, message)
+}

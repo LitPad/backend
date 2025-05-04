@@ -96,7 +96,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	bookRouter.Get("/author/:username", endpoint.GetLatestAuthorBooks)
 	bookRouter.Get("/genres", endpoint.GetAllBookGenres)
-	bookRouter.Get("/sub-genres", endpoint.GetAllBookSubGenres)
+	bookRouter.Get("/sections", endpoint.GetAllBookSections)
+	bookRouter.Get("/sub-sections", endpoint.GetAllBookSubSections)
 	bookRouter.Get("/tags", endpoint.GetAllBookTags)
 
 	// Gifts Routes (4)
@@ -142,9 +143,20 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/books/contracts", endpoint.AdminMiddleware, endpoint.AdminGetBookContracts)
 	adminRouter.Post("/books/genres", endpoint.AdminMiddleware, endpoint.AdminAddBookGenre)
 	adminRouter.Post("/books/tags", endpoint.AdminMiddleware, endpoint.AdminAddBookTag)
+	adminRouter.Get("/books/sections", endpoint.AdminMiddleware, endpoint.AdminGetSections)
+	adminRouter.Post("/books/sections", endpoint.AdminMiddleware, endpoint.AdminAddBookSection)
+	adminRouter.Post("/books/subsections", endpoint.AdminMiddleware, endpoint.AdminAddBookSubSection)
 	adminRouter.Put("/books/genres/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookGenre)
+	adminRouter.Put("/books/sections/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookSection)
+	adminRouter.Get("/books/subsections/:slug", endpoint.AdminMiddleware, endpoint.AdminGetSubSection)
+	adminRouter.Put("/books/subsections/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookSubSection)
 	adminRouter.Put("/books/tags/:slug", endpoint.AdminMiddleware, endpoint.AdminUpdateBookTag)
 	adminRouter.Delete("/books/genres/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookGenre)
+	adminRouter.Delete("/books/sections/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookSection)
+	adminRouter.Delete("/books/subsections/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookSubSection)
+	adminRouter.Get("/books/subsections/:slug/add-book/:book_slug", endpoint.AdminMiddleware, endpoint.AddBookToSubSection)
+	adminRouter.Get("/books/subsections/:slug/remove-book/:book_slug", endpoint.AdminMiddleware, endpoint.RemoveBookFromSubSection)
+	
 	adminRouter.Delete("/books/tags/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookTag)
 
 	// Admin Waitlist (1)

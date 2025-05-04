@@ -19,7 +19,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subGenreSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -32,14 +32,14 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subGenreSlug strin
 		}
 		query = query.Where(models.Book{GenreID: genre.ID})
 	}
-	if subGenreSlug != "" {
-		subGenre := models.SubGenre{Slug: subGenreSlug}
-		db.Take(&subGenre, subGenre)
-		if subGenre.ID == uuid.Nil {
-			errData := utils.NotFoundErr("Invalid book sub genre")
+	if sectionSlug != "" {
+		section := models.Section{Slug: sectionSlug}
+		db.Take(&section, section)
+		if section.ID == uuid.Nil {
+			errData := utils.NotFoundErr("Invalid book section")
 			return books, &errData
 		}
-		query = query.Where(models.Book{SubGenreID: subGenre.ID})
+		query = query.Where(models.Book{SectionID: section.ID})
 	}
 	if tagSlug != "" {
 		tag := models.Tag{Slug: tagSlug}
@@ -196,11 +196,11 @@ func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug s
 	return &book, nil
 }
 
-func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, subGenre models.SubGenre, coverImage string, tags []models.Tag) models.Book {
+func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, subSection models.SubSection, coverImage string, tags []models.Tag) models.Book {
 	book := models.Book{
 		AuthorID: author.ID, Author: author, Title: data.Title,
 		Blurb: data.Blurb, AgeDiscretion: data.AgeDiscretion,
-		GenreID: genre.ID, SubGenreID: subGenre.ID, Genre: genre, SubGenre: subGenre,
+		GenreID: genre.ID, SubSectionID: subSection.ID, Genre: genre, SubSection: subSection,
 		Tags:       tags,
 		CoverImage: coverImage,
 	}
@@ -208,14 +208,14 @@ func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCr
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, subGenre models.SubGenre, coverImage string, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, subSection models.SubSection, coverImage string, Tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
 	book.GenreID = genre.ID
 	book.Genre = genre
-	book.SubGenreID = subGenre.ID
-	book.SubGenre = subGenre
+	book.SubSectionID = subSection.ID
+	book.SubSection = subSection
 	book.Tags = Tags
 	
 	if coverImage != "" {
@@ -431,10 +431,16 @@ func (g GenreManager) GetAll(db *gorm.DB) []models.Genre {
 	return genres
 }
 
-func (g GenreManager) GetAllSubGenres(db *gorm.DB) []models.SubGenre {
-	genres := []models.SubGenre{}
-	db.Find(&genres)
-	return genres
+func (g GenreManager) GetAllSections(db *gorm.DB) []models.Section {
+	sections := []models.Section{}
+	db.Preload("SubSections").Preload("SubSections.Books").Find(&sections)
+	return sections
+}
+
+func (g GenreManager) GetAllSubSections(db *gorm.DB) []models.SubSection {
+	subSections := []models.SubSection{}
+	db.Preload("Books").Find(&subSections)
+	return subSections
 }
 
 func (g GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
@@ -447,6 +453,30 @@ func (g GenreManager) GetBySlug(db *gorm.DB, slug string) *models.Genre {
 	}
 
 	return &genre
+}
+
+func (g GenreManager) GetSectionBySlug(db *gorm.DB, slug string) *models.Section {
+
+	section := models.Section{Slug: slug}
+	db.Take(&section, section)
+
+	if section.ID == uuid.Nil {
+		return nil
+	}
+
+	return &section
+}
+
+func (g GenreManager) GetSubSectionBySlug(db *gorm.DB, slug string) *models.SubSection {
+
+	subSection := models.SubSection{Slug: slug}
+	db.Preload("Section").Preload("Books").Preload("Books.Author").Take(&subSection, subSection)
+
+	if subSection.ID == uuid.Nil {
+		return nil
+	}
+
+	return &subSection
 }
 
 type ReviewManager struct {

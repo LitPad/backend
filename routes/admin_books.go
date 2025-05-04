@@ -7,6 +7,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // @Summary Add Genre
@@ -42,6 +43,62 @@ func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 	}
 	db.Omit("Tags.*").Create(&models.Genre{Name: name, Tags: tags})
 	return c.Status(201).JSON(ResponseMessage("Genre added successfully"))
+}
+
+// @Summary Add Section
+// @Description Add a new book section to the app.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param data body schemas.TagsAddSchema true "Section"
+// @Success 201 {object} schemas.ResponseSchema "Section Added Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections [post]
+// @Security BearerAuth
+func (ep Endpoint) AdminAddBookSection(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	name := data.Name
+	existingSection := models.Section{}
+	db.Where("LOWER(name) = LOWER(?)", name).First(&existingSection)
+	if existingSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "Section already exists"))
+	}
+	db.Create(&models.Section{Name: name})
+	return c.Status(201).JSON(ResponseMessage("Section added successfully"))
+}
+
+// @Summary Add SubSection
+// @Description Add a new book subsection to the app.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param data body schemas.TagsAddSchema true "SubSection"
+// @Success 201 {object} schemas.ResponseSchema "Sub Section Added Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections [post]
+// @Security BearerAuth
+func (ep Endpoint) AdminAddBookSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+	name := data.Name
+	existingSubSection := models.SubSection{}
+	db.Where("LOWER(name) = LOWER(?)", name).First(&existingSubSection)
+	if existingSubSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "Sub Section already exists"))
+	}
+	db.Create(&models.SubSection{Name: name})
+	return c.Status(201).JSON(ResponseMessage("Sub Section added successfully"))
 }
 
 // @Summary Add Tag
@@ -116,6 +173,78 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Genre updated successfully"))
 }
 
+// @Summary Update Section
+// @Description Update a section.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Section slug"
+// @Param data body schemas.TagsAddSchema true "Section"
+// @Success 200 {object} schemas.ResponseSchema "Section Updated Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections/{slug} [put]
+// @Security BearerAuth
+func (ep Endpoint) AdminUpdateBookSection(c *fiber.Ctx) error {
+	db := ep.DB
+	section := genreManager.GetSectionBySlug(db, c.Params("slug"))
+	if section == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Section does not exist"))
+	}
+
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	name := data.Name
+	existingSection := models.Section{}
+	db.Where("LOWER(name) = LOWER(?)", name).Not("id = ?", section.ID).First(&existingSection)
+	if existingSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "Section already exists with that name"))
+	}
+	section.Name = name
+	db.Save(&section)
+	return c.Status(200).JSON(ResponseMessage("Section updated successfully"))
+}
+
+// @Summary Update SubSection
+// @Description Update a subsection.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Param data body schemas.TagsAddSchema true "SubSection"
+// @Success 200 {object} schemas.ResponseSchema "SubSection Updated Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug} [put]
+// @Security BearerAuth
+func (ep Endpoint) AdminUpdateBookSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+
+	data := schemas.TagsAddSchema{}
+	errCode, errData := ValidateRequest(c, &data)
+	if errData != nil {
+		return c.Status(*errCode).JSON(errData)
+	}
+
+	name := data.Name
+	existingSubSection := models.SubSection{}
+	db.Where("LOWER(name) = LOWER(?)", name).Not("id = ?", subsection.ID).First(&existingSubSection)
+	if existingSubSection.ID != uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("name", "SubSection already exists with that name"))
+	}
+	subsection.Name = name
+	db.Save(&subsection)
+	return c.Status(200).JSON(ResponseMessage("SubSection updated successfully"))
+}
+
 // @Summary Update Tag
 // @Description Update a tag to the app.
 // @Tags Admin | Books
@@ -174,6 +303,130 @@ func (ep Endpoint) AdminDeleteBookGenre(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Genre deleted successfully"))
 }
 
+// @Summary Delete Section
+// @Description Delete a book section.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Section slug"
+// @Success 200 {object} schemas.ResponseSchema "Section Deleted Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) AdminDeleteBookSection(c *fiber.Ctx) error {
+	db := ep.DB
+	section := genreManager.GetSectionBySlug(db, c.Params("slug"))
+	if section == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Section does not exist"))
+	}
+	db.Delete(&section)
+	return c.Status(200).JSON(ResponseMessage("Section deleted successfully"))
+}
+
+// @Summary Delete SubSection
+// @Description Delete a book subsection.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Success 200 {object} schemas.ResponseSchema "SubSection Deleted Successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug} [delete]
+// @Security BearerAuth
+func (ep Endpoint) AdminDeleteBookSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+	db.Delete(&subsection)
+	return c.Status(200).JSON(ResponseMessage("SubSection deleted successfully"))
+}
+
+// @Summary Add Book To A SubSection
+// @Description Add a book to a subsection.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Param book_slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema "Book added to subsection successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug}/add-book/{book_slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) AddBookToSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+	book, err := bookManager.GetBySlug(db, c.Params("book_slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	if book.SubSectionID != subsection.ID {
+		book.SubSectionID = subsection.ID
+		book.OrderInSection = uint(len(subsection.Books) + 1)
+		db.Save(&book)
+	}
+	return c.Status(200).JSON(ResponseMessage("Book added to subsection successfully"))
+}
+
+// @Summary Remove Book From SubSection
+// @Description Remove a book from a subsection and adjust order of remaining books.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Param book_slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema "Book removed from subsection successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug}/remove-book/{book_slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) RemoveBookFromSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+
+	// Get the book by its slug
+	book, err := bookManager.GetBySlug(db, c.Params("book_slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	// Get the current order of the book
+	currentOrder := book.OrderInSection
+
+	// Start a transaction to handle the operations atomically
+	tx := db.Begin()
+
+	// 1. Set the SubSectionID of the book to nil
+	if err := tx.Model(&book).Update("SubSectionID", nil).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(utils.ServerErr("Failed to remove book from subsection"))
+	}
+
+	// 2. Rearrange the OrderInSection for books after the removed book
+	if err := tx.Model(&models.Book{}).
+		Where("sub_section_id = ? AND order_in_section > ?", subsection.ID, currentOrder).
+		Update("order_in_section", gorm.Expr("order_in_section - 1")).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(utils.ServerErr("Failed to update book order"))
+	}
+
+	// Commit the transaction
+	tx.Commit()
+
+	// Return a success message
+	return c.Status(200).JSON(ResponseMessage("Book removed from subsection"))
+}
+
 // @Summary Delete Tag
 // @Description Delete a tag from the app.
 // @Tags Admin | Books
@@ -197,6 +450,54 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("Tag deleted successfully"))
 }
 
+// @Summary Get Sections
+// @Description Retrieve sections with sub sections.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Success 200 {object} schemas.SectionsWithSubSectionsSchema "Sections Retrieved Successfully"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetSections(c *fiber.Ctx) error {
+	db := ep.DB
+	sections := genreManager.GetAllSections(db)
+	response := schemas.SectionsWithSubSectionsSchema{
+		ResponseSchema: ResponseMessage("Sections retrieved successfully"),
+	}.Init(sections)
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Get A Sub Section
+// @Description Retrieve a single sub section.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Sub Section slug"
+// @Success 200 {object} schemas.SubSectionWithBooksResponseSchema "Sub section Retrieved Successfully"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subSection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subSection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Sub section does not exist"))
+	}
+	// Paginate books
+	paginatedData, paginatedBooks, err := PaginateQueryset(subSection.Books, c, 200)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	books := paginatedBooks.([]models.Book)
+
+	response := schemas.SubSectionWithBooksResponseSchema{
+		ResponseSchema: ResponseMessage("Sub section retrieved successfully"),
+		Data: schemas.SubSectionWithBooksSchema{}.Init(*subSection, books, *paginatedData),
+	}
+	return c.Status(200).JSON(response)
+}
+
 // @Summary List Books with Pagination
 // @Description Retrieves a list of books with support for pagination and optional filtering based on book title.
 // @Tags Admin | Books
@@ -207,7 +508,7 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 // @Param name query string false "name or username of the book author to filter by"
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
-// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -222,13 +523,13 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 	ratingQuery := c.QueryBool("rating", false)
 	nameQuery := c.Query("name", "")
 	genreSlug := c.Query("genre_slug", "")
-	subGenreSlug := c.Query("sub_genre_slug", "")
+	sectionSlug := c.Query("section_slug", "")
 	tagSlug := c.Query("tag_slug", "")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
 
-	books, _ := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery, featured, weeklyFeatured, trending)
+	books, _ := bookManager.GetLatest(db, genreSlug, sectionSlug, tagSlug, titleQuery, ratingQuery, "", nameQuery, featured, weeklyFeatured, trending)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
@@ -255,7 +556,7 @@ func (ep Endpoint) AdminGetBooks(c *fiber.Ctx) error {
 // @Param title query string false "Title of the book to filter by"
 // @Param rating query bool false "Filter by highest ratings"
 // @Param genre_slug query string false "Filter by Genre slug"
-// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -270,7 +571,7 @@ func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
 	ratingQuery := c.QueryBool("rating", false)
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug", "")
-	subGenreSlug := c.Query("sub_genre_slug", "")
+	sectionSlug := c.Query("section_slug", "")
 	tagSlug := c.Query("tag_slug", "")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
@@ -283,7 +584,7 @@ func (ep Endpoint) AdminGetAuthorBooks(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.NotFoundErr("Author does not exist!"))
 	}
 
-	books, _ := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, titleQuery, ratingQuery, username, "", featured, weeklyFeatured, trending)
+	books, _ := bookManager.GetLatest(db, genreSlug, sectionSlug, tagSlug, titleQuery, ratingQuery, username, "", featured, weeklyFeatured, trending)
 
 	// Paginate and return books
 	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)

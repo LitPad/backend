@@ -43,19 +43,35 @@ func (ep Endpoint) GetAllBookGenres(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
-// @Summary View Available Book Sub Genres
-// @Description This endpoint views available book sub genres
+// @Summary View Available Book Sections
+// @Description This endpoint views available book sections
 // @Tags Books
-// @Success 200 {object} schemas.SubGenresResponseSchema
+// @Success 200 {object} schemas.SectionsResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /books/sub-genres [get]
-func (ep Endpoint) GetAllBookSubGenres(c *fiber.Ctx) error {
+// @Router /books/sections [get]
+func (ep Endpoint) GetAllBookSections(c *fiber.Ctx) error {
 	db := ep.DB
-	genres := genreManager.GetAllSubGenres(db)
+	sections := genreManager.GetAllSections(db)
 
-	response := schemas.SubGenresResponseSchema{
-		ResponseSchema: ResponseMessage("Sub Genres fetched successfully"),
-	}.Init(genres)
+	response := schemas.SectionsResponseSchema{
+		ResponseSchema: ResponseMessage("Sections fetched successfully"),
+	}.Init(sections)
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Available Book Sub Sections
+// @Description This endpoint views available book sub sections
+// @Tags Books
+// @Success 200 {object} schemas.SubSectionsResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /books/sub-sections [get]
+func (ep Endpoint) GetAllBookSubSections(c *fiber.Ctx) error {
+	db := ep.DB
+	subSections := genreManager.GetAllSubSections(db)
+
+	response := schemas.SubSectionsResponseSchema{
+		ResponseSchema: ResponseMessage("Sub Sections fetched successfully"),
+	}.Init(subSections)
 	return c.Status(200).JSON(response)
 }
 
@@ -64,7 +80,7 @@ func (ep Endpoint) GetAllBookSubGenres(c *fiber.Ctx) error {
 // @Tags Books
 // @Param page query int false "Current Page" default(1)
 // @Param genre_slug query string false "Filter by Genre slug"
-// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -75,12 +91,12 @@ func (ep Endpoint) GetAllBookSubGenres(c *fiber.Ctx) error {
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	genreSlug := c.Query("genre_slug")
-	subGenreSlug := c.Query("sub_genre_slug")
+	sectionSlug := c.Query("section_slug")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
-	books, err := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending)
+	books, err := bookManager.GetLatest(db, genreSlug, sectionSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -106,7 +122,7 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 // @Param page query int false "Current Page" default(1)
 // @Param username path string true "Filter by Author Username"
 // @Param genre_slug query string false "Filter by Genre slug"
-// @Param sub_genre_slug query string false "Filter by Sub Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
 // @Param weeklyFeatured query bool false "Filter by Weekly Featured"
@@ -118,12 +134,12 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug")
-	subGenreSlug := c.Query("sub_genre_slug")
+	sectionSlug := c.Query("section_slug")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
-	books, err := bookManager.GetLatest(db, genreSlug, subGenreSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending)
+	books, err := bookManager.GetLatest(db, genreSlug, sectionSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -301,12 +317,12 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
 	
-	// Validate Sub Genre
-	subGenreSlug := data.SubGenreSlug
-	subGenre := models.SubGenre{Slug: subGenreSlug}
-	db.Take(&subGenre, subGenre)
-	if subGenre.ID == uuid.Nil {
-		return c.Status(422).JSON(utils.ValidationErr("sub_genre_slug", "Invalid sub genre slug!"))
+	// Validate Sub Section
+	subSectionSlug := data.SubSectionSlug
+	subSection := models.SubSection{Slug: subSectionSlug}
+	db.Take(&subSection, subSection)
+	if subSection.ID == uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("sub_section_slug", "Invalid sub section slug!"))
 	}
 
 	// Validate Tags
@@ -324,7 +340,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 
 	// Upload File
 	coverImage := UploadFile(file, string(choices.IF_BOOKS))
-	book := bookManager.Create(db, *author, data, genre, subGenre, coverImage, tags)
+	book := bookManager.Create(db, *author, data, genre, subSection, coverImage, tags)
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book created successfully"),
 		Data:           schemas.BookSchema{}.Init(book),
@@ -363,12 +379,12 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
 
-	// Validate Sub Genre
-	subGenreSlug := data.SubGenreSlug
-	subGenre := models.SubGenre{Slug: subGenreSlug}
-	db.Take(&subGenre, subGenre)
-	if subGenre.ID == uuid.Nil {
-		return c.Status(422).JSON(utils.ValidationErr("sub_genre_slug", "Invalid sub genre slug!"))
+	// Validate Sub Section
+	subSectionSlug := data.SubSectionSlug
+	subSection := models.SubSection{Slug: subSectionSlug}
+	db.Take(&subSection, subSection)
+	if subSection.ID == uuid.Nil {
+		return c.Status(422).JSON(utils.ValidationErr("sub_section_slug", "Invalid sub section slug!"))
 	}
 
 	// Validate Tags
@@ -390,7 +406,7 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 		coverImage = UploadFile(file, string(choices.IF_BOOKS))
 	}
 
-	updatedBook := bookManager.Update(db, *book, data, genre, subGenre, coverImage, tags)
+	updatedBook := bookManager.Update(db, *book, data, genre, subSection, coverImage, tags)
 
 	response := schemas.BookResponseSchema{
 		ResponseSchema: ResponseMessage("Book updated successfully"),
