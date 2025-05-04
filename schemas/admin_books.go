@@ -1,6 +1,8 @@
 package schemas
 
 import (
+	"time"
+
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
 )
@@ -69,4 +71,81 @@ type BookWithStats struct {
 	ReadsCount int     `json:"reads_count"`
 	GenreName  string  `json:"genre_name"`
 	GenreSlug  string  `json:"genre_slug"`
+}
+
+type SectionWithSubsectionsSchema struct {
+	Name             string             `json:"name"`
+	Slug             string             `json:"slug"`
+	SubSections      []SubSectionSchema `json:"sub_sections"`
+	SubSectionsCount int                `json:"sub_sections_count"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+}
+
+func (s SectionWithSubsectionsSchema) Init(section models.Section) SectionWithSubsectionsSchema {
+	s.Name = section.Name
+	s.Slug = section.Slug
+	s.CreatedAt = section.CreatedAt
+	s.UpdatedAt = section.UpdatedAt
+	subsections := []SubSectionSchema{}
+	for _, item := range section.SubSections {
+		subsections = append(subsections, SubSectionSchema{}.Init(item))
+	}
+	s.SubSections = subsections
+	s.SubSectionsCount = len(section.SubSections)
+	return s
+}
+
+type SectionsWithSubSectionsSchema struct {
+	ResponseSchema
+	Data []SectionWithSubsectionsSchema `json:"data"`
+}
+
+func (s SectionsWithSubSectionsSchema) Init(sections []models.Section) SectionsWithSubSectionsSchema {
+	sectionsData := []SectionWithSubsectionsSchema{}
+	for _, item := range sections {
+		sectionsData = append(sectionsData, SectionWithSubsectionsSchema{}.Init(item))
+	}
+	s.Data = sectionsData
+	return s
+}
+
+type SubSectionBookSchema struct {
+	OrderInSection uint            `json:"order_in_section"`
+	Title          string         `json:"title"`
+	Author         UserDataSchema `json:"author"`
+}
+
+type SubSectionBookResponseSchema struct {
+	PaginatedResponseDataSchema
+	Items []SubSectionBookSchema `json:"items"`
+}
+
+type SubSectionWithBooksSchema struct {
+	SubSectionSchema
+	Section string                       `json:"section"`
+	Books   SubSectionBookResponseSchema `json:"books"`
+}
+
+func (s SubSectionWithBooksSchema) Init(subSection models.SubSection, books []models.Book, paginatedData PaginatedResponseDataSchema) SubSectionWithBooksSchema {
+	s.SubSectionSchema = s.SubSectionSchema.Init(subSection)
+	s.Section = subSection.Section.Name
+	bookItems := []SubSectionBookSchema{}
+	for _, item := range books {
+		bookItems = append(bookItems, SubSectionBookSchema{
+			OrderInSection: item.OrderInSection,
+			Title: item.Title,
+			Author: UserDataSchema{}.Init(item.Author),
+		})
+	}
+	s.Books = SubSectionBookResponseSchema{
+		PaginatedResponseDataSchema: paginatedData,
+		Items: bookItems,
+	}
+	return s
+}
+
+type SubSectionWithBooksResponseSchema struct {
+	ResponseSchema
+	Data SubSectionWithBooksSchema `json:"data"`
 }

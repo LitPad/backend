@@ -8,6 +8,7 @@ import (
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
@@ -113,21 +114,29 @@ func createSections(db *gorm.DB) []models.Section {
 			section := models.Section{Name: item}
 			sections = append(sections, section)
 		}
-		db.Create(&sections)
+		db.Omit("SubSections.*").Create(&sections)
 	}
 	return sections
 }
 
-func createSubSections(db *gorm.DB) []models.SubSection {
+func createSubSections(db *gorm.DB, sections []models.Section) []models.SubSection {
 	subSections := []models.SubSection{}
 	db.Find(&subSections)
 
 	if len(subSections) < 1 {
 		for _, item := range SUBSECTIONS {
-			subSection := models.SubSection{Name: item}
+			section := sections[rand.Intn(len(sections))]
+			subSection := models.SubSection{Name: item, SectionID: section.ID}
 			subSections = append(subSections, subSection)
 		}
 		db.Create(&subSections)
+	} else {
+		for _, item := range subSections {
+			if item.SectionID == uuid.Nil  {
+				item.SectionID = sections[rand.Intn(len(sections))].ID
+				db.Save(&item)
+			}
+		}
 	}
 	return subSections
 }
@@ -237,7 +246,7 @@ func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	tags := createTags(db)
 	genres := createGenres(db, tags)
 	sections := createSections(db)
-	subSections := createSubSections(db)
+	subSections := createSubSections(db, sections)
 	createGifts(db)
 	createSubscriptionPlans(db)
 	book := createBook(db, author, genres[0], tags[0], sections, subSections)

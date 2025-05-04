@@ -44,11 +44,13 @@ func (s SectionSchema) Init(section models.Section) SectionSchema {
 type SubSectionSchema struct {
 	Name string `json:"name"`
 	Slug string `json:"slug"`
+	BooksCount int `json:"books_count"`
 }
 
 func (s SubSectionSchema) Init(subSection models.SubSection) SubSectionSchema {
 	s.Name = subSection.Name
 	s.Slug = subSection.Slug
+	s.BooksCount = len(subSection.Books)
 	return s
 }
 

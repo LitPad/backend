@@ -7,6 +7,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // @Summary Add Genre
@@ -344,6 +345,87 @@ func (ep Endpoint) AdminDeleteBookSubSection(c *fiber.Ctx) error {
 	return c.Status(200).JSON(ResponseMessage("SubSection deleted successfully"))
 }
 
+// @Summary Add Book To A SubSection
+// @Description Add a book to a subsection.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Param book_slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema "Book added to subsection successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug}/add-book/{book_slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) AddBookToSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+	book, err := bookManager.GetBySlug(db, c.Params("book_slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	if book.SubSectionID != subsection.ID {
+		book.SubSectionID = subsection.ID
+		book.OrderInSection = uint(len(subsection.Books) + 1)
+		db.Save(&book)
+	}
+	return c.Status(200).JSON(ResponseMessage("Book added to subsection successfully"))
+}
+
+// @Summary Remove Book From SubSection
+// @Description Remove a book from a subsection and adjust order of remaining books.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "SubSection slug"
+// @Param book_slug path string true "Book slug"
+// @Success 200 {object} schemas.ResponseSchema "Book removed from subsection successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug}/remove-book/{book_slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) RemoveBookFromSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subsection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
+	}
+
+	// Get the book by its slug
+	book, err := bookManager.GetBySlug(db, c.Params("book_slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+
+	// Get the current order of the book
+	currentOrder := book.OrderInSection
+
+	// Start a transaction to handle the operations atomically
+	tx := db.Begin()
+
+	// 1. Set the SubSectionID of the book to nil
+	if err := tx.Model(&book).Update("SubSectionID", nil).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(utils.ServerErr("Failed to remove book from subsection"))
+	}
+
+	// 2. Rearrange the OrderInSection for books after the removed book
+	if err := tx.Model(&models.Book{}).
+		Where("sub_section_id = ? AND order_in_section > ?", subsection.ID, currentOrder).
+		Update("order_in_section", gorm.Expr("order_in_section - 1")).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(utils.ServerErr("Failed to update book order"))
+	}
+
+	// Commit the transaction
+	tx.Commit()
+
+	// Return a success message
+	return c.Status(200).JSON(ResponseMessage("Book removed from subsection"))
+}
 
 // @Summary Delete Tag
 // @Description Delete a tag from the app.
@@ -366,6 +448,54 @@ func (ep Endpoint) AdminDeleteBookTag(c *fiber.Ctx) error {
 	db.Model(&tag).Association("Genres").Clear()
 	db.Delete(&tag)
 	return c.Status(200).JSON(ResponseMessage("Tag deleted successfully"))
+}
+
+// @Summary Get Sections
+// @Description Retrieve sections with sub sections.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Success 200 {object} schemas.SectionsWithSubSectionsSchema "Sections Retrieved Successfully"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/sections [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetSections(c *fiber.Ctx) error {
+	db := ep.DB
+	sections := genreManager.GetAllSections(db)
+	response := schemas.SectionsWithSubSectionsSchema{
+		ResponseSchema: ResponseMessage("Sections retrieved successfully"),
+	}.Init(sections)
+	return c.Status(200).JSON(response)
+}
+
+// @Summary Get A Sub Section
+// @Description Retrieve a single sub section.
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Sub Section slug"
+// @Success 200 {object} schemas.SubSectionWithBooksResponseSchema "Sub section Retrieved Successfully"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/subsections/{slug} [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetSubSection(c *fiber.Ctx) error {
+	db := ep.DB
+	subSection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	if subSection == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Sub section does not exist"))
+	}
+	// Paginate books
+	paginatedData, paginatedBooks, err := PaginateQueryset(subSection.Books, c, 200)
+	if err != nil {
+		return c.Status(400).JSON(err)
+	}
+	books := paginatedBooks.([]models.Book)
+
+	response := schemas.SubSectionWithBooksResponseSchema{
+		ResponseSchema: ResponseMessage("Sub section retrieved successfully"),
+		Data: schemas.SubSectionWithBooksSchema{}.Init(*subSection, books, *paginatedData),
+	}
+	return c.Status(200).JSON(response)
 }
 
 // @Summary List Books with Pagination

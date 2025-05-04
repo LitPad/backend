@@ -433,13 +433,13 @@ func (g GenreManager) GetAll(db *gorm.DB) []models.Genre {
 
 func (g GenreManager) GetAllSections(db *gorm.DB) []models.Section {
 	sections := []models.Section{}
-	db.Find(&sections)
+	db.Preload("SubSections").Preload("SubSections.Books").Find(&sections)
 	return sections
 }
 
 func (g GenreManager) GetAllSubSections(db *gorm.DB) []models.SubSection {
 	subSections := []models.SubSection{}
-	db.Find(&subSections)
+	db.Preload("Books").Find(&subSections)
 	return subSections
 }
 
@@ -470,7 +470,7 @@ func (g GenreManager) GetSectionBySlug(db *gorm.DB, slug string) *models.Section
 func (g GenreManager) GetSubSectionBySlug(db *gorm.DB, slug string) *models.SubSection {
 
 	subSection := models.SubSection{Slug: slug}
-	db.Take(&subSection, subSection)
+	db.Preload("Section").Preload("Books").Preload("Books.Author").Take(&subSection, subSection)
 
 	if subSection.ID == uuid.Nil {
 		return nil

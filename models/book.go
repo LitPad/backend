@@ -34,24 +34,29 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 	return
 }
 
+type Section struct {
+	BaseModel
+	Name        string `gorm:"unique"`
+	Slug        string `gorm:"unique"`
+	SubSections []SubSection
+}
+
+func (section *Section) BeforeSave(tx *gorm.DB) (err error) {
+	section.Slug = slug.Make(section.Name)
+	return
+}
+
 type SubSection struct {
 	BaseModel
-	Name string `gorm:"unique"`
-	Slug string `gorm:"unique"`
+	Name      string `gorm:"unique"`
+	Slug      string `gorm:"unique"`
+	Books     []Book
+	SectionID uuid.UUID
+	Section   Section `gorm:"foreignKey:SectionID;constraint:OnDelete:SET NULL;<-:false"`
 }
 
 func (subSection *SubSection) BeforeSave(tx *gorm.DB) (err error) {
 	subSection.Slug = slug.Make(subSection.Name)
-	return
-}
-
-type Section struct {
-	BaseModel
-	Name string `gorm:"unique"`
-	Slug string `gorm:"unique"`
-}
-func (section *Section) BeforeSave(tx *gorm.DB) (err error) {
-	section.Slug = slug.Make(section.Name)
 	return
 }
 
@@ -67,13 +72,13 @@ type Book struct {
 	GenreID uuid.UUID
 	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	SubSectionID uuid.UUID
-	SubSection   SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
+	SubSectionID   uuid.UUID
+	SubSection     SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
+	OrderInSection uint
 
 	SectionID uuid.UUID
 	Section   Section `gorm:"foreignKey:SectionID;constraint:OnDelete:SET NULL;<-:false"`
 
-	OrderInSection uint
 	Tags       []Tag     `gorm:"many2many:book_tags"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`
@@ -166,7 +171,7 @@ type BookReport struct {
 	BookID                uuid.UUID `json:"book_id"`
 	Book                  Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Reason                string    `gorm:"type: varchar(1000)"`
-	AdditionalExplanation *string    `gorm:"type: varchar(1000)"`
+	AdditionalExplanation *string   `gorm:"type: varchar(1000)"`
 }
 
 type Chapter struct {

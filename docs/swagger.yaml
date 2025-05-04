@@ -1108,11 +1108,41 @@ definitions:
       slug:
         type: string
     type: object
+  schemas.SectionWithSubsectionsSchema:
+    properties:
+      created_at:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      sub_sections:
+        items:
+          $ref: '#/definitions/schemas.SubSectionSchema'
+        type: array
+      sub_sections_count:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   schemas.SectionsResponseSchema:
     properties:
       data:
         items:
           $ref: '#/definitions/schemas.SectionSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SectionsWithSubSectionsSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.SectionWithSubsectionsSchema'
         type: array
       message:
         example: Data fetched/created/updated/deleted
@@ -1217,9 +1247,60 @@ definitions:
     required:
     - token
     type: object
+  schemas.SubSectionBookResponseSchema:
+    properties:
+      current_page:
+        example: 1
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/schemas.SubSectionBookSchema'
+        type: array
+      last_page:
+        example: 100
+        type: integer
+      per_page:
+        example: 100
+        type: integer
+    type: object
+  schemas.SubSectionBookSchema:
+    properties:
+      author:
+        $ref: '#/definitions/schemas.UserDataSchema'
+      order_in_section:
+        type: integer
+      title:
+        type: string
+    type: object
   schemas.SubSectionSchema:
     properties:
+      books_count:
+        type: integer
       name:
+        type: string
+      slug:
+        type: string
+    type: object
+  schemas.SubSectionWithBooksResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.SubSectionWithBooksSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.SubSectionWithBooksSchema:
+    properties:
+      books:
+        $ref: '#/definitions/schemas.SubSectionBookResponseSchema'
+      books_count:
+        type: integer
+      name:
+        type: string
+      section:
         type: string
       slug:
         type: string
@@ -1915,6 +1996,26 @@ paths:
       tags:
       - Admin | Books
   /admin/books/sections:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve sections with sub sections.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sections Retrieved Successfully
+          schema:
+            $ref: '#/definitions/schemas.SectionsWithSubSectionsSchema'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Sections
+      tags:
+      - Admin | Books
     post:
       consumes:
       - application/json
@@ -2076,6 +2177,32 @@ paths:
       summary: Delete SubSection
       tags:
       - Admin | Books
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single sub section.
+      parameters:
+      - description: Sub Section slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sub section Retrieved Successfully
+          schema:
+            $ref: '#/definitions/schemas.SubSectionWithBooksResponseSchema'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get A Sub Section
+      tags:
+      - Admin | Books
     put:
       consumes:
       - application/json
@@ -2110,6 +2237,78 @@ paths:
       security:
       - BearerAuth: []
       summary: Update SubSection
+      tags:
+      - Admin | Books
+  /admin/books/subsections/{slug}/add-book/{book_slug}:
+    get:
+      consumes:
+      - application/json
+      description: Add a book to a subsection.
+      parameters:
+      - description: SubSection slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Book slug
+        in: path
+        name: book_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Book added to subsection successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Book To A SubSection
+      tags:
+      - Admin | Books
+  /admin/books/subsections/{slug}/remove-book/{book_slug}:
+    get:
+      consumes:
+      - application/json
+      description: Remove a book from a subsection and adjust order of remaining books.
+      parameters:
+      - description: SubSection slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Book slug
+        in: path
+        name: book_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Book removed from subsection successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove Book From SubSection
       tags:
       - Admin | Books
   /admin/books/tags:
