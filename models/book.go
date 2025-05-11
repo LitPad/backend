@@ -76,9 +76,6 @@ type Book struct {
 	SubSection     SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
 	OrderInSection uint
 
-	SectionID uuid.UUID
-	Section   Section `gorm:"foreignKey:SectionID;constraint:OnDelete:SET NULL;<-:false"`
-
 	Tags       []Tag     `gorm:"many2many:book_tags"`
 	Chapters   []Chapter `gorm:"<-:false"`
 	CoverImage string    `gorm:"type:varchar(10000)"`

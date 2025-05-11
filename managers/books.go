@@ -19,7 +19,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subSectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -32,14 +32,14 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 		}
 		query = query.Where(models.Book{GenreID: genre.ID})
 	}
-	if sectionSlug != "" {
-		section := models.Section{Slug: sectionSlug}
-		db.Take(&section, section)
-		if section.ID == uuid.Nil {
-			errData := utils.NotFoundErr("Invalid book section")
+	if subSectionSlug != "" {
+		subSection := models.SubSection{Slug: subSectionSlug}
+		db.Take(&subSection, subSection)
+		if subSection.ID == uuid.Nil {
+			errData := utils.NotFoundErr("Invalid book subsection")
 			return books, &errData
 		}
-		query = query.Where(models.Book{SectionID: section.ID})
+		query = query.Where(models.Book{SubSectionID: subSection.ID})
 	}
 	if tagSlug != "" {
 		tag := models.Tag{Slug: tagSlug}

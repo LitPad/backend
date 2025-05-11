@@ -142,7 +142,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
-	b.Section = b.Section.Init(book.Section)
+	b.Section = b.Section.Init(book.SubSection.Section)
 	b.SubSection = b.SubSection.Init(book.SubSection)
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()

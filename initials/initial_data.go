@@ -179,10 +179,7 @@ func createBook(db *gorm.DB, author models.User, genre models.Genre, tag models.
 	books := []models.Book{}
 	db.Find(&books)
 	for _, book := range books {
-		// attach random sections and subsections
-		section := sections[rand.Intn(len(sections))]
 		subSection := subSections[rand.Intn(len(subSections))]
-		book.SectionID = section.ID
 		book.SubSectionID = subSection.ID
 		db.Save(&book)
 	}
