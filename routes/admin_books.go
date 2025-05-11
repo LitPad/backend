@@ -78,14 +78,19 @@ func (ep Endpoint) AdminAddBookSection(c *fiber.Ctx) error {
 // @Tags Admin | Books
 // @Accept json
 // @Produce json
+// @Param slug path string true "Section slug"
 // @Param data body schemas.TagsAddSchema true "SubSection"
 // @Success 201 {object} schemas.ResponseSchema "Sub Section Added Successfully"
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /admin/books/subsections [post]
+// @Router /admin/books/sections/{slug}/subsections [post]
 // @Security BearerAuth
 func (ep Endpoint) AdminAddBookSubSection(c *fiber.Ctx) error {
 	db := ep.DB
+	section := genreManager.GetSectionBySlug(db, c.Params("slug"))
+	if section == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("No section with that id"))
+	}
 	data := schemas.TagsAddSchema{}
 	errCode, errData := ValidateRequest(c, &data)
 	if errData != nil {
@@ -97,7 +102,7 @@ func (ep Endpoint) AdminAddBookSubSection(c *fiber.Ctx) error {
 	if existingSubSection.ID != uuid.Nil {
 		return c.Status(422).JSON(utils.ValidationErr("name", "Sub Section already exists"))
 	}
-	db.Create(&models.SubSection{Name: name})
+	db.Create(&models.SubSection{Name: name, SectionID: section.ID})
 	return c.Status(201).JSON(ResponseMessage("Sub Section added successfully"))
 }
 

@@ -718,7 +718,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/books/subsections": {
+        "/admin/books/sections/{slug}/subsections": {
             "post": {
                 "security": [
                     {
@@ -737,6 +737,13 @@ const docTemplate = `{
                 ],
                 "summary": "Add SubSection",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Section slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "SubSection",
                         "name": "data",

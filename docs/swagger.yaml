@@ -2114,12 +2114,17 @@ paths:
       summary: Update Section
       tags:
       - Admin | Books
-  /admin/books/subsections:
+  /admin/books/sections/{slug}/subsections:
     post:
       consumes:
       - application/json
       description: Add a new book subsection to the app.
       parameters:
+      - description: Section slug
+        in: path
+        name: slug
+        required: true
+        type: string
       - description: SubSection
         in: body
         name: data
