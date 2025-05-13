@@ -1190,6 +1190,197 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/featured-contents": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of a featured content and optional filtering based on location.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Featured"
+                ],
+                "summary": "List Featured Content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Location",
+                        "name": "location",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of books",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.FeaturedContentsResponseSchema"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a featured content.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Featured"
+                ],
+                "summary": "Add Featured Content",
+                "parameters": [
+                    {
+                        "description": "content",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.FeaturedContentEntrySchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Featured content added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.FeaturedContentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/featured-contents/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a featured content.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Featured"
+                ],
+                "summary": "Update Featured Content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Featured Content ID (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "content",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/schemas.FeaturedContentEntrySchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Featured content updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.FeaturedContentResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a featured content.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Featured"
+                ],
+                "summary": "Delete Featured Content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Featured Content ID (uuid)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Featured content deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.ResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/payments/plans": {
             "put": {
                 "security": [
@@ -4590,6 +4781,19 @@ const docTemplate = `{
                 "DT_IOS"
             ]
         },
+        "choices.FeaturedContentLocationChoice": {
+            "type": "string",
+            "enum": [
+                "home",
+                "library",
+                "inbox"
+            ],
+            "x-enum-varnames": [
+                "FCL_HOME",
+                "FCL_LIBRARY",
+                "FCL_INBOX"
+            ]
+        },
         "choices.NotificationTypeChoice": {
             "type": "string",
             "enum": [
@@ -5435,6 +5639,92 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 5,
                     "example": "johndoe@email.com"
+                }
+            }
+        },
+        "schemas.FeaturedContentBookSchema": {
+            "type": "object",
+            "properties": {
+                "blurb": {
+                    "type": "string"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "schemas.FeaturedContentEntrySchema": {
+            "type": "object",
+            "properties": {
+                "book_slug": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/choices.FeaturedContentLocationChoice"
+                }
+            }
+        },
+        "schemas.FeaturedContentResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.FeaturedContentSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.FeaturedContentSchema": {
+            "type": "object",
+            "properties": {
+                "book": {
+                    "$ref": "#/definitions/schemas.FeaturedContentBookSchema"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "location": {
+                    "$ref": "#/definitions/choices.FeaturedContentLocationChoice"
+                }
+            }
+        },
+        "schemas.FeaturedContentsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FeaturedContentSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 }
             }
         },

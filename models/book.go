@@ -270,3 +270,13 @@ type Bookmark struct {
 	BookID uuid.UUID
 	Book   Book `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 }
+
+type FeaturedContent struct {
+	BaseModel
+	Location choices.FeaturedContentLocationChoice
+	Desc     string
+	BookID   uuid.UUID
+	Book     Book    `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
+	SeenBy   []*User `gorm:"many2many:featured_content_seen_by;"`
+	IsActive bool	`gorm:"default:true;"`
+}

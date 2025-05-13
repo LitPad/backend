@@ -37,6 +37,7 @@ func Models() []interface{} {
 		&models.Comment{},
 		&models.Like{},
 		&models.Vote{},
+		&models.FeaturedContent{},
 
 		// wallet
 		&models.Coin{},

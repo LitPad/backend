@@ -269,3 +269,19 @@ func (s DeviceType) IsValid() bool {
 	}
 	return false
 }
+
+type FeaturedContentLocationChoice string
+
+const (
+	FCL_HOME FeaturedContentLocationChoice = "home"
+	FCL_LIBRARY   FeaturedContentLocationChoice = "library"
+	FCL_INBOX   FeaturedContentLocationChoice = "inbox"
+)
+
+func (s FeaturedContentLocationChoice) IsValid() bool {
+	switch s {
+	case FCL_HOME, FCL_LIBRARY, FCL_INBOX:
+		return true
+	}
+	return false
+}

@@ -671,3 +671,46 @@ func (l LikeManager) AddOrDelete (db *gorm.DB, user models.User, comment models.
 	db.Delete(&like)
 	return "Unliked"
 }
+
+type FeaturedContentManager struct {
+	Model     models.FeaturedContent
+	ModelList []models.FeaturedContent
+}
+
+func (f FeaturedContentManager) GetAll (db *gorm.DB, location *choices.FeaturedContentLocationChoice, isActive *bool) []models.FeaturedContent {
+	contents := f.ModelList
+	query := db.Joins("Book")
+	if location != nil {
+		query = query.Where("location = ?", location)
+	}
+	if isActive != nil {
+		query = query.Where("is_active = ?", isActive)
+	}
+	query.Find(&contents)
+	return contents
+}
+
+func (f FeaturedContentManager) Create (db *gorm.DB, location choices.FeaturedContentLocationChoice, desc string, book models.Book) models.FeaturedContent {
+	content := models.FeaturedContent{Location: location, Desc: desc, BookID: book.ID}
+	db.Create(&content)
+	content.Book = book
+	return content
+}
+
+func (f FeaturedContentManager) GetByID (db *gorm.DB, id uuid.UUID) *models.FeaturedContent {
+	content := models.FeaturedContent{}
+	db.Where("id = ?", id).Take(&content, content)
+	if content.ID == uuid.Nil {
+		return nil
+	}
+	return &content
+}
+
+func (f FeaturedContentManager) Update (db *gorm.DB, content models.FeaturedContent, location choices.FeaturedContentLocationChoice, desc string, book models.Book) models.FeaturedContent {
+	content.Location = location
+	content.Desc = desc
+	content.BookID = book.ID
+	db.Save(&content)
+	content.Book = book
+	return content
+}

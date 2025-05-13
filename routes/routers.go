@@ -159,6 +159,12 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	
 	adminRouter.Delete("/books/tags/:slug", endpoint.AdminMiddleware, endpoint.AdminDeleteBookTag)
 
+	// Admin Contents
+	adminRouter.Get("/featured-contents", endpoint.AdminMiddleware, endpoint.AdminGetFeaturedContents)
+	adminRouter.Post("/featured-contents", endpoint.AdminMiddleware, endpoint.AdminAddAFeaturedContent)
+	adminRouter.Put("/featured-contents/:id", endpoint.AdminMiddleware, endpoint.AdminUpdateAFeaturedContent)
+	adminRouter.Delete("/featured-contents/:id", endpoint.AdminMiddleware, endpoint.AdminDeleteAFeaturedContent)
+
 	// Admin Waitlist (1)
 	adminRouter.Get("/waitlist", endpoint.AdminMiddleware, endpoint.AdminGetWaitlist)
 

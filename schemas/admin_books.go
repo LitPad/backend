@@ -5,6 +5,7 @@ import (
 
 	"github.com/LitPad/backend/models"
 	"github.com/LitPad/backend/models/choices"
+	"github.com/google/uuid"
 )
 
 type ContractSchema2 struct {
@@ -150,3 +151,56 @@ type SubSectionWithBooksResponseSchema struct {
 	Data SubSectionWithBooksSchema `json:"data"`
 }
 
+type FeaturedContentBookSchema struct {
+	Title      string `json:"title"`
+	Slug       string `json:"slug"`
+	CoverImage string `json:"cover_image"`
+	Blurb      string `json:"blurb"`
+}
+
+type FeaturedContentSchema struct {
+	ID       uuid.UUID                             `json:"id"`
+	Location choices.FeaturedContentLocationChoice `json:"location"`
+	Desc     string                                `json:"desc"`
+	Book     FeaturedContentBookSchema             `json:"book"`
+	IsActive bool                                  `json:"is_active"`
+}
+
+func (f FeaturedContentSchema) Init(featuredContent models.FeaturedContent) FeaturedContentSchema {
+	f.ID = featuredContent.ID
+	f.Location = featuredContent.Location
+	f.Desc = featuredContent.Desc
+	book := featuredContent.Book
+	f.Book = FeaturedContentBookSchema{
+		Title: book.Title, Slug: book.Slug,
+		CoverImage: book.CoverImage, Blurb: book.Blurb,
+	}
+	f.IsActive = featuredContent.IsActive
+	return f
+}
+
+type FeaturedContentsResponseSchema struct {
+	ResponseSchema
+	Data []FeaturedContentSchema `json:"data"`
+}
+
+func (f FeaturedContentsResponseSchema) Init(featuredContents []models.FeaturedContent) FeaturedContentsResponseSchema {
+	// Set Initial Data
+	contents := []FeaturedContentSchema{}
+	for _, content := range featuredContents {
+		contents = append(contents, FeaturedContentSchema{}.Init(content))
+	}
+	f.Data = contents
+	return f
+}
+
+type FeaturedContentResponseSchema struct {
+	ResponseSchema
+	Data FeaturedContentSchema `json:"data"`
+}
+
+type FeaturedContentEntrySchema struct {
+	Location choices.FeaturedContentLocationChoice `json:"location" validate:"featured_content_location_choice_validator"`
+	BookSlug string                                `json:"book_slug" validate:"required"`
+	Desc     string                                `json:"desc" validate:"required"`
+}

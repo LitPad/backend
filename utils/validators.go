@@ -10,6 +10,11 @@ func AccountTypeValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.AccType).IsValid()
 }
 
+// Validates if a featured content location choice value is the correct one
+func FeaturedContentLocationChoiceValidator(fl validator.FieldLevel) bool {
+	return fl.Field().Interface().(choices.FeaturedContentLocationChoice).IsValid()
+}
+
 // Validates if a payment type value is the correct one
 func PaymentTypeValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.PaymentType).IsValid()
