@@ -308,7 +308,7 @@ type BookChapterCreateSchema struct {
 
 type BookCreateSchema struct {
 	Title          string          `form:"title" validate:"required,max=200"`
-	Blurb          string          `form:"blurb" validate:"required,max=200"`
+	Blurb          string          `form:"blurb" validate:"required,max=1000,min=100"`
 	GenreSlug      string          `form:"genre_slug" validate:"required"`
 	SubSectionSlug string          `form:"sub_section_slug" validate:"required"`
 	TagSlugs       []string        `form:"tag_slugs" validate:"required"`
@@ -317,7 +317,7 @@ type BookCreateSchema struct {
 
 type ChapterCreateSchema struct {
 	Title      string   `json:"title" validate:"required,max=100"`
-	Paragraphs []string `json:"paragraphs" validate:"required,max=400"`
+	Paragraphs []string `json:"paragraphs" validate:"required,min=100"`
 	IsLast     bool     `json:"is_last"`
 }
 

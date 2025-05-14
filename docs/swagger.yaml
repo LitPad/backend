@@ -403,7 +403,7 @@ definitions:
       paragraphs:
         items:
           type: string
-        maxItems: 400
+        minItems: 100
         type: array
       title:
         maxLength: 100
@@ -682,6 +682,9 @@ definitions:
         type: string
       location:
         $ref: '#/definitions/choices.FeaturedContentLocationChoice'
+    required:
+    - book_slug
+    - desc
     type: object
   schemas.FeaturedContentResponseSchema:
     properties:
@@ -3219,7 +3222,8 @@ paths:
         - ATYPE_SIXTEEN
         - ATYPE_EIGHTEEN
       - in: formData
-        maxLength: 200
+        maxLength: 1000
+        minLength: 100
         name: blurb
         required: true
         type: string
@@ -3419,7 +3423,8 @@ paths:
         - ATYPE_SIXTEEN
         - ATYPE_EIGHTEEN
       - in: formData
-        maxLength: 200
+        maxLength: 1000
+        minLength: 100
         name: blurb
         required: true
         type: string

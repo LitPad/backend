@@ -2322,7 +2322,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 200,
+                        "maxLength": 1000,
+                        "minLength": 100,
                         "type": "string",
                         "name": "blurb",
                         "in": "formData",
@@ -3177,7 +3178,8 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 200,
+                        "maxLength": 1000,
+                        "minLength": 100,
                         "type": "string",
                         "name": "blurb",
                         "in": "formData",
@@ -5261,7 +5263,7 @@ const docTemplate = `{
                 },
                 "paragraphs": {
                     "type": "array",
-                    "maxItems": 400,
+                    "minItems": 100,
                     "items": {
                         "type": "string"
                     }
@@ -5661,6 +5663,10 @@ const docTemplate = `{
         },
         "schemas.FeaturedContentEntrySchema": {
             "type": "object",
+            "required": [
+                "book_slug",
+                "desc"
+            ],
             "properties": {
                 "book_slug": {
                     "type": "string"
