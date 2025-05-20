@@ -21,6 +21,7 @@ type BookManager struct {
 
 func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string, subSectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool, orderBySubSection bool) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
+	joinedSubSections := false
 
 	query := db.Model(&b.Model)
 	if genreSlug != "" {
@@ -42,6 +43,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 		query = query.Joins("JOIN sub_sections ON sub_sections.id = books.sub_section_id").
 		Joins("JOIN sections ON sections.id = sub_sections.section_id").
 		Where("sections.id = ?", section.ID)
+		joinedSubSections = true
 	}
 	if subSectionSlug != "" {
 		subSection := models.SubSection{Slug: subSectionSlug}
@@ -98,8 +100,11 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 
 	// 📌 Sorting Logic
 	if orderBySubSection {
+		if !joinedSubSections {
+			query = query.
+				Joins("LEFT JOIN sub_sections ON sub_sections.id = books.sub_section_id")
+		}
 		query = query.
-			Joins("LEFT JOIN sub_sections ON sub_sections.id = books.sub_section_id").
 			Group("sub_sections.name").
 			Order("sub_sections.name ASC")
 	}
