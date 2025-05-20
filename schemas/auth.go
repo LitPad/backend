@@ -50,10 +50,16 @@ type TokensResponseSchema struct {
 	UserProfile
 	Access  string `json:"access" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
 	Refresh string `json:"refresh" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InNpbXBsZWlkIiwiZXhwIjoxMjU3ODk0MzAwfQ.Ys_jP70xdxch32hFECfJQuvpvU5_IiTIN2pJJv68EqQ"`
+	FeaturedContents []FeaturedContentSchema `json:"featured_contents"`
 }
 
-func (t TokensResponseSchema) Init(user models.User) TokensResponseSchema {
+func (t TokensResponseSchema) Init(user models.User, featuredContents []models.FeaturedContent) TokensResponseSchema {
 	t.UserProfile = t.UserProfile.Init(user, nil)
+	featuredContentsData := []FeaturedContentSchema{}
+	for _, content := range featuredContents {
+		featuredContentsData = append(featuredContentsData, FeaturedContentSchema{}.Init(content))
+	}
+	t.FeaturedContents = featuredContentsData
 	return t
 }
 

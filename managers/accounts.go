@@ -184,6 +184,24 @@ func (u UserManager) DeleteAllToken(db *gorm.DB, user models.User) {
 	db.Where("user_id = ?", user.ID).Delete(&models.AuthToken{})
 }
 
+func (u UserManager) GetFeaturedContents(db *gorm.DB, user models.User) []models.FeaturedContent {
+	featuredContents := []models.FeaturedContent{}
+	db.
+    Model(&models.FeaturedContent{}).
+    Joins("JOIN books ON books.id = featured_contents.book_id").
+    Where("featured_contents.is_active = ?", true).
+    Where("NOT EXISTS (?)",
+        db.
+            Table("featured_content_seen_by").
+            Select("1").
+            Where("featured_content_seen_by.featured_content_id = featured_contents.id").
+            Where("featured_content_seen_by.user_id = ?", user.ID),
+    ).
+    Preload("Book").Preload("Book.Author").
+    Find(&featuredContents)
+	return featuredContents
+}
+
 type NotificationManager struct{}
 
 func (n NotificationManager) GetAllByUser(db *gorm.DB, user *models.User) []models.Notification {

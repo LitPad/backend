@@ -247,9 +247,10 @@ func (ep Endpoint) Login(c *fiber.Ctx) error {
 
 	// Create Auth Tokens
 	tokens := userManager.GenerateAuthTokens(db, user, GenerateAccessToken(user), GenerateRefreshToken())
+	featuredContents := userManager.GetFeaturedContents(db, user)
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: tokens.Access, Refresh: tokens.Refresh}.Init(user),
+		Data:           schemas.TokensResponseSchema{Access: tokens.Access, Refresh: tokens.Refresh}.Init(user, featuredContents),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -286,9 +287,10 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}
+	featuredContents := userManager.GetFeaturedContents(db, *user)
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Social Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(*user),
+		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(*user, featuredContents),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -324,9 +326,10 @@ func (ep Endpoint) FacebookLogin(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}
+	featuredContents := userManager.GetFeaturedContents(db, *user)
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Login successful"),
-		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(*user),
+		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(*user, featuredContents),
 	}
 	return c.Status(201).JSON(response)
 }
@@ -363,10 +366,11 @@ func (ep Endpoint) Refresh(c *fiber.Ctx) error {
 	token.Access = GenerateAccessToken(user)
 	token.Refresh = GenerateRefreshToken()
 	db.Save(&token)
+	featuredContents := userManager.GetFeaturedContents(db, user)
 
 	response := schemas.LoginResponseSchema{
 		ResponseSchema: ResponseMessage("Tokens refresh successful"),
-		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(user),
+		Data:           schemas.TokensResponseSchema{Access: token.Access, Refresh: token.Refresh}.Init(user, featuredContents),
 	}
 	return c.Status(201).JSON(response)
 }
