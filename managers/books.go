@@ -19,7 +19,7 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subSectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string, subSectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool, orderBySubSection bool) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 
 	query := db.Model(&b.Model)
@@ -31,6 +31,17 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subSectionSlug str
 			return books, &errData
 		}
 		query = query.Where(models.Book{GenreID: genre.ID})
+	}
+	if sectionSlug != "" {
+		section := models.Section{Slug: sectionSlug}
+		db.Take(&section, section)
+		if section.ID == uuid.Nil {
+			errData := utils.NotFoundErr("Invalid book section")
+			return books, &errData
+		}
+		query = query.Joins("JOIN sub_sections ON sub_sections.id = books.sub_section_id").
+		Joins("JOIN sections ON sections.id = sub_sections.section_id").
+		Where("sections.id = ?", section.ID)
 	}
 	if subSectionSlug != "" {
 		subSection := models.SubSection{Slug: subSectionSlug}
@@ -86,6 +97,12 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subSectionSlug str
 		Group("books.id")
 
 	// 📌 Sorting Logic
+	if orderBySubSection {
+		query = query.
+			Joins("LEFT JOIN sub_sections ON sub_sections.id = books.sub_section_id").
+			Group("sub_sections.name").
+			Order("sub_sections.name ASC")
+	}
 	if trending {
 		// Order by most read books
 		query = query.Joins("LEFT JOIN book_reads ON book_reads.book_id = books.id").
@@ -96,6 +113,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, subSectionSlug str
 	} else {
 		query = query.Order("books.created_at DESC")
 	}
+	
 	query.Scopes(scopes.AuthorGenreTagBookPreloadScope).Find(&books)
 	return books, nil
 }

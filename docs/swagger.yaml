@@ -1796,6 +1796,10 @@ paths:
         in: query
         name: genre_slug
         type: string
+      - description: Filter by Section slug
+        in: query
+        name: section_slug
+        type: string
       - description: Filter by Sub Section slug
         in: query
         name: sub_section_slug
@@ -1888,6 +1892,10 @@ paths:
       - description: Filter by Genre slug
         in: query
         name: genre_slug
+        type: string
+      - description: Filter by Section slug
+        in: query
+        name: section_slug
         type: string
       - description: Filter by Sub Section slug
         in: query
@@ -3172,6 +3180,10 @@ paths:
         in: query
         name: genre_slug
         type: string
+      - description: Filter by Section slug
+        in: query
+        name: section_slug
+        type: string
       - description: Filter by Sub Section slug
         in: query
         name: sub_section_slug
@@ -3283,6 +3295,10 @@ paths:
       - description: Filter by Genre slug
         in: query
         name: genre_slug
+        type: string
+      - description: Filter by Section slug
+        in: query
+        name: section_slug
         type: string
       - description: Filter by Sub Section slug
         in: query

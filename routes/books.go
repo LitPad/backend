@@ -80,6 +80,7 @@ func (ep Endpoint) GetAllBookSubSections(c *fiber.Ctx) error {
 // @Tags Books
 // @Param page query int false "Current Page" default(1)
 // @Param genre_slug query string false "Filter by Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param sub_section_slug query string false "Filter by Sub Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
@@ -91,12 +92,13 @@ func (ep Endpoint) GetAllBookSubSections(c *fiber.Ctx) error {
 func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	genreSlug := c.Query("genre_slug")
-	subSectionSlug := c.Query("sub_section_slug")
+	sectionSlug := c.Query("section_slug", "")
+	subSectionSlug := c.Query("sub_section_slug", "")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
-	books, err := bookManager.GetLatest(db, genreSlug, subSectionSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending)
+	books, err := bookManager.GetLatest(db, genreSlug, sectionSlug, subSectionSlug, tagSlug, "", false, "", "", featured, weeklyFeatured, trending, true)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -122,6 +124,7 @@ func (ep Endpoint) GetLatestBooks(c *fiber.Ctx) error {
 // @Param page query int false "Current Page" default(1)
 // @Param username path string true "Filter by Author Username"
 // @Param genre_slug query string false "Filter by Genre slug"
+// @Param section_slug query string false "Filter by Section slug"
 // @Param sub_section_slug query string false "Filter by Sub Section slug"
 // @Param tag_slug query string false "Filter by Tag slug"
 // @Param featured query bool false "Filter by Featured"
@@ -134,12 +137,13 @@ func (ep Endpoint) GetLatestAuthorBooks(c *fiber.Ctx) error {
 	db := ep.DB
 	username := c.Params("username")
 	genreSlug := c.Query("genre_slug")
-	subSectionSlug := c.Query("sub_section_slug")
+	sectionSlug := c.Query("section_slug", "")
+	subSectionSlug := c.Query("sub_section_slug", "")
 	tagSlug := c.Query("tag_slug")
 	featured := c.QueryBool("featured")
 	weeklyFeatured := c.QueryBool("weekly_featured")
 	trending := c.QueryBool("trending")
-	books, err := bookManager.GetLatest(db, genreSlug, subSectionSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending)
+	books, err := bookManager.GetLatest(db, genreSlug, sectionSlug, subSectionSlug, tagSlug, "", false, username, "", featured, weeklyFeatured, trending, true)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}

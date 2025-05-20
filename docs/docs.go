@@ -126,6 +126,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Filter by Sub Section slug",
                         "name": "sub_section_slug",
                         "in": "query"
@@ -264,6 +270,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Genre slug",
                         "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
                         "in": "query"
                     },
                     {
@@ -2247,6 +2259,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Filter by Sub Section slug",
                         "name": "sub_section_slug",
                         "in": "query"
@@ -2408,6 +2426,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by Genre slug",
                         "name": "genre_slug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
                         "in": "query"
                     },
                     {
