@@ -62,12 +62,23 @@ func (ep Endpoint) GetAllBookSections(c *fiber.Ctx) error {
 // @Summary View Available Book Sub Sections
 // @Description This endpoint views available book sub sections
 // @Tags Books
+// @Param section_slug query string false "Filter by Section slug"
 // @Success 200 {object} schemas.SubSectionsResponseSchema
 // @Failure 400 {object} utils.ErrorResponse
 // @Router /books/sub-sections [get]
 func (ep Endpoint) GetAllBookSubSections(c *fiber.Ctx) error {
 	db := ep.DB
-	subSections := genreManager.GetAllSubSections(db)
+	sectionSlug := c.Query("section_slug", "")
+	var sectionID *uuid.UUID
+	if sectionSlug != "" {
+		section := models.Section{Slug: sectionSlug}
+		db.Take(&section, section)
+		if section.ID == uuid.Nil {
+			return c.Status(404).JSON(utils.NotFoundErr("Invalid section slug!"))
+		}
+		sectionID = &section.ID
+	}
+	subSections := genreManager.GetAllSubSections(db, sectionID)
 
 	response := schemas.SubSectionsResponseSchema{
 		ResponseSchema: ResponseMessage("Sub Sections fetched successfully"),

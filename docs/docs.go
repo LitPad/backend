@@ -3889,6 +3889,14 @@ const docTemplate = `{
                     "Books"
                 ],
                 "summary": "View Available Book Sub Sections",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by Section slug",
+                        "name": "section_slug",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -6876,6 +6884,12 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string"
+                },
+                "featured_contents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.FeaturedContentSchema"
+                    }
                 },
                 "followers": {
                     "type": "array",

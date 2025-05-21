@@ -460,9 +460,13 @@ func (g GenreManager) GetAllSections(db *gorm.DB) []models.Section {
 	return sections
 }
 
-func (g GenreManager) GetAllSubSections(db *gorm.DB) []models.SubSection {
+func (g GenreManager) GetAllSubSections(db *gorm.DB, sectionID *uuid.UUID) []models.SubSection {
 	subSections := []models.SubSection{}
-	db.Preload("Books").Find(&subSections)
+	query := db.Preload("Books")
+	if sectionID != nil {
+		query = query.Where(models.SubSection{SectionID: *sectionID})
+	}
+	query.Find(&subSections)
 	return subSections
 }
 

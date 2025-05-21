@@ -1487,6 +1487,10 @@ definitions:
         $ref: '#/definitions/choices.SubscriptionTypeChoice'
       email:
         type: string
+      featured_contents:
+        items:
+          $ref: '#/definitions/schemas.FeaturedContentSchema'
+        type: array
       followers:
         items:
           $ref: '#/definitions/schemas.FollowerData'
@@ -4259,6 +4263,11 @@ paths:
   /books/sub-sections:
     get:
       description: This endpoint views available book sub sections
+      parameters:
+      - description: Filter by Section slug
+        in: query
+        name: section_slug
+        type: string
       responses:
         "200":
           description: OK
