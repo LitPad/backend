@@ -1499,6 +1499,8 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
+      is_active:
+        type: boolean
       is_following:
         type: boolean
       name:
@@ -1639,6 +1641,8 @@ definitions:
         items:
           $ref: '#/definitions/schemas.FollowerData'
         type: array
+      is_active:
+        type: boolean
       is_following:
         type: boolean
       name:

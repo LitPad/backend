@@ -6903,6 +6903,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
                 },
+                "is_active": {
+                    "type": "boolean"
+                },
                 "is_following": {
                     "type": "boolean"
                 },
@@ -7111,6 +7114,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/schemas.FollowerData"
                     }
+                },
+                "is_active": {
+                    "type": "boolean"
                 },
                 "is_following": {
                     "type": "boolean"
