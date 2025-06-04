@@ -66,7 +66,7 @@
             max-height: 118px;
             height: 118px;
             border-radius: 10px;
-            font-size: 32px;
+            font-size: 20px;
             text-align: center;
             /* background: rgba(38, 134, 237, 0.03); */
             color: #000;
@@ -115,18 +115,28 @@
 
             <tr>
                 <td>
-                    <p style="text-align: center; font-weight: 600; font-size: 20px;">Reset reset successfully</p>
+                    <p style="text-align: center; font-weight: 500; font-size: 20px;">Your verification code is:</p>
                 </td>
             </tr>
+
+            <!-- OTP Code -->
             <tr>
                 <td>
-                    <p style="text-align: center; font-size: 16px;"></p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p style="text-align: center; font-size: 16px;">Hello {{.Name}}, your password has been updated
-                        successfully</p>
+                    <table class="passcode">
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        {{range $index, $digit := .Code}}
+                                            <td class="code">
+                                                <p>{{$digit}}</p>
+                                            </td>
+                                        {{end}}
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
 
@@ -135,13 +145,13 @@
                     <p style="text-align: center; font-size: 16px;"></p>
                 </td>
             </tr>
-
-
             <tr>
                 <td>
-                    <p style="text-align: center; font-size: 16px;"></p>
+                    <p style="text-align: center; font-size: 16px;">Thank you,<br />
+                        The LitPad team</p>
                 </td>
             </tr>
+
             <tr>
                 <td style="padding: 12px 0;">
                     <p style="background-color: #c4c4c4; padding: 0.4px; width: 100%; max-width: 600px;"></p>

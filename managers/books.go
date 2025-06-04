@@ -41,8 +41,8 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 			return books, &errData
 		}
 		query = query.Joins("JOIN sub_sections ON sub_sections.id = books.sub_section_id").
-		Joins("JOIN sections ON sections.id = sub_sections.section_id").
-		Where("sections.id = ?", section.ID)
+			Joins("JOIN sections ON sections.id = sub_sections.section_id").
+			Where("sections.id = ?", section.ID)
 		joinedSubSections = true
 	}
 	if subSectionSlug != "" {
@@ -89,7 +89,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 
 	// 📌 Filter by Weekly Featured (Check if it's within this week)
 	if weeklyFeatured {
-		query = query.Where("weekly_featured >= ? AND weekly_featured <= ?", 
+		query = query.Where("weekly_featured >= ? AND weekly_featured <= ?",
 			time.Now().Truncate(7*24*time.Hour), time.Now().Add(7*24*time.Hour))
 	}
 
@@ -118,19 +118,19 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 	} else {
 		query = query.Order("books.created_at DESC")
 	}
-	
+
 	query.Scopes(scopes.AuthorGenreTagBookPreloadScope).Find(&books)
 	return books, nil
 }
 
-func (b BookManager) GetUserBookmarkedBooks (db *gorm.DB, user models.User) []models.Book {
+func (b BookManager) GetUserBookmarkedBooks(db *gorm.DB, user models.User) []models.Book {
 	books := b.ModelList
 	db.Joins("JOIN bookmarks ON bookmarks.book_id = books.id").
 		Where("bookmarks.user_id = ?", user.ID).
 		Scopes(scopes.AuthorGenreTagBookPreloadScope).
 		Find(&books)
 	return books
-} 
+}
 
 func (b BookManager) GetBySlug(db *gorm.DB, slug string, preload bool) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{Slug: slug}
@@ -240,7 +240,7 @@ func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCrea
 	book.SubSectionID = subSection.ID
 	book.SubSection = subSection
 	book.Tags = Tags
-	
+
 	if coverImage != "" {
 		book.CoverImage = coverImage
 	}
@@ -331,7 +331,7 @@ func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.Chapt
 	// Generate paragraphs
 	paragraphsToCreate := []models.Paragraph{}
 	for idx, paragraph := range data.Paragraphs {
-		paragraphsToCreate = append(paragraphsToCreate, models.Paragraph{ChapterID: chapter.ID, Text: paragraph, Index: uint(idx+1)})
+		paragraphsToCreate = append(paragraphsToCreate, models.Paragraph{ChapterID: chapter.ID, Text: paragraph, Index: uint(idx + 1)})
 	}
 	db.Create(&paragraphsToCreate)
 	chapter.Paragraphs = paragraphsToCreate
@@ -412,7 +412,7 @@ func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas
 	return chapter
 }
 
-func (c ChapterManager) GetParagraph (db *gorm.DB, chapter models.Chapter, index uint) *models.Paragraph {
+func (c ChapterManager) GetParagraph(db *gorm.DB, chapter models.Chapter, index uint) *models.Paragraph {
 	paragraph := models.Paragraph{ChapterID: chapter.ID, Index: index}
 	db.Take(&paragraph, paragraph)
 	if paragraph.ID == uuid.Nil {
@@ -420,6 +420,7 @@ func (c ChapterManager) GetParagraph (db *gorm.DB, chapter models.Chapter, index
 	}
 	return &paragraph
 }
+
 type TagManager struct {
 	Model     models.Tag
 	ModelList []models.Tag
@@ -596,10 +597,10 @@ func (c CommentManager) GetByParagraphID(db *gorm.DB, paragraphId uuid.UUID) []m
 
 func (c CommentManager) Create(db *gorm.DB, user *models.User, paragraphID uuid.UUID, data schemas.ParagraphCommentAddSchema) models.Comment {
 	comment := models.Comment{
-		UserID:    user.ID,
-		User:      *user,
+		UserID:      user.ID,
+		User:        *user,
 		ParagraphID: &paragraphID,
-		Text:      data.Text,
+		Text:        data.Text,
 	}
 	db.Create(&comment)
 	return comment
@@ -622,9 +623,9 @@ func (c CommentManager) GetReplyByUserAndID(db *gorm.DB, user *models.User, id u
 
 func (c CommentManager) CreateReply(db *gorm.DB, user *models.User, reviewOrParagraphComment *models.Comment, data schemas.ReplyReviewOrCommentSchema) models.Comment {
 	reply := models.Comment{
-		UserID: user.ID,
-		User:   *user,
-		Text:   data.Text,
+		UserID:   user.ID,
+		User:     *user,
+		Text:     data.Text,
 		ParentID: &reviewOrParagraphComment.ID,
 	}
 	db.Create(&reply)
@@ -662,7 +663,7 @@ type BookmarkManager struct {
 	ModelList []models.Bookmark
 }
 
-func (b BookmarkManager) AddOrDelete (db *gorm.DB, user models.User, book models.Book) string {
+func (b BookmarkManager) AddOrDelete(db *gorm.DB, user models.User, book models.Book) string {
 	bookmark := models.Bookmark{UserID: user.ID, BookID: book.ID}
 	db.Take(&bookmark, bookmark)
 	if bookmark.ID == uuid.Nil {
@@ -678,7 +679,7 @@ type BookReportManager struct {
 	ModelList []models.BookReport
 }
 
-func (b BookReportManager) Create (db *gorm.DB, user models.User, book models.Book, reason string, additionalExplanation *string) {
+func (b BookReportManager) Create(db *gorm.DB, user models.User, book models.Book, reason string, additionalExplanation *string) {
 	bookReport := models.BookReport{UserID: user.ID, BookID: book.ID, Reason: reason, AdditionalExplanation: additionalExplanation}
 	db.Create(&bookReport)
 }
@@ -688,7 +689,7 @@ type LikeManager struct {
 	ModelList []models.Bookmark
 }
 
-func (l LikeManager) AddOrDelete (db *gorm.DB, user models.User, comment models.Comment) string {
+func (l LikeManager) AddOrDelete(db *gorm.DB, user models.User, comment models.Comment) string {
 	like := models.Like{UserID: user.ID, CommentID: &comment.ID}
 	db.Take(&like, like)
 	if like.ID == uuid.Nil {
@@ -704,7 +705,7 @@ type FeaturedContentManager struct {
 	ModelList []models.FeaturedContent
 }
 
-func (f FeaturedContentManager) GetAll (db *gorm.DB, location *choices.FeaturedContentLocationChoice, isActive *bool) []models.FeaturedContent {
+func (f FeaturedContentManager) GetAll(db *gorm.DB, location *choices.FeaturedContentLocationChoice, isActive *bool) []models.FeaturedContent {
 	contents := f.ModelList
 	query := db.Joins("Book")
 	if location != nil {
@@ -717,14 +718,14 @@ func (f FeaturedContentManager) GetAll (db *gorm.DB, location *choices.FeaturedC
 	return contents
 }
 
-func (f FeaturedContentManager) Create (db *gorm.DB, location choices.FeaturedContentLocationChoice, desc string, book models.Book) models.FeaturedContent {
+func (f FeaturedContentManager) Create(db *gorm.DB, location choices.FeaturedContentLocationChoice, desc string, book models.Book) models.FeaturedContent {
 	content := models.FeaturedContent{Location: location, Desc: desc, BookID: book.ID}
 	db.Create(&content)
 	content.Book = book
 	return content
 }
 
-func (f FeaturedContentManager) GetByID (db *gorm.DB, id uuid.UUID) *models.FeaturedContent {
+func (f FeaturedContentManager) GetByID(db *gorm.DB, id uuid.UUID) *models.FeaturedContent {
 	content := models.FeaturedContent{}
 	db.Where("id = ?", id).Take(&content, content)
 	if content.ID == uuid.Nil {
@@ -733,7 +734,7 @@ func (f FeaturedContentManager) GetByID (db *gorm.DB, id uuid.UUID) *models.Feat
 	return &content
 }
 
-func (f FeaturedContentManager) Update (db *gorm.DB, content models.FeaturedContent, location choices.FeaturedContentLocationChoice, desc string, book models.Book) models.FeaturedContent {
+func (f FeaturedContentManager) Update(db *gorm.DB, content models.FeaturedContent, location choices.FeaturedContentLocationChoice, desc string, book models.Book) models.FeaturedContent {
 	content.Location = location
 	content.Desc = desc
 	content.BookID = book.ID

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/LitPad/backend/config"
@@ -43,12 +44,11 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 	// Sort different templates and subject for respective email types
 	switch emailType {
 	case ET_ACTIVATE:
-		templateFile = "templates/email-activation.html"
-		subject = "Activate your account"
+		templateFile = "templates/email-verification.html"
+		subject = "Verify your account"
 		data["template_file"] = templateFile
 		data["subject"] = subject
-		data["text"] = "Please use the code below to verify your email."
-		data["code"] = otp
+		data["code"] = strings.Split(strconv.FormatUint(uint64(*otp), 10), "")
 
 	case ET_RESET:
 		templateFile = "templates/password-reset.html"
@@ -57,7 +57,6 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 		data["subject"] = subject
 		data["text"] = "Please click the button below to reset your password."
 		data["url"] = fmt.Sprintf("%s://reset-password?token=%s", cfg.AppScheme, *tokenString)
-
 	case ET_RESET_SUCC:
 		templateFile = "templates/password-reset-success.html"
 		subject = "Password reset successfully"
@@ -65,7 +64,7 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 		data["subject"] = subject
 		data["text"] = "Your password was reset successfully."
 	case ET_PAYMENT_SUCC:
-		templateFile = "templates/payment-success.html"
+		templateFile = "templates/subscribe-success.html"
 		amount := extraData["amount"].(decimal.Decimal)
 		subject = "Payment successful"
 		data["template_file"] = templateFile
@@ -79,7 +78,7 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 		data["subject"] = subject
 		data["text"] = fmt.Sprintf("Your payment of %s was unsuccessful. Please contact support", amount)
 	case ET_PAYMENT_CANCEL:
-		templateFile = "templates/payment-canceled.html"
+		templateFile = "templates/subscribe-cancel.html"
 		subject = "Payment canceled"
 		amount := extraData["amount"].(decimal.Decimal)
 		data["template_file"] = templateFile
@@ -106,7 +105,7 @@ func sortEmail(cfg config.Config, emailType EmailTypeChoice, otp *uint, tokenStr
 type EmailContext struct {
 	Name string
 	Url  *string
-	Code *uint
+	Code []string
 	Text string
 }
 
@@ -130,7 +129,7 @@ func SendEmail(user *models.User, emailType EmailTypeChoice, otp *uint, tokenStr
 	}
 
 	if code, ok := emailData["code"]; ok {
-		code := code.(*uint)
+		code := code.([]string)
 		data.Code = code
 	}
 
