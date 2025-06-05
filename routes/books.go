@@ -502,8 +502,8 @@ func (ep Endpoint) UpdateChapter(c *fiber.Ctx) error {
 		return c.Status(404).JSON(err)
 	}
 
-	if chapter.Book.AuthorID != author.ID {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "Not yours to edit"))
+	if chapter.Book.AuthorID != author.ID && !author.IsStaff{
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "You cannot edit this book"))
 	}
 
 	data := schemas.ChapterCreateSchema{}
@@ -534,8 +534,8 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	if chapter.Book.AuthorID != author.ID {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "Not yours to delete"))
+	if chapter.Book.AuthorID != author.ID && !author.IsStaff {
+		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "You cannot delete this book"))
 	}
 	db.Delete(&chapter)
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfully"))
