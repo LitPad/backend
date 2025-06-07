@@ -5295,7 +5295,6 @@ const docTemplate = `{
                 },
                 "paragraphs": {
                     "type": "array",
-                    "minItems": 100,
                     "items": {
                         "type": "string"
                     }

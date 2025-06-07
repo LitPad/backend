@@ -403,7 +403,6 @@ definitions:
       paragraphs:
         items:
           type: string
-        minItems: 100
         type: array
       title:
         maxLength: 100

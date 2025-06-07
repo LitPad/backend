@@ -317,7 +317,7 @@ type BookCreateSchema struct {
 
 type ChapterCreateSchema struct {
 	Title      string   `json:"title" validate:"required,max=100"`
-	Paragraphs []string `json:"paragraphs" validate:"required,min=100"`
+	Paragraphs []string `json:"paragraphs" validate:"required"`
 	IsLast     bool     `json:"is_last"`
 }
 
