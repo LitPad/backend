@@ -527,6 +527,7 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
+	db.Where("chapter_id = ?", chapter.ID).Delete(&models.Paragraph{})
 	db.Delete(&chapter)
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfully"))
 }
