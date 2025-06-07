@@ -461,8 +461,7 @@ func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
 	db := ep.DB
-	author := RequestUser(c)
-	book, err := bookManager.GetByAuthorAndSlug(db, author, c.Params("slug"))
+	book, err := bookManager.GetBySlug(db, c.Params("slug"), false)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -496,14 +495,9 @@ func (ep Endpoint) AddChapter(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) UpdateChapter(c *fiber.Ctx) error {
 	db := ep.DB
-	author := RequestUser(c)
 	chapter, err := chapterManager.GetBySlug(db, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
-	}
-
-	if chapter.Book.AuthorID != author.ID && !author.IsStaff{
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "You cannot edit this book"))
 	}
 
 	data := schemas.ChapterCreateSchema{}
@@ -529,13 +523,9 @@ func (ep Endpoint) UpdateChapter(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	db := ep.DB
-	author := RequestUser(c)
 	chapter, err := chapterManager.GetBySlug(db, c.Params("slug"))
 	if err != nil {
 		return c.Status(404).JSON(err)
-	}
-	if chapter.Book.AuthorID != author.ID && !author.IsStaff {
-		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_OWNER, "You cannot delete this book"))
 	}
 	db.Delete(&chapter)
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfully"))

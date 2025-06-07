@@ -8,7 +8,6 @@ import (
 
 	"github.com/LitPad/backend/config"
 	"github.com/LitPad/backend/models"
-	"github.com/LitPad/backend/models/choices"
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -69,7 +68,7 @@ func (ep Endpoint) AuthorMiddleware(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_INVALID_TOKEN, *err))
 	}
-	if user.AccountType != choices.ACCTYPE_AUTHOR && !user.IsStaff {
+	if !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_AUTHORS_ONLY, "For Authors only!"))
 	}
 	c.Locals("user", user)
