@@ -1,6 +1,10 @@
 package utils
 
 import (
+	"fmt"
+	"strings"
+	"unicode"
+
 	"github.com/LitPad/backend/models/choices"
 	"github.com/go-playground/validator/v10"
 )
@@ -58,4 +62,45 @@ func ReplyTypeValidator(fl validator.FieldLevel) bool {
 // Validates if a device type value is the correct one
 func DeviceTypeValidator(fl validator.FieldLevel) bool {
 	return fl.Field().Interface().(choices.DeviceType).IsValid()
+}
+
+func CountWords(text string) int {
+    if strings.TrimSpace(text) == "" {
+        return 0
+    }
+    
+    // Split by whitespace and filter out empty strings
+    fields := strings.FieldsFunc(text, func(c rune) bool {
+        return unicode.IsSpace(c)
+    })
+    
+    return len(fields)
+}
+
+// WordCountMinValidator validates minimum word count
+func WordCountMinValidator(fl validator.FieldLevel) bool {
+    text := fl.Field().String()
+    wordCount := CountWords(text)
+    minCount := fl.Param()
+    
+    var min int
+    if _, err := fmt.Sscanf(minCount, "%d", &min); err != nil {
+        return false
+    }
+    
+    return wordCount >= min
+}
+
+// WordCountMaxValidator validates maximum word count
+func WordCountMaxValidator(fl validator.FieldLevel) bool {
+    text := fl.Field().String()
+    wordCount := CountWords(text)
+    maxCount := fl.Param()
+    
+    var max int
+    if _, err := fmt.Sscanf(maxCount, "%d", &max); err != nil {
+        return false
+    }
+    
+    return wordCount <= max
 }

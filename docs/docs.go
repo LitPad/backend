@@ -2340,8 +2340,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 1000,
-                        "minLength": 100,
                         "type": "string",
                         "name": "blurb",
                         "in": "formData",
@@ -2350,12 +2348,6 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "genre_slug",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "name": "sub_section_slug",
                         "in": "formData",
                         "required": true
                     },
@@ -3202,8 +3194,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 1000,
-                        "minLength": 100,
                         "type": "string",
                         "name": "blurb",
                         "in": "formData",
@@ -3212,12 +3202,6 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "name": "genre_slug",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "name": "sub_section_slug",
                         "in": "formData",
                         "required": true
                     },

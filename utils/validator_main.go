@@ -47,6 +47,8 @@ func init() {
 	customValidator.RegisterValidation("contract_status_validator", ContractStatusChoiceValidator)
 	customValidator.RegisterValidation("reply_type_validator", ReplyTypeValidator)
 	customValidator.RegisterValidation("featured_content_location_choice_validator", FeaturedContentLocationChoiceValidator)
+    customValidator.RegisterValidation("wordcount_min", WordCountMinValidator)
+    customValidator.RegisterValidation("wordcount_max", WordCountMaxValidator)
 
 	RegisterTagName()
 }
@@ -85,6 +87,12 @@ func registerTranslations(param string) {
 	registerTranslation("email", "Invalid Email", translator)
 	eqErrMsg := fmt.Sprintf("Must be %s", param)
 	registerTranslation("eq", eqErrMsg, translator)
+
+	wordcountMinErrMsg := fmt.Sprintf("%s words min", param)
+	registerTranslation("wordcount_min", wordcountMinErrMsg, translator)
+	wordcountMaxErrMsg := fmt.Sprintf("%s words max", param)
+	registerTranslation("wordcount_max", wordcountMaxErrMsg, translator)
+
 }
 
 func (e *ErrorResponse) Error() string {

@@ -220,32 +220,34 @@ func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug s
 	return &book, nil
 }
 
-func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, subSection models.SubSection, coverImage string, tags []models.Tag) models.Book {
+func (b BookManager) Create(db *gorm.DB, author models.User, data schemas.BookCreateSchema, genre models.Genre, coverImage string, tags []models.Tag) models.Book {
 	book := models.Book{
 		AuthorID: author.ID, Author: author, Title: data.Title,
 		Blurb: data.Blurb, AgeDiscretion: data.AgeDiscretion,
-		GenreID: genre.ID, SubSectionID: subSection.ID, Genre: genre, SubSection: subSection,
+		GenreID: genre.ID,
 		Tags:       tags,
 		CoverImage: coverImage,
 	}
 	db.Omit("Tags.*").Create(&book)
+	book.Tags = tags
+	book.Genre = genre
 	return book
 }
 
-func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, subSection models.SubSection, coverImage string, Tags []models.Tag) models.Book {
+func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCreateSchema, genre models.Genre, coverImage string, tags []models.Tag) models.Book {
 	book.Title = data.Title
 	book.Blurb = data.Blurb
 	book.AgeDiscretion = data.AgeDiscretion
 	book.GenreID = genre.ID
 	book.Genre = genre
-	book.SubSectionID = subSection.ID
-	book.SubSection = subSection
-	book.Tags = Tags
+	book.Tags = tags
 
 	if coverImage != "" {
 		book.CoverImage = coverImage
 	}
 	db.Omit("Tags.*").Save(&book)
+	book.Tags = tags
+	book.Genre = genre
 	return book
 }
 

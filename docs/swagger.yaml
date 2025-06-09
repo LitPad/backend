@@ -3241,17 +3241,11 @@ paths:
         - ATYPE_SIXTEEN
         - ATYPE_EIGHTEEN
       - in: formData
-        maxLength: 1000
-        minLength: 100
         name: blurb
         required: true
         type: string
       - in: formData
         name: genre_slug
-        required: true
-        type: string
-      - in: formData
-        name: sub_section_slug
         required: true
         type: string
       - collectionFormat: csv
@@ -3446,17 +3440,11 @@ paths:
         - ATYPE_SIXTEEN
         - ATYPE_EIGHTEEN
       - in: formData
-        maxLength: 1000
-        minLength: 100
         name: blurb
         required: true
         type: string
       - in: formData
         name: genre_slug
-        required: true
-        type: string
-      - in: formData
-        name: sub_section_slug
         required: true
         type: string
       - collectionFormat: csv
