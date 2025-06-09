@@ -77,18 +77,18 @@ type Book struct {
 	OrderInSection uint
 
 	Tags       []Tag     `gorm:"many2many:book_tags"`
-	Chapters   []Chapter `gorm:"<-:false"`
+	Chapters   []Chapter `gorm:"constraint:OnDelete:CASCADE"`
 	CoverImage string    `gorm:"type:varchar(10000)"`
 
 	Completed bool      `gorm:"default:false"`
-	Reviews   []Comment `gorm:"<-:false"`
-	Votes     []Vote    `gorm:"<-:false"`
+	Reviews   []Comment `gorm:"<-:false;constraint:OnDelete:CASCADE"`
+	Votes     []Vote    `gorm:"<-:false;constraint:OnDelete:CASCADE"`
 
 	Featured       bool `gorm:"default:false"` //controlled by admin
 	WeeklyFeatured time.Time
-	Reads          []BookRead
+	Reads          []BookRead `gorm:"<-:false;constraint:OnDelete:CASCADE"`
 	AvgRating      float64 // meant for query purposes. do not intentionally populate field
-	Bookmark       []Bookmark
+	Bookmark       []Bookmark `gorm:"<-:false;constraint:OnDelete:CASCADE"`
 
 	// BOOK CONTRACT
 	FullName             string `gorm:"type: varchar(1000)"`
@@ -177,7 +177,7 @@ type Chapter struct {
 	Book       Book        `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Title      string      `gorm:"type: varchar(255)"`
 	Slug       string      `gorm:"unique"`
-	Paragraphs []Paragraph `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE"`
+	Paragraphs []Paragraph `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;"`
 }
 
 func (c *Chapter) GenerateUniqueSlug(tx *gorm.DB) string {

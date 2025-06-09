@@ -427,7 +427,7 @@ func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	db.Select("Tags").Delete(&book)
+	bookManager.DeleteBookWithSQL(db, book.ID)
 	return c.Status(200).JSON(ResponseMessage("Book deleted successfully"))
 }
 

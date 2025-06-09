@@ -251,6 +251,216 @@ func (b BookManager) Update(db *gorm.DB, book models.Book, data schemas.BookCrea
 	return book
 }
 
+func (b BookManager) DeleteBookWithAllRelations(db *gorm.DB, bookID uuid.UUID) error {
+    return db.Transaction(func(tx *gorm.DB) error {
+        // 1. Handle Book Reviews (Comments) and their nested relations
+        var reviewIDs []uuid.UUID
+        if err := tx.Model(&models.Comment{}).Where("book_id = ?", bookID).
+            Pluck("id", &reviewIDs).Error; err != nil {
+            return fmt.Errorf("failed to get review IDs: %w", err)
+        }
+        
+        if len(reviewIDs) > 0 {
+            // Delete likes for book reviews
+            if err := tx.Where("comment_id IN ?", reviewIDs).Delete(&models.Like{}).Error; err != nil {
+                return fmt.Errorf("failed to delete review likes: %w", err)
+            }
+            
+            // Delete replies to book reviews (assuming replies reference parent comment)
+            if err := tx.Where("parent_id IN ?", reviewIDs).Delete(&models.Comment{}).Error; err != nil {
+                return fmt.Errorf("failed to delete review replies: %w", err)
+            }
+            
+            // Delete book reviews
+            if err := tx.Where("book_id = ?", bookID).Delete(&models.Comment{}).Error; err != nil {
+                return fmt.Errorf("failed to delete reviews: %w", err)
+            }
+        }
+        
+        // 2. Delete Book Votes
+        if err := tx.Where("book_id = ?", bookID).Delete(&models.Vote{}).Error; err != nil {
+            return fmt.Errorf("failed to delete votes: %w", err)
+        }
+        
+        // 3. Delete Book Reads
+        if err := tx.Where("book_id = ?", bookID).Delete(&models.BookRead{}).Error; err != nil {
+            return fmt.Errorf("failed to delete book reads: %w", err)
+        }
+        
+        // 4. Delete Book Bookmarks
+        if err := tx.Where("book_id = ?", bookID).Delete(&models.Bookmark{}).Error; err != nil {
+            return fmt.Errorf("failed to delete bookmarks: %w", err)
+        }
+        
+        // 5. Delete Many-to-Many Tags association
+        if err := tx.Table("book_tags").Where("book_id = ?", bookID).Delete(&struct{}{}).Error; err != nil {
+            return fmt.Errorf("failed to delete book tags: %w", err)
+        }
+        
+        // 6. Handle Chapters and their nested relations
+        var chapterIDs []uuid.UUID
+        if err := tx.Model(&models.Chapter{}).Where("book_id = ?", bookID).
+            Pluck("id", &chapterIDs).Error; err != nil {
+            return fmt.Errorf("failed to get chapter IDs: %w", err)
+        }
+        
+        if len(chapterIDs) > 0 {
+            // Get all paragraph IDs for these chapters
+            var paragraphIDs []uuid.UUID
+            if err := tx.Model(&models.Paragraph{}).Where("chapter_id IN ?", chapterIDs).
+                Pluck("id", &paragraphIDs).Error; err != nil {
+                return fmt.Errorf("failed to get paragraph IDs: %w", err)
+            }
+            
+            if len(paragraphIDs) > 0 {
+                // Get all comment IDs for these paragraphs
+                var commentIDs []uuid.UUID
+                if err := tx.Model(&models.Comment{}).Where("paragraph_id IN ?", paragraphIDs).
+                    Pluck("id", &commentIDs).Error; err != nil {
+                    return fmt.Errorf("failed to get paragraph comment IDs: %w", err)
+                }
+                
+                // Delete likes for paragraph comments
+                if len(commentIDs) > 0 {
+                    if err := tx.Where("comment_id IN ?", commentIDs).Delete(&models.Like{}).Error; err != nil {
+                        return fmt.Errorf("failed to delete paragraph comment likes: %w", err)
+                    }
+                }
+                
+                // Delete paragraph comments
+                if err := tx.Where("paragraph_id IN ?", paragraphIDs).Delete(&models.Comment{}).Error; err != nil {
+                    return fmt.Errorf("failed to delete paragraph comments: %w", err)
+                }
+            }
+            
+            // Delete paragraphs
+            if err := tx.Where("chapter_id IN ?", chapterIDs).Delete(&models.Paragraph{}).Error; err != nil {
+                return fmt.Errorf("failed to delete paragraphs: %w", err)
+            }
+        }
+        
+        // Delete chapters
+        if err := tx.Where("book_id = ?", bookID).Delete(&models.Chapter{}).Error; err != nil {
+            return fmt.Errorf("failed to delete chapters: %w", err)
+        }
+        
+        // 7. Finally, delete the book itself
+        if err := tx.Delete(&models.Book{}, bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete book: %w", err)
+        }
+        
+        return nil
+    })
+}
+
+func (b BookManager) DeleteBookWithSQL(db *gorm.DB, bookID uuid.UUID) error {
+    return db.Transaction(func(tx *gorm.DB) error {
+        // Step 1: Delete all likes for comments related to this book (both reviews and paragraph comments)
+        if err := tx.Exec(`
+            DELETE FROM likes 
+            WHERE comment_id IN (
+                WITH RECURSIVE all_book_comments AS (
+                    -- Base case: Direct book reviews
+                    SELECT id FROM comments 
+                    WHERE book_id = $1
+                    
+                    UNION ALL
+                    
+                    -- Base case: Comments on paragraphs in this book's chapters
+                    SELECT id FROM comments 
+                    WHERE paragraph_id IN (
+                        SELECT p.id FROM paragraphs p
+                        INNER JOIN chapters c ON p.chapter_id = c.id
+                        WHERE c.book_id = $1
+                    )
+                    
+                    UNION ALL
+                    
+                    -- Recursive case: Replies to any of the above comments
+                    SELECT c.id FROM comments c
+                    INNER JOIN all_book_comments abc ON c.parent_id = abc.id
+                )
+                SELECT id FROM all_book_comments
+            )
+        `, bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete likes: %w", err)
+        }
+
+        // Step 2: Delete all comments (reviews + paragraph comments + nested replies) for this book
+        if err := tx.Exec(`
+            DELETE FROM comments 
+            WHERE id IN (
+                WITH RECURSIVE all_book_comments AS (
+                    -- Base case: Direct book reviews
+                    SELECT id FROM comments 
+                    WHERE book_id = $1
+                    
+                    UNION ALL
+                    
+                    -- Base case: Comments on paragraphs in this book's chapters
+                    SELECT id FROM comments 
+                    WHERE paragraph_id IN (
+                        SELECT p.id FROM paragraphs p
+                        INNER JOIN chapters c ON p.chapter_id = c.id
+                        WHERE c.book_id = $1
+                    )
+                    
+                    UNION ALL
+                    
+                    -- Recursive case: Replies to any of the above comments
+                    SELECT c.id FROM comments c
+                    INNER JOIN all_book_comments abc ON c.parent_id = abc.id
+                )
+                SELECT id FROM all_book_comments
+            )
+        `, bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete comments: %w", err)
+        }
+
+        // Step 3: Delete book votes
+        if err := tx.Exec("DELETE FROM votes WHERE book_id = $1", bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete votes: %w", err)
+        }
+
+        // Step 4: Delete book reads
+        if err := tx.Exec("DELETE FROM book_reads WHERE book_id = $1", bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete book reads: %w", err)
+        }
+
+        // Step 5: Delete book bookmarks
+        if err := tx.Exec("DELETE FROM bookmarks WHERE book_id = $1", bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete bookmarks: %w", err)
+        }
+
+        // Step 6: Delete book tags (many-to-many relationship)
+        if err := tx.Exec("DELETE FROM book_tags WHERE book_id = $1", bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete book tags: %w", err)
+        }
+
+        // Step 7: Delete paragraphs in all chapters of this book
+        if err := tx.Exec(`
+            DELETE FROM paragraphs 
+            WHERE chapter_id IN (
+                SELECT id FROM chapters WHERE book_id = $1
+            )
+        `, bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete paragraphs: %w", err)
+        }
+
+        // Step 8: Delete chapters
+        if err := tx.Exec("DELETE FROM chapters WHERE book_id = $1", bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete chapters: %w", err)
+        }
+
+        // Step 9: Finally, delete the book itself
+        if err := tx.Exec("DELETE FROM books WHERE id = $1", bookID).Error; err != nil {
+            return fmt.Errorf("failed to delete book: %w", err)
+        }
+
+        return nil
+    })
+}
+
 func (b BookManager) SetContract(db *gorm.DB, book models.Book, idFrontImage string, idBackImage string, data schemas.ContractCreateSchema) models.Book {
 	book.FullName = data.FullName
 	book.Email = data.Email
@@ -418,7 +628,7 @@ func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas
 func (c ChapterManager) DeleteChapterWithAllRelations(db *gorm.DB, chapterID uuid.UUID) error {
     return db.Transaction(func(tx *gorm.DB) error {
         // Get all paragraph IDs for this chapter
-        var paragraphIDs []string
+        var paragraphIDs []uuid.UUID
         if err := tx.Model(&models.Paragraph{}).Where("chapter_id = ?", chapterID).
             Pluck("id", &paragraphIDs).Error; err != nil {
             return fmt.Errorf("failed to get paragraph IDs: %w", err)
@@ -426,7 +636,7 @@ func (c ChapterManager) DeleteChapterWithAllRelations(db *gorm.DB, chapterID uui
         
         if len(paragraphIDs) > 0 {
             // Get all comment IDs for these paragraphs
-            var commentIDs []string
+            var commentIDs []uuid.UUID
             if err := tx.Model(&models.Comment{}).Where("paragraph_id IN ?", paragraphIDs).
                 Pluck("id", &commentIDs).Error; err != nil {
                 return fmt.Errorf("failed to get comment IDs: %w", err)
