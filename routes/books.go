@@ -331,7 +331,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 	if genre.ID == uuid.Nil {
 		return c.Status(422).JSON(utils.ValidationErr("genre_slug", "Invalid genre slug!"))
 	}
-	
+
 	// Validate Sub Section
 	subSectionSlug := data.SubSectionSlug
 	subSection := models.SubSection{Slug: subSectionSlug}
@@ -375,8 +375,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 	db := ep.DB
-	author := RequestUser(c)
-	book, err := bookManager.GetByAuthorAndSlug(db, author, c.Params("slug"))
+	book, err := bookManager.GetBySlug(db, c.Params("slug"), true)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
@@ -440,12 +439,11 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) DeleteBook(c *fiber.Ctx) error {
 	db := ep.DB
-	author := RequestUser(c)
-	book, err := bookManager.GetByAuthorAndSlug(db, author, c.Params("slug"))
+	book, err := bookManager.GetBySlug(db, c.Params("slug"), false)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	db.Delete(&book)
+	db.Select("Tags").Delete(&book)
 	return c.Status(200).JSON(ResponseMessage("Book deleted successfully"))
 }
 
@@ -527,8 +525,7 @@ func (ep Endpoint) DeleteChapter(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	db.Where("chapter_id = ?", chapter.ID).Delete(&models.Paragraph{})
-	db.Delete(&chapter)
+	chapterManager.DeleteChapterWithSQL(db, chapter.ID)
 	return c.Status(200).JSON(ResponseMessage("Chapter deleted successfully"))
 }
 

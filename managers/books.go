@@ -12,6 +12,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type BookManager struct {
@@ -410,6 +411,112 @@ func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas
 
 	tx.Commit()
 	return chapter
+}
+
+func (c ChapterManager) DeleteChapterWithAllRelations(db *gorm.DB, chapterID uuid.UUID) error {
+    return db.Transaction(func(tx *gorm.DB) error {
+        // Get all paragraph IDs for this chapter
+        var paragraphIDs []string
+        if err := tx.Model(&models.Paragraph{}).Where("chapter_id = ?", chapterID).
+            Pluck("id", &paragraphIDs).Error; err != nil {
+            return fmt.Errorf("failed to get paragraph IDs: %w", err)
+        }
+        
+        if len(paragraphIDs) > 0 {
+            // Get all comment IDs for these paragraphs
+            var commentIDs []string
+            if err := tx.Model(&models.Comment{}).Where("paragraph_id IN ?", paragraphIDs).
+                Pluck("id", &commentIDs).Error; err != nil {
+                return fmt.Errorf("failed to get comment IDs: %w", err)
+            }
+            
+            // Delete likes for these comments
+            if len(commentIDs) > 0 {
+                if err := tx.Where("comment_id IN ?", commentIDs).Delete(&models.Like{}).Error; err != nil {
+                    return fmt.Errorf("failed to delete likes: %w", err)
+                }
+            }
+            
+            // Delete comments
+            if err := tx.Where("paragraph_id IN ?", paragraphIDs).Select(clause.Associations).Delete(&models.Comment{}).Error; err != nil {
+                return fmt.Errorf("failed to delete comments: %w", err)
+            }
+        }
+        
+        // Delete paragraphs
+        if err := tx.Where("chapter_id = ?", chapterID).Delete(&models.Paragraph{}).Error; err != nil {
+            return fmt.Errorf("failed to delete paragraphs: %w", err)
+        }
+        
+        // Delete chapter
+        if err := tx.Delete(&models.Chapter{}, chapterID).Error; err != nil {
+            return fmt.Errorf("failed to delete chapter: %w", err)
+        }
+        
+        return nil
+    })
+}
+
+func (c ChapterManager) DeleteChapterWithSQL(db *gorm.DB, chapterID uuid.UUID) error {
+    return db.Transaction(func(tx *gorm.DB) error {
+        // Step 1: Delete all likes for comments related to this chapter
+        if err := tx.Exec(`
+            DELETE FROM likes 
+            WHERE comment_id IN (
+                WITH RECURSIVE comment_tree AS (
+                    -- Base case: Direct comments on paragraphs in this chapter
+                    SELECT id FROM comments 
+                    WHERE paragraph_id IN (
+                        SELECT id FROM paragraphs WHERE chapter_id = $1
+                    )
+                    
+                    UNION ALL
+                    
+                    -- Recursive case: Replies to comments
+                    SELECT c.id FROM comments c
+                    INNER JOIN comment_tree ct ON c.parent_id = ct.id
+                )
+                SELECT id FROM comment_tree
+            )
+        `, chapterID).Error; err != nil {
+            return fmt.Errorf("failed to delete likes: %w", err)
+        }
+
+        // Step 2: Delete all comments (including nested replies) for this chapter
+        if err := tx.Exec(`
+            DELETE FROM comments 
+            WHERE id IN (
+                WITH RECURSIVE comment_tree AS (
+                    -- Base case: Direct comments on paragraphs in this chapter
+                    SELECT id FROM comments 
+                    WHERE paragraph_id IN (
+                        SELECT id FROM paragraphs WHERE chapter_id = $1
+                    )
+                    
+                    UNION ALL
+                    
+                    -- Recursive case: Replies to comments
+                    SELECT c.id FROM comments c
+                    INNER JOIN comment_tree ct ON c.parent_id = ct.id
+                )
+                SELECT id FROM comment_tree
+            )
+        `, chapterID).Error; err != nil {
+            return fmt.Errorf("failed to delete comments: %w", err)
+        }
+
+        // Step 3: Delete paragraphs
+        if err := tx.Exec("DELETE FROM paragraphs WHERE chapter_id = $1", chapterID).Error; err != nil {
+            return fmt.Errorf("failed to delete paragraphs: %w", err)
+        }
+
+        // Step 4: Delete chapter
+        if err := tx.Exec("DELETE FROM chapters WHERE id = $1", chapterID).Error; err != nil {
+            return fmt.Errorf("failed to delete chapter: %w", err)
+        }
+
+        return nil
+    })
 }
 
 func (c ChapterManager) GetParagraph(db *gorm.DB, chapter models.Chapter, index uint) *models.Paragraph {

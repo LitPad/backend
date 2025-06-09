@@ -177,7 +177,7 @@ type Chapter struct {
 	Book       Book        `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Title      string      `gorm:"type: varchar(255)"`
 	Slug       string      `gorm:"unique"`
-	Paragraphs []Paragraph `gorm:"<-:false"`
+	Paragraphs []Paragraph `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE"`
 }
 
 func (c *Chapter) GenerateUniqueSlug(tx *gorm.DB) string {
@@ -210,7 +210,7 @@ type Paragraph struct {
 	Chapter   Chapter `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;<-:false"`
 	Index     uint
 	Text      string    `gorm:"type:text"`
-	Comments  []Comment `gorm:"foreignKey:ParagraphID;<-:false"`
+	Comments  []Comment `gorm:"foreignKey:ParagraphID;constraint:OnDelete:CASCADE"`
 }
 
 func (p Paragraph) CommentsCount() int {
@@ -226,14 +226,14 @@ type Comment struct {
 	Book   *Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Rating choices.RatingChoice
 
-	ParagraphID *uuid.UUID // For praragrapj
+	ParagraphID *uuid.UUID // For paragraph
 	Paragraph   *Paragraph `gorm:"foreignKey:ParagraphID;constraint:OnDelete:CASCADE;<-:false"`
-	Likes       []Like
+	Likes       []Like `gorm:"foreignKey:CommentID;constraint:OnDelete:CASCADE"`
 	Text        string `gorm:"type:varchar(10000)"`
 
 	ParentID *uuid.UUID
-
-	Replies []Comment `gorm:"foreignKey:ParentID"`
+	Parent   *Comment  `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;<-:false"`
+	Replies []Comment `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
 }
 
 func (c Comment) LikesCount() int {
