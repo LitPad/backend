@@ -640,6 +640,35 @@ func (ep Endpoint) AdminGetBookDetails(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
+// @Summary Toggle Book Completed Status
+// @Description Set the book completed status to true or false. 
+// @Tags Admin | Books
+// @Accept json
+// @Produce json
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.BookCompletionStatusResponseSchema "Book status updated successfully"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /admin/books/book/{slug}/toggle-book-completion-status [get]
+// @Security BearerAuth
+func (ep Endpoint) ToggleBookCompletionStatus(c *fiber.Ctx) error {
+	db := ep.DB
+	book, err := bookManager.GetBySlug(db, c.Params("slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	if book.Completed {
+		book.Completed = false
+	} else {
+		book.Completed = true
+	}
+	db.Save(&book)
+	response := schemas.BookCompletionStatusResponseSchema{
+		ResponseSchema: ResponseMessage("Book completed to subsection successfully"),
+		Data: schemas.BookCompletionStatusSchema{Completed: book.Completed},
+	}
+	return c.Status(200).JSON(response)
+}
+
 // @Summary List Book Contracts with Pagination
 // @Description Retrieves a list of book contracts with support for pagination and optional filtering based on contract status.
 // @Tags Admin | Books

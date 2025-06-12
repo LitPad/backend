@@ -204,3 +204,12 @@ type FeaturedContentEntrySchema struct {
 	BookSlug string                                `json:"book_slug" validate:"required"`
 	Desc     string                                `json:"desc" validate:"required"`
 }
+
+type BookCompletionStatusSchema struct {
+	Completed bool `json:"completed"`
+}
+
+type BookCompletionStatusResponseSchema struct {
+	ResponseSchema
+	Data BookCompletionStatusSchema `json:"data"`
+}

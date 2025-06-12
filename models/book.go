@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 
 	"github.com/LitPad/backend/models/choices"
@@ -87,7 +88,7 @@ type Book struct {
 	Featured       bool `gorm:"default:false"` //controlled by admin
 	WeeklyFeatured time.Time
 	Reads          []BookRead `gorm:"<-:false;constraint:OnDelete:CASCADE"`
-	AvgRating      float64 // meant for query purposes. do not intentionally populate field
+	AvgRating      float64    // meant for query purposes. do not intentionally populate field
 	Bookmark       []Bookmark `gorm:"<-:false;constraint:OnDelete:CASCADE"`
 
 	// BOOK CONTRACT
@@ -113,6 +114,16 @@ type Book struct {
 	ChapterPrice         int
 	FullPurchaseMode     bool                         `gorm:"default:false"`
 	ContractStatus       choices.ContractStatusChoice `gorm:"default:PENDING"`
+}
+
+func (b Book) GetWordCount() int {
+	totalWords := 0
+	for _, chapter := range b.Chapters {
+		for _, paragraph := range chapter.Paragraphs {
+			totalWords += len(strings.Fields(paragraph.Text))
+		}
+	}
+	return totalWords
 }
 
 func (b Book) VotesCount() int {
@@ -159,6 +170,7 @@ type BookRead struct {
 	BookID    uuid.UUID `json:"book_id"`
 	Book      Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Completed bool      `gorm:"default:false"`
+	InLibrary bool      `gorm:"default:false"`
 }
 
 type BookReport struct {
@@ -228,12 +240,12 @@ type Comment struct {
 
 	ParagraphID *uuid.UUID // For paragraph
 	Paragraph   *Paragraph `gorm:"foreignKey:ParagraphID;constraint:OnDelete:CASCADE;<-:false"`
-	Likes       []Like `gorm:"foreignKey:CommentID;constraint:OnDelete:CASCADE"`
-	Text        string `gorm:"type:varchar(10000)"`
+	Likes       []Like     `gorm:"foreignKey:CommentID;constraint:OnDelete:CASCADE"`
+	Text        string     `gorm:"type:varchar(10000)"`
 
 	ParentID *uuid.UUID
 	Parent   *Comment  `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE;<-:false"`
-	Replies []Comment `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
+	Replies  []Comment `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
 }
 
 func (c Comment) LikesCount() int {
@@ -278,5 +290,5 @@ type FeaturedContent struct {
 	BookID   uuid.UUID
 	Book     Book    `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	SeenBy   []*User `gorm:"many2many:featured_content_seen_by;"`
-	IsActive bool	`gorm:"default:true;"`
+	IsActive bool    `gorm:"default:true;"`
 }

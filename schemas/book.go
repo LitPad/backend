@@ -42,9 +42,9 @@ func (s SectionSchema) Init(section models.Section) SectionSchema {
 }
 
 type SubSectionSchema struct {
-	Name string `json:"name"`
-	Slug string `json:"slug"`
-	BooksCount int `json:"books_count"`
+	Name       string `json:"name"`
+	Slug       string `json:"slug"`
+	BooksCount int    `json:"books_count"`
 }
 
 func (s SubSectionSchema) Init(subSection models.SubSection) SubSectionSchema {
@@ -118,6 +118,7 @@ type BookSchema struct {
 	CoverImage         string                `json:"cover_image"`
 	FullPrice          *int                  `json:"full_price"`
 	ChapterPrice       int                   `json:"chapter_price"`
+	Completed          bool                  `json:"completed"`
 	Votes              int                   `json:"votes"`
 	Reads              int                   `json:"reads"`
 	AvgRating          float64               `json:"avg_rating"`
@@ -156,6 +157,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	}
 
 	b.CoverImage = book.CoverImage
+	b.Completed = book.Completed
 	b.CreatedAt = book.CreatedAt
 	b.UpdatedAt = book.UpdatedAt
 	return b
@@ -280,11 +282,13 @@ type ReplyResponseSchema struct {
 
 type BookDetailSchema struct {
 	BookSchema
-	Reviews ReviewsResponseDataSchema `json:"reviews"`
+	WordCount int                       `json:"word_count"`
+	Reviews   ReviewsResponseDataSchema `json:"reviews"`
 }
 
 func (b BookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Comment) BookDetailSchema {
 	b.BookSchema = b.BookSchema.Init(book)
+	b.WordCount = book.GetWordCount()
 	reviewsToAdd := b.Reviews.Items
 	for _, review := range reviews {
 		reviewsToAdd = append(reviewsToAdd, ReviewSchema{}.Init(review))
@@ -307,11 +311,11 @@ type BookChapterCreateSchema struct {
 }
 
 type BookCreateSchema struct {
-	Title          string          `form:"title" validate:"required,max=200"`
-	Blurb          string          `form:"blurb" validate:"required,wordcount_max=1000,wordcount_min=100"`
-	GenreSlug      string          `form:"genre_slug" validate:"required"`
-	TagSlugs       []string        `form:"tag_slugs" validate:"required"`
-	AgeDiscretion  choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
+	Title         string          `form:"title" validate:"required,max=200"`
+	Blurb         string          `form:"blurb" validate:"required,wordcount_max=1000,wordcount_min=100"`
+	GenreSlug     string          `form:"genre_slug" validate:"required"`
+	TagSlugs      []string        `form:"tag_slugs" validate:"required"`
+	AgeDiscretion choices.AgeType `form:"age_discretion" validate:"required,age_discretion_validator"`
 }
 
 type ChapterCreateSchema struct {

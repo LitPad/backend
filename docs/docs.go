@@ -221,6 +221,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/books/book/{slug}/toggle-book-completion-status": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set the book completed status to true or false.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "Toggle Book Completed Status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book status updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookCompletionStatusResponseSchema"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/books/by-username/{username}": {
             "get": {
                 "security": [
@@ -4993,6 +5036,30 @@ const docTemplate = `{
                 }
             }
         },
+        "schemas.BookCompletionStatusResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.BookCompletionStatusSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.BookCompletionStatusSchema": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                }
+            }
+        },
         "schemas.BookDetailResponseSchema": {
             "type": "object",
             "properties": {
@@ -5029,6 +5096,9 @@ const docTemplate = `{
                 },
                 "chapters_count": {
                     "type": "integer"
+                },
+                "completed": {
+                    "type": "boolean"
                 },
                 "cover_image": {
                     "type": "string"
@@ -5075,6 +5145,9 @@ const docTemplate = `{
                     "example": "2024-06-05T02:32:34.462196+01:00"
                 },
                 "votes": {
+                    "type": "integer"
+                },
+                "word_count": {
                     "type": "integer"
                 }
             }
@@ -5131,6 +5204,9 @@ const docTemplate = `{
                 },
                 "chapters_count": {
                     "type": "integer"
+                },
+                "completed": {
+                    "type": "boolean"
                 },
                 "cover_image": {
                     "type": "string"

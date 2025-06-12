@@ -34,7 +34,7 @@ func TagsChaptersVotesBookScope(db *gorm.DB) *gorm.DB {
 }
 
 func AuthorGenreTagReviewsBookScope(db *gorm.DB) *gorm.DB {
-	return db.Scopes(AuthorGenreTagBookPreloadScope).Preload("Reviews").Preload("Reviews.User").Preload("Reviews.Likes").Preload("Reviews.Replies")
+	return db.Scopes(AuthorGenreTagBookPreloadScope).Preload("Reviews").Preload("Reviews.User").Preload("Reviews.Likes").Preload("Reviews.Replies").Preload("Chapters.Paragraphs")
 }
 
 func BoughtChapterScope(db *gorm.DB) *gorm.DB {

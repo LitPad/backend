@@ -80,6 +80,20 @@ func (a AgeType) IsValid() bool {
 	return false
 }
 
+type BookStatusChoice string
+const (
+	BS_ONGOING     BookStatusChoice = "ongoing"
+	BS_COMPLETED   BookStatusChoice = "completed"
+)
+
+func (b BookStatusChoice) IsValid() bool {
+	switch b {
+	case BS_ONGOING, BS_COMPLETED:
+		return true
+	}
+	return false
+}
+
 type RatingChoice int
 
 const (
