@@ -47,7 +47,7 @@ type SubSectionSchema struct {
 	BooksCount int    `json:"books_count"`
 }
 
-func (s SubSectionSchema) Init(subSection models.SubSection) SubSectionSchema {
+func (s SubSectionSchema) Init(subSection *models.SubSection) SubSectionSchema {
 	s.Name = subSection.Name
 	s.Slug = subSection.Slug
 	s.BooksCount = len(subSection.Books)
@@ -144,8 +144,8 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
 	if book.SubSection != nil {
-		section := b.Section.Init(book.SubSection.Section)
-		subsection := b.SubSection.Init(*book.SubSection)
+		section := SectionSchema{}.Init(book.SubSection.Section)
+		subsection := SubSectionSchema{}.Init(book.SubSection)
 		b.Section = &section
 		b.SubSection = &subsection
  	} else {
@@ -385,7 +385,7 @@ func (s SubSectionsResponseSchema) Init(subSections []models.SubSection) SubSect
 	// Set Initial Data
 	subSectionItems := s.Data
 	for _, subSection := range subSections {
-		subSectionItems = append(subSectionItems, SubSectionSchema{}.Init(subSection))
+		subSectionItems = append(subSectionItems, SubSectionSchema{}.Init(&subSection))
 	}
 	s.Data = subSectionItems
 	return s

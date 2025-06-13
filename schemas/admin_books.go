@@ -90,7 +90,7 @@ func (s SectionWithSubsectionsSchema) Init(section models.Section) SectionWithSu
 	s.UpdatedAt = section.UpdatedAt
 	subsections := []SubSectionSchema{}
 	for _, item := range section.SubSections {
-		subsections = append(subsections, SubSectionSchema{}.Init(item))
+		subsections = append(subsections, SubSectionSchema{}.Init(&item))
 	}
 	s.SubSections = subsections
 	s.SubSectionsCount = len(section.SubSections)
@@ -129,7 +129,7 @@ type SubSectionWithBooksSchema struct {
 }
 
 func (s SubSectionWithBooksSchema) Init(subSection models.SubSection, books []models.Book, paginatedData PaginatedResponseDataSchema) SubSectionWithBooksSchema {
-	s.SubSectionSchema = s.SubSectionSchema.Init(subSection)
+	s.SubSectionSchema = s.SubSectionSchema.Init(&subSection)
 	s.Section = subSection.Section.Name
 	bookItems := []SubSectionBookSchema{}
 	for _, item := range books {
