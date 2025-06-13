@@ -73,8 +73,8 @@ type Book struct {
 	GenreID uuid.UUID
 	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	SubSectionID   uuid.UUID
-	SubSection     SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
+	SubSectionID   *uuid.UUID `gorm:"null"`
+	SubSection     *SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
 	OrderInSection uint
 
 	Tags       []Tag     `gorm:"many2many:book_tags"`

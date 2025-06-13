@@ -178,11 +178,6 @@ func createBook(db *gorm.DB, author models.User, genre models.Genre, tag models.
 	db.Omit("Tags.*").FirstOrCreate(&book, bookToCreate)
 	books := []models.Book{}
 	db.Find(&books)
-	for _, book := range books {
-		subSection := subSections[rand.Intn(len(subSections))]
-		book.SubSectionID = subSection.ID
-		db.Save(&book)
-	}
 	return book
 }
 

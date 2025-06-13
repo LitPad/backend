@@ -372,8 +372,8 @@ func (ep Endpoint) AddBookToSubSection(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	if book.SubSectionID != subsection.ID {
-		book.SubSectionID = subsection.ID
+	if book.SubSectionID != &subsection.ID {
+		book.SubSectionID = &subsection.ID
 		book.OrderInSection = uint(len(subsection.Books) + 1)
 		db.Save(&book)
 	}

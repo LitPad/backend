@@ -110,8 +110,8 @@ type BookSchema struct {
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
-	Section            SectionSchema         `json:"section"`
-	SubSection         SubSectionSchema      `json:"sub_section"`
+	Section            *SectionSchema         `json:"section"`
+	SubSection         *SubSectionSchema      `json:"sub_section"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
@@ -143,8 +143,15 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
-	b.Section = b.Section.Init(book.SubSection.Section)
-	b.SubSection = b.SubSection.Init(book.SubSection)
+	if book.SubSection != nil {
+		section := b.Section.Init(book.SubSection.Section)
+		subsection := b.SubSection.Init(*book.SubSection)
+		b.Section = &section
+		b.SubSection = &subsection
+ 	} else {
+		b.Section = nil
+		b.SubSection = nil
+	}
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()
 	b.Reads = book.ReadsCount()

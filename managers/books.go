@@ -53,7 +53,7 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 			errData := utils.NotFoundErr("Invalid book subsection")
 			return books, &errData
 		}
-		query = query.Where(models.Book{SubSectionID: subSection.ID})
+		query = query.Where(models.Book{SubSectionID: &subSection.ID})
 	}
 	if tagSlug != "" {
 		tag := models.Tag{Slug: tagSlug}
