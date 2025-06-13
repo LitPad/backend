@@ -67,7 +67,7 @@ type Book struct {
 	Author        User   `gorm:"foreignKey:AuthorID;constraint:OnDelete:SET NULL;<-:false"`
 	Title         string `gorm:"type: varchar(255)"`
 	Slug          string `gorm:"unique"`
-	Blurb         string `gorm:"type: varchar(1000)"`
+	Blurb         string `gorm:"type: varchar(10000)"`
 	AgeDiscretion choices.AgeType
 
 	GenreID uuid.UUID
