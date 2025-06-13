@@ -237,12 +237,12 @@ func createReview(db *gorm.DB, book models.Book, user models.User) models.Commen
 func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	log.Println("Creating Initial Data....")
 	createSuperUser(db, cfg)
+	tags := createTags(db)
+	genres := createGenres(db, tags)
 	if cfg.Environment != "production" {
 		createReader(db, cfg)
 		author := createAuthor(db, cfg)
 		createCoins(db)
-		tags := createTags(db)
-		genres := createGenres(db, tags)
 		sections := createSections(db)
 		subSections := createSubSections(db, sections)
 		createGifts(db)
