@@ -24,7 +24,11 @@ func ResponseMessage(message string) schemas.ResponseSchema {
 }
 
 func RequestUser(c *fiber.Ctx) *models.User {
-	return c.Locals("user").(*models.User)
+	user, ok := c.Locals("user").(*models.User)
+	if !ok || user == nil {
+		return nil
+	}
+	return user
 }
 
 func Session(c *fiber.Ctx, store *session.Store) *session.Session {

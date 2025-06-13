@@ -137,7 +137,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminRouter.Get("/subscribers", endpoint.AdminGetSubscribers)
 
 	// Admin Books (2)
-	adminBooksRouter := adminRouter.Group("/books")
+	adminBooksRouter := adminRouter.Group("/books", endpoint.AdminMiddleware)
 	adminBooksRouter.Get("", endpoint.AdminGetBooks)
 	adminBooksRouter.Get("/by-username/:username", endpoint.AdminGetAuthorBooks)
 	adminBooksRouter.Get("/book-detail/:slug", endpoint.AdminGetBookDetails)
