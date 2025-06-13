@@ -14,10 +14,10 @@ import (
 )
 
 func createSuperUser(db *gorm.DB, cfg config.Config) models.User {
-	name := "Test Admin"
+	name := "Dark Xenia"
 	user := models.User{
 		Name:            &name,
-		Username:        "test-admin",
+		Username:        "xenia",
 		Email:           cfg.FirstSuperuserEmail,
 		Password:        cfg.FirstSuperUserPassword,
 		IsSuperuser:     true,
@@ -237,20 +237,22 @@ func createReview(db *gorm.DB, book models.Book, user models.User) models.Commen
 func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	log.Println("Creating Initial Data....")
 	createSuperUser(db, cfg)
-	createReader(db, cfg)
-	author := createAuthor(db, cfg)
-	createCoins(db)
-	tags := createTags(db)
-	genres := createGenres(db, tags)
-	sections := createSections(db)
-	subSections := createSubSections(db, sections)
-	createGifts(db)
-	createSubscriptionPlans(db)
-	book := createBook(db, author, genres[0], tags[0], sections, subSections)
-	chapter := createChapter(db, book)
-	paragraph := createParagraphs(db, chapter)
-	comment := createParagraphComment(db, author, paragraph)
-	createReply(db, comment, author)
-	createReview(db, book, author)
+	if cfg.Environment != "production" {
+		createReader(db, cfg)
+		author := createAuthor(db, cfg)
+		createCoins(db)
+		tags := createTags(db)
+		genres := createGenres(db, tags)
+		sections := createSections(db)
+		subSections := createSubSections(db, sections)
+		createGifts(db)
+		createSubscriptionPlans(db)
+		book := createBook(db, author, genres[0], tags[0], sections, subSections)
+		chapter := createChapter(db, book)
+		paragraph := createParagraphs(db, chapter)
+		comment := createParagraphComment(db, author, paragraph)
+		createReply(db, comment, author)
+		createReview(db, book, author)
+	}
 	log.Println("Initial Data Created....")
 }
