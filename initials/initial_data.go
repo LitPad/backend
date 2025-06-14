@@ -73,12 +73,14 @@ func createCoins(db *gorm.DB) {
 	}
 }
 
-func createTags(db *gorm.DB) []models.Tag {
+func createTags(db *gorm.DB, genres []models.Genre) []models.Tag {
 	tags := []models.Tag{}
 	db.Find(&tags)
 	if len(tags) < 1 {
+		rand.Seed(time.Now().UnixNano())
 		for _, item := range TAGS {
-			tag := models.Tag{Name: item}
+			genre := genres[rand.Intn(len(genres))]
+			tag := models.Tag{Name: item, GenreID: genre.ID}
 			tags = append(tags, tag)
 		}
 		db.Create(&tags)
@@ -86,19 +88,13 @@ func createTags(db *gorm.DB) []models.Tag {
 	return tags
 }
 
-func createGenres(db *gorm.DB, tags []models.Tag) []models.Genre {
+func createGenres(db *gorm.DB) []models.Genre {
 	genres := []models.Genre{}
 	db.Find(&genres)
 
 	if len(genres) < 1 {
 		for _, item := range GENRES {
-			// Shuffle the list
-			rand.New(rand.NewSource(time.Now().UnixNano()))
-			rand.Shuffle(len(tags), func(i, j int) {
-				tags[i], tags[j] = tags[j], tags[i]
-			})
-			genre := models.Genre{Name: item, Tags: tags[:10]}
-			genres = append(genres, genre)
+			genres = append(genres, models.Genre{Name: item})
 		}
 		db.Omit("Tags.*").Create(&genres)
 	}
@@ -232,9 +228,9 @@ func createReview(db *gorm.DB, book models.Book, user models.User) models.Commen
 func CreateInitialData(db *gorm.DB, cfg config.Config) {
 	log.Println("Creating Initial Data....")
 	createSuperUser(db, cfg)
-	tags := createTags(db)
-	genres := createGenres(db, tags)
+	genres := createGenres(db)
 	if cfg.Environment != "production" {
+		tags := createTags(db, genres)
 		createReader(db, cfg)
 		author := createAuthor(db, cfg)
 		createCoins(db)

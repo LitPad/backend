@@ -334,7 +334,7 @@ func (ep Endpoint) CreateBook(c *fiber.Ctx) error {
 
 	// Validate Tags
 	tagSlugs := data.TagSlugs
-	tags, errStr := CheckTagStrings(db, tagSlugs)
+	tags, errStr := CheckTagStrings(db, tagSlugs, genre)
 	if errStr != nil {
 		return c.Status(422).JSON(utils.ValidationErr("tag_slugs", *errStr))
 	}
@@ -387,7 +387,7 @@ func (ep Endpoint) UpdateBook(c *fiber.Ctx) error {
 
 	// Validate Tags
 	tagSlugs := data.TagSlugs
-	tags, errStr := CheckTagStrings(db, tagSlugs)
+	tags, errStr := CheckTagStrings(db, tagSlugs, genre)
 	if errStr != nil {
 		return c.Status(422).JSON(utils.ValidationErr("tag_slugs", *errStr))
 	}

@@ -123,9 +123,17 @@ func ValidatePaymentStatus(c *fiber.Ctx) (*string, *utils.ErrorResponse) {
 	return &status, nil
 }
 
-func CheckTagStrings(db *gorm.DB, submittedList []string) ([]models.Tag, *string) {
+func CheckTagStrings(db *gorm.DB, submittedList []string, genre models.Genre) ([]models.Tag, *string) {
+	// Swagger fix
+	if len(submittedList) == 1 && strings.Contains(submittedList[0], ",") {
+		submittedList = strings.Split(submittedList[0], ",")
+		for i := range submittedList {
+			submittedList[i] = strings.TrimSpace(submittedList[i])
+		}
+	}
+	
 	tags := []models.Tag{}
-	db.Find(&tags)
+	db.Where("genre_id = ?", genre.ID).Find(&tags)
 	// Create a map for quick lookup of predefined strings
 	predefinedMap := make(map[string]bool)
 	for _, item := range tags {

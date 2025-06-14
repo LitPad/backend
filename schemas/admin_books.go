@@ -53,11 +53,6 @@ type ContractsResponseSchema struct {
 	Data ContractsResponseDataSchema `json:"data"`
 }
 
-type GenreAddSchema struct {
-	Name     string   `json:"name" validate:"required"`
-	TagSlugs []string `json:"tag_slugs"`
-}
-
 type TagsAddSchema struct {
 	Name string `json:"name" validate:"required"`
 }

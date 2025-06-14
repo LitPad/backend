@@ -759,17 +759,6 @@ definitions:
       username:
         type: string
     type: object
-  schemas.GenreAddSchema:
-    properties:
-      name:
-        type: string
-      tag_slugs:
-        items:
-          type: string
-        type: array
-    required:
-    - name
-    type: object
   schemas.GenreSchema:
     properties:
       name:
@@ -1465,6 +1454,8 @@ definitions:
     type: object
   schemas.TagSchema:
     properties:
+      books_count:
+        type: integer
       name:
         type: string
       slug:
@@ -2041,7 +2032,7 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/schemas.GenreAddSchema'
+          $ref: '#/definitions/schemas.TagsAddSchema'
       produces:
       - application/json
       responses:
@@ -2108,7 +2099,7 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/schemas.GenreAddSchema'
+          $ref: '#/definitions/schemas.TagsAddSchema'
       produces:
       - application/json
       responses:
@@ -2450,38 +2441,6 @@ paths:
       summary: Remove Book From SubSection
       tags:
       - Admin | Books
-  /admin/books/tags:
-    post:
-      consumes:
-      - application/json
-      description: Add a new tag to the app.
-      parameters:
-      - description: Tag
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.TagsAddSchema'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Tag added successfully
-          schema:
-            $ref: '#/definitions/schemas.ResponseSchema'
-        "400":
-          description: Invalid request data
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Add Tag
-      tags:
-      - Admin | Books
   /admin/books/tags/{slug}:
     delete:
       consumes:
@@ -2547,6 +2506,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Update Tag
+      tags:
+      - Admin | Books
+  /admin/books/tags/add/{genre_slug}:
+    post:
+      consumes:
+      - application/json
+      description: Add a new tag to the app.
+      parameters:
+      - description: Genre slug
+        in: path
+        name: genre_slug
+        required: true
+        type: string
+      - description: Tag
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.TagsAddSchema'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tag added successfully
+          schema:
+            $ref: '#/definitions/schemas.ResponseSchema'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add Tag
       tags:
       - Admin | Books
   /admin/featured-contents:

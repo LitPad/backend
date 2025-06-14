@@ -11,11 +11,13 @@ import (
 type TagSchema struct {
 	Name string `json:"name"`
 	Slug string `json:"slug"`
+	BooksCount int `json:"books_count"`
 }
 
 func (t TagSchema) Init(tag models.Tag) TagSchema {
 	t.Name = tag.Name
 	t.Slug = tag.Slug
+	t.BooksCount = tag.BooksCount()
 	return t
 }
 
@@ -61,9 +63,8 @@ type GenreSchema struct {
 
 func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 	g.GenreWithoutTagSchema = g.GenreWithoutTagSchema.Init(genre)
-	tags := genre.Tags
-	tagsToAdd := g.Tags
-	for _, tag := range tags {
+	tagsToAdd := make([]TagSchema, 0)
+	for _, tag := range genre.Tags {
 		tagsToAdd = append(tagsToAdd, TagSchema{}.Init(tag))
 	}
 	g.Tags = tagsToAdd

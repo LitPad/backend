@@ -11,11 +11,25 @@ import (
 	"gorm.io/gorm"
 )
 
+type Genre struct {
+	BaseModel
+	Name string `gorm:"unique"`
+	Slug string `gorm:"unique"`
+	Tags []Tag
+}
+
+func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
+	genre.Slug = slug.Make(genre.Name)
+	return
+}
+
 type Tag struct {
 	BaseModel
-	Name   string  `gorm:"unique"`
+	Name   string
 	Slug   string  `gorm:"unique"`
-	Genres []Genre `gorm:"many2many:genre_tags;"`
+	GenreID uuid.UUID 
+	Genre Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
+	Books []Book `gorm:"many2many:book_tags;"`
 }
 
 func (tag *Tag) BeforeSave(tx *gorm.DB) (err error) {
@@ -23,16 +37,8 @@ func (tag *Tag) BeforeSave(tx *gorm.DB) (err error) {
 	return
 }
 
-type Genre struct {
-	BaseModel
-	Name string `gorm:"unique"`
-	Slug string `gorm:"unique"`
-	Tags []Tag  `gorm:"many2many:genre_tags;"`
-}
-
-func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
-	genre.Slug = slug.Make(genre.Name)
-	return
+func (t Tag) BooksCount() int {
+	return len(t.Books)
 }
 
 type Section struct {

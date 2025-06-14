@@ -770,7 +770,7 @@ type GenreManager struct {
 
 func (g GenreManager) GetAll(db *gorm.DB) []models.Genre {
 	genres := g.ModelList
-	db.Preload("Tags").Find(&genres)
+	db.Preload("Tags").Preload("Tags.Books").Find(&genres)
 	return genres
 }
 

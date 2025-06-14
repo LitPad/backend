@@ -143,7 +143,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	adminBooksRouter.Get("/book-detail/:slug", endpoint.AdminGetBookDetails)
 	adminBooksRouter.Get("/contracts", endpoint.AdminGetBookContracts)
 	adminBooksRouter.Post("/genres", endpoint.AdminAddBookGenre)
-	adminBooksRouter.Post("/tags", endpoint.AdminAddBookTag)
+	adminBooksRouter.Post("/tags/add/:genre_slug", endpoint.AdminAddBookTag)
 	adminBooksRouter.Get("/sections", endpoint.AdminGetSections)
 	adminBooksRouter.Post("/sections", endpoint.AdminAddBookSection)
 	adminBooksRouter.Post("/sections/:slug/subsections", endpoint.AdminAddBookSubSection)

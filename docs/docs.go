@@ -454,7 +454,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.GenreAddSchema"
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
                         }
                     }
                 ],
@@ -512,7 +512,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/schemas.GenreAddSchema"
+                            "$ref": "#/definitions/schemas.TagsAddSchema"
                         }
                     }
                 ],
@@ -1089,7 +1089,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/books/tags": {
+        "/admin/books/tags/add/{genre_slug}": {
             "post": {
                 "security": [
                     {
@@ -1108,6 +1108,13 @@ const docTemplate = `{
                 ],
                 "summary": "Add Tag",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Genre slug",
+                        "name": "genre_slug",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Tag",
                         "name": "data",
@@ -5848,23 +5855,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.GenreAddSchema": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "tag_slugs": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "schemas.GenreSchema": {
             "type": "object",
             "properties": {
@@ -6880,6 +6870,9 @@ const docTemplate = `{
         "schemas.TagSchema": {
             "type": "object",
             "properties": {
+                "books_count": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 },

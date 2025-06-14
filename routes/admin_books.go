@@ -15,7 +15,7 @@ import (
 // @Tags Admin | Books
 // @Accept json
 // @Produce json
-// @Param data body schemas.GenreAddSchema true "Genre"
+// @Param data body schemas.TagsAddSchema true "Genre"
 // @Success 201 {object} schemas.ResponseSchema "Genre Added Successfully"
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
@@ -23,7 +23,7 @@ import (
 // @Security BearerAuth
 func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 	db := ep.DB
-	data := schemas.GenreAddSchema{}
+	data := schemas.TagsAddSchema{}
 	errCode, errData := ValidateRequest(c, &data)
 	if errData != nil {
 		return c.Status(*errCode).JSON(errData)
@@ -34,14 +34,7 @@ func (ep Endpoint) AdminAddBookGenre(c *fiber.Ctx) error {
 	if existingGenre.ID != uuid.Nil {
 		return c.Status(422).JSON(utils.ValidationErr("name", "Genre already exists"))
 	}
-	tags := []models.Tag{}
-	if len(data.TagSlugs) > 0 {
-		db.Where("slug IN ?", data.TagSlugs).Find(&tags)
-		if len(tags) < 1 {
-			return c.Status(422).JSON(utils.ValidationErr("tag_slugs", "Enter at least one valid tag slug"))
-		}
-	}
-	db.Omit("Tags.*").Create(&models.Genre{Name: name, Tags: tags})
+	db.Create(&models.Genre{Name: name})
 	return c.Status(201).JSON(ResponseMessage("Genre added successfully"))
 }
 
@@ -111,14 +104,20 @@ func (ep Endpoint) AdminAddBookSubSection(c *fiber.Ctx) error {
 // @Tags Admin | Books
 // @Accept json
 // @Produce json
+// @Param genre_slug path string true "Genre slug"
 // @Param data body schemas.TagsAddSchema true "Tag"
 // @Success 201 {object} schemas.ResponseSchema "Tag added successfully"
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
-// @Router /admin/books/tags [post]
+// @Router /admin/books/tags/add/{genre_slug} [post]
 // @Security BearerAuth
 func (ep Endpoint) AdminAddBookTag(c *fiber.Ctx) error {
 	db := ep.DB
+	genre := genreManager.GetBySlug(db, c.Params("genre_slug"))
+	if genre == nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Genre does not exist"))
+	}
+
 	data := schemas.TagsAddSchema{}
 	errCode, errData := ValidateRequest(c, &data)
 	if errData != nil {
@@ -130,7 +129,7 @@ func (ep Endpoint) AdminAddBookTag(c *fiber.Ctx) error {
 	if existingTag.ID != uuid.Nil {
 		return c.Status(422).JSON(utils.ValidationErr("name", "Tag already exists"))
 	}
-	db.Create(&models.Tag{Name: name})
+	db.Create(&models.Tag{Name: name, GenreID: genre.ID})
 	return c.Status(201).JSON(ResponseMessage("Tag added successfully"))
 }
 
@@ -140,7 +139,7 @@ func (ep Endpoint) AdminAddBookTag(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param slug path string true "Genre slug"
-// @Param data body schemas.GenreAddSchema true "Genre"
+// @Param data body schemas.TagsAddSchema true "Genre"
 // @Success 200 {object} schemas.ResponseSchema "Genre Updated Successfully"
 // @Failure 400 {object} utils.ErrorResponse "Invalid request data"
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
@@ -153,7 +152,7 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 		return c.Status(404).JSON(utils.NotFoundErr("Genre does not exist"))
 	}
 
-	data := schemas.GenreAddSchema{}
+	data := schemas.TagsAddSchema{}
 	errCode, errData := ValidateRequest(c, &data)
 	if errData != nil {
 		return c.Status(*errCode).JSON(errData)
@@ -164,14 +163,6 @@ func (ep Endpoint) AdminUpdateBookGenre(c *fiber.Ctx) error {
 	db.Where("LOWER(name) = LOWER(?)", name).Not("id = ?", genre.ID).First(&existingGenre)
 	if existingGenre.ID != uuid.Nil {
 		return c.Status(422).JSON(utils.ValidationErr("name", "Genre already exists with that name"))
-	}
-	tags := []models.Tag{}
-	if len(tags) > 0 {
-		db.Where("slug IN ?", data.TagSlugs).Find(&tags)
-		if len(tags) < 1 {
-			return c.Status(422).JSON(utils.ValidationErr("tag_slugs", "Enter at leat one valid tag slugs"))
-		}
-		genre.Tags = tags
 	}
 	genre.Name = name
 	db.Save(&genre)

@@ -12,8 +12,8 @@ import (
 
 func addBookGenre(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, token string) {
 	genre := GenreData(db)
-	genreData := schemas.GenreAddSchema{
-		Name: genre.Name, TagSlugs: []string{"invalid-tag-slug"},
+	genreData := schemas.TagsAddSchema{
+		Name: genre.Name,
 	}
 	t.Run("Reject Genre Creation Due To Already Existing Genre", func(t *testing.T) {
 		url := fmt.Sprintf("%s/genres", baseUrl)
@@ -43,7 +43,6 @@ func addBookGenre(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, tok
 	})
 
 	t.Run("Accept Genre Creation", func(t *testing.T) {
-		genreData.TagSlugs = []string{genre.Tags[0].Slug}
 		url := fmt.Sprintf("%s/genres", baseUrl)
 		res := ProcessJsonTestBody(t, app, url, "POST", genreData, token)
 		// Assert Status code
@@ -88,7 +87,7 @@ func addBookTag(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, token
 
 func updateBookGenre(t *testing.T, app *fiber.App, db *gorm.DB, baseUrl string, token string) {
 	genre := GenreData(db)
-	genreData := schemas.GenreAddSchema{
+	genreData := schemas.TagsAddSchema{
 		Name: genre.Name,
 	}
 
