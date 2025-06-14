@@ -214,6 +214,87 @@
                 }
             }
         },
+        "/admin/books/book-detail/{slug}/reading-progress": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows an admin to view reading progress data of a book",
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "View Book Reading Progress Data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "12_months",
+                        "description": "Time Range to filter by (12_months, 30_days, 7_days)",
+                        "name": "time_range_filter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookReadingProgressResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/books/book-detail/{slug}/retention-stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows an admin to view retention data of a book",
+                "tags": [
+                    "Admin | Books"
+                ],
+                "summary": "View Book Retention Data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Book slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/schemas.BookRetentionStatsResponseSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/books/book/{slug}/toggle-book-completion-status": {
             "get": {
                 "security": [
@@ -5113,6 +5194,9 @@
                 "genre": {
                     "$ref": "#/definitions/schemas.GenreWithoutTagSchema"
                 },
+                "library_count": {
+                    "type": "integer"
+                },
                 "partial_view_chapter": {
                     "$ref": "#/definitions/schemas.ChapterListSchema"
                 },
@@ -5152,6 +5236,46 @@
                 }
             }
         },
+        "schemas.BookReadingProgressResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.BookReadingProgressSchema"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.BookReadingProgressSchema": {
+            "type": "object",
+            "properties": {
+                "completion_rate": {
+                    "type": "number",
+                    "example": 70
+                },
+                "label": {
+                    "type": "string",
+                    "example": "Jul or Mon or Week 1"
+                },
+                "new_readers": {
+                    "type": "integer",
+                    "example": 500
+                },
+                "total_readers": {
+                    "type": "integer",
+                    "example": 1000
+                }
+            }
+        },
         "schemas.BookReportSchema": {
             "type": "object",
             "required": [
@@ -5173,6 +5297,22 @@
             "properties": {
                 "data": {
                     "$ref": "#/definitions/schemas.BookSchema"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Data fetched/created/updated/deleted"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "schemas.BookRetentionStatsResponseSchema": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/schemas.RetentionStatsSchema"
                 },
                 "message": {
                     "type": "string",
@@ -5368,6 +5508,9 @@
         "schemas.ChapterDetailSchema": {
             "type": "object",
             "properties": {
+                "is_last": {
+                    "type": "boolean"
+                },
                 "paragraphs": {
                     "type": "array",
                     "items": {
@@ -5385,6 +5528,9 @@
         "schemas.ChapterListSchema": {
             "type": "object",
             "properties": {
+                "is_last": {
+                    "type": "boolean"
+                },
                 "slug": {
                     "type": "string"
                 },
@@ -6367,6 +6513,23 @@
                 "status": {
                     "type": "string",
                     "example": "success"
+                }
+            }
+        },
+        "schemas.RetentionStatsSchema": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "number",
+                    "example": 35
+                },
+                "dropped": {
+                    "type": "number",
+                    "example": 20
+                },
+                "in_progress": {
+                    "type": "number",
+                    "example": 45
                 }
             }
         },

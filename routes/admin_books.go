@@ -631,6 +631,63 @@ func (ep Endpoint) AdminGetBookDetails(c *fiber.Ctx) error {
 	return c.Status(200).JSON(response)
 }
 
+// @Summary View Book Reading Progress Data
+// @Description This endpoint allows an admin to view reading progress data of a book
+// @Tags Admin | Books
+// @Param slug path string true "Book slug"
+// @Param time_range_filter query string false "Time Range to filter by (12_months, 30_days, 7_days)" default(12_months)
+// @Success 200 {object} schemas.BookReadingProgressResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /admin/books/book-detail/{slug}/reading-progress [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetBookReadingProgress(c *fiber.Ctx) error {
+	db := ep.DB
+	time_range_filter := c.Query("time_range_filter", "12_months")
+	if time_range_filter != "12_months" && time_range_filter != "30_days" && time_range_filter != "7_days" {
+		return c.Status(400).JSON(utils.InvalidParamErr("Invalid date filter"))
+	}
+	book, err := bookManager.GetBySlug(db, c.Params("slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	var readingProgressData []schemas.BookReadingProgressSchema
+	switch time_range_filter {
+	case "30_days":
+		readingProgressData = bookManager.Get30DayReadingProgress(ep.DB, book.ID)
+	case "7_days":
+		readingProgressData = bookManager.Get7DayReadingProgress(ep.DB, book.ID)
+	default:
+		readingProgressData = bookManager.GetYearlyReadingProgress(ep.DB, book.ID)
+	}
+	response := schemas.BookReadingProgressResponseSchema{
+		ResponseSchema: ResponseMessage("Book Reading Progress fetched successfully"),
+		Data:           readingProgressData,
+	}
+	return c.Status(200).JSON(response)
+}
+
+// @Summary View Book Retention Data
+// @Description This endpoint allows an admin to view retention data of a book
+// @Tags Admin | Books
+// @Param slug path string true "Book slug"
+// @Success 200 {object} schemas.BookRetentionStatsResponseSchema
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /admin/books/book-detail/{slug}/retention-stats [get]
+// @Security BearerAuth
+func (ep Endpoint) AdminGetBookRetentionStats(c *fiber.Ctx) error {
+	db := ep.DB
+	book, err := bookManager.GetBySlug(db, c.Params("slug"), false)
+	if err != nil {
+		return c.Status(404).JSON(err)
+	}
+	retentionData := bookManager.GetReaderRetentionPieData(db, book.ID)
+	response := schemas.BookRetentionStatsResponseSchema{
+		ResponseSchema: ResponseMessage("Book Retention data fetched successfully"),
+		Data:           retentionData,
+	}
+	return c.Status(200).JSON(response)
+}
+
 // @Summary Toggle Book Completed Status
 // @Description Set the book completed status to true or false. 
 // @Tags Admin | Books

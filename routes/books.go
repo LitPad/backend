@@ -229,7 +229,7 @@ func (ep Endpoint) GetBookChapter(c *fiber.Ctx) error {
 	if chapter.Book.AuthorID != user.ID && user.SubscriptionExpired() && !chapterIsFirst && !user.IsStaff {
 		return c.Status(401).JSON(utils.RequestErr(utils.ERR_NOT_ALLOWED, "Renew your subscription to view this chapter"))
 	}
-	ReadBook(db, chapter.BookID, user)
+	ReadBook(db, chapter.BookID, user, chapter.IsLast)
 	response := schemas.ChapterResponseSchema{
 		ResponseSchema: ResponseMessage("Chapter fetched successfully"),
 		Data:           schemas.ChapterDetailSchema{}.Init(*chapter),

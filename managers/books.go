@@ -210,6 +210,153 @@ func (b BookManager) GetBySlugWithReviews(db *gorm.DB, slug string) (*models.Boo
 	return &book, nil
 }
 
+func (b BookManager) GetYearlyReadingProgress(db *gorm.DB, bookID uuid.UUID) []schemas.BookReadingProgressSchema {
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -11, 0)
+
+	var reads []models.BookRead
+	db.Where("book_id = ? AND created_at >= ?", bookID, start).Find(&reads)
+
+	monthlyData := make([]schemas.BookReadingProgressSchema, 12)
+	for i := 0; i < 12; i++ {
+		monthlyData[i] = schemas.BookReadingProgressSchema{
+			Label:          start.AddDate(0, i, 0).Format("Jan"),
+			TotalReaders:   0,
+			CompletionRate: 0.0,
+			NewReaders:     0,
+		}
+	}
+
+	for _, r := range reads {
+		monthIndex := int((r.CreatedAt.Year()-start.Year())*12 + int(r.CreatedAt.Month()) - int(start.Month()))
+		if monthIndex < 0 || monthIndex >= 12 {
+			continue
+		}
+
+		bucket := &monthlyData[monthIndex]
+		bucket.TotalReaders++
+
+		if r.Completed {
+			prevTotal := float64(bucket.TotalReaders - 1)
+			bucket.CompletionRate = (bucket.CompletionRate*prevTotal + 1) / float64(bucket.TotalReaders)
+		}
+
+		if r.FirstRead {
+			bucket.NewReaders++
+		}
+	}
+
+	return monthlyData
+}
+
+func (b BookManager) Get30DayReadingProgress(db *gorm.DB, bookID uuid.UUID) []schemas.BookReadingProgressSchema {
+	now := time.Now()
+	startDate := now.AddDate(0, 0, -30)
+
+	var reads []models.BookRead
+	db.Where("book_id = ? AND created_at BETWEEN ? AND ?", bookID, startDate, now).Find(&reads)
+
+	weekStats := make([]schemas.BookReadingProgressSchema, 4)
+	for i := 0; i < 4; i++ {
+		weekStats[i] = schemas.BookReadingProgressSchema{
+			Label:          fmt.Sprintf("Week %d", i+1),
+			TotalReaders:   0,
+			CompletionRate: 0.0,
+			NewReaders:     0,
+		}
+	}
+
+	for _, r := range reads {
+		weekIndex := int(now.Sub(r.CreatedAt).Hours() / 24 / 7)
+		if weekIndex > 3 {
+			weekIndex = 3
+		}
+		bucket := &weekStats[3-weekIndex]
+
+		bucket.TotalReaders++
+
+		if r.Completed {
+			prevTotal := float64(bucket.TotalReaders - 1)
+			bucket.CompletionRate = (bucket.CompletionRate*prevTotal + 1) / float64(bucket.TotalReaders)
+		}
+
+		if r.FirstRead {
+			bucket.NewReaders++
+		}
+	}
+
+	return weekStats
+}
+
+func (b BookManager) Get7DayReadingProgress(db *gorm.DB, bookID uuid.UUID) []schemas.BookReadingProgressSchema {
+	now := time.Now()
+	startDate := now.AddDate(0, 0, -6)
+
+	var reads []models.BookRead
+	db.Where("book_id = ? AND created_at BETWEEN ? AND ?", bookID, startDate, now).Find(&reads)
+
+	dailyStats := make([]schemas.BookReadingProgressSchema, 7)
+	for i := 0; i < 7; i++ {
+		day := now.AddDate(0, 0, -6+i).Weekday().String()
+		dailyStats[i] = schemas.BookReadingProgressSchema{
+			Label:          day,
+			TotalReaders:   0,
+			CompletionRate: 0.0,
+			NewReaders:     0,
+		}
+	}
+
+	for _, r := range reads {
+		dayIndex := int(now.Sub(r.CreatedAt).Hours() / 24)
+		if dayIndex > 6 {
+			dayIndex = 6
+		}
+		bucket := &dailyStats[6-dayIndex]
+
+		bucket.TotalReaders++
+
+		if r.Completed {
+			prevTotal := float64(bucket.TotalReaders - 1)
+			bucket.CompletionRate = (bucket.CompletionRate*prevTotal + 1) / float64(bucket.TotalReaders)
+		}
+
+		if r.FirstRead {
+			bucket.NewReaders++
+		}
+	}
+	return dailyStats
+}
+
+func (b BookManager) GetReaderRetentionPieData(db *gorm.DB, bookID uuid.UUID) schemas.RetentionStatsSchema {
+	var reads []models.BookRead
+	db.Where("book_id = ?", bookID).Find(&reads)
+
+	stats := schemas.RetentionStatsSchema{}
+	for _, r := range reads {
+		switch {
+		case r.Completed:
+			stats.Completed++
+		case r.InLibrary:
+			stats.InProgress++
+		default:
+			stats.Dropped++
+		}
+	}
+	stats.Total = stats.Completed + stats.InProgress + stats.Dropped
+
+
+	if stats.Total != 0 {
+		stats.Completed = float64(stats.Completed) / float64(stats.Total) * 100
+		stats.InProgress = float64(stats.InProgress) / float64(stats.Total) * 100
+		stats.Dropped = float64(stats.Dropped) / float64(stats.Total) * 100
+	} else {
+		stats.Completed = 0
+		stats.InProgress = 0
+		stats.Dropped = 0
+	}
+	return stats
+}
+
 func (b BookManager) GetByAuthorAndSlug(db *gorm.DB, author *models.User, slug string) (*models.Book, *utils.ErrorResponse) {
 	book := models.Book{AuthorID: author.ID, Slug: slug}
 	db.Scopes(scopes.AuthorGenreTagBookScope).Preload("Chapters").Take(&book, book)
@@ -539,6 +686,7 @@ func (c ChapterManager) Create(db *gorm.DB, book models.Book, data schemas.Chapt
 	chapter := models.Chapter{
 		BookID: book.ID,
 		Title:  data.Title,
+		IsLast: data.IsLast,
 	}
 	db.Create(&chapter)
 	// Generate paragraphs
@@ -555,8 +703,9 @@ func (c ChapterManager) Update(db *gorm.DB, chapter models.Chapter, data schemas
 	// Update title only if changed
 	if chapter.Title != data.Title {
 		chapter.Title = data.Title
-		db.Save(&chapter)
 	}
+	chapter.IsLast = data.IsLast
+	db.Save(&chapter)
 
 	existingParagraphs := chapter.Paragraphs
 

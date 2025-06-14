@@ -208,3 +208,27 @@ type BookCompletionStatusResponseSchema struct {
 	ResponseSchema
 	Data BookCompletionStatusSchema `json:"data"`
 }
+
+type BookReadingProgressSchema struct {
+	Label          string `json:"label" example:"Jul or Mon or Week 1"`
+	TotalReaders   int    `json:"total_readers" example:"1000"`
+	CompletionRate float64    `json:"completion_rate" example:"70"`
+	NewReaders     int    `json:"new_readers" example:"500"`
+}
+
+type BookReadingProgressResponseSchema struct {
+	ResponseSchema
+	Data []BookReadingProgressSchema `json:"data"`
+}
+
+type RetentionStatsSchema struct {
+	Completed  float64 `json:"completed" example:"35"`
+	InProgress float64 `json:"in_progress" example:"45"`
+	Dropped    float64 `json:"dropped" example:"20"`
+	Total float64 `json:"-"`
+}
+
+type BookRetentionStatsResponseSchema struct {
+	ResponseSchema
+	Data RetentionStatsSchema `json:"data"`
+}

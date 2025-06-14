@@ -25,11 +25,11 @@ func (genre *Genre) BeforeSave(tx *gorm.DB) (err error) {
 
 type Tag struct {
 	BaseModel
-	Name   string
-	Slug   string  `gorm:"unique"`
-	GenreID uuid.UUID 
-	Genre Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
-	Books []Book `gorm:"many2many:book_tags;"`
+	Name    string
+	Slug    string `gorm:"unique"`
+	GenreID uuid.UUID
+	Genre   Genre  `gorm:"foreignKey:GenreID;constraint:OnDelete:CASCADE;<-:false"`
+	Books   []Book `gorm:"many2many:book_tags;"`
 }
 
 func (tag *Tag) BeforeSave(tx *gorm.DB) (err error) {
@@ -79,7 +79,7 @@ type Book struct {
 	GenreID uuid.UUID
 	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	SubSectionID   *uuid.UUID `gorm:"null"`
+	SubSectionID   *uuid.UUID  `gorm:"null"`
 	SubSection     *SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
 	OrderInSection uint
 
@@ -140,6 +140,16 @@ func (b Book) ReadsCount() int {
 	return len(b.Reads)
 }
 
+func (b Book) LibraryCount() int {
+	count := 0
+	for _, read := range b.Reads {
+		if read.InLibrary {
+			count++
+		}
+	}
+	return count
+}
+
 func (b Book) ChaptersCount() int {
 	return len(b.Chapters)
 }
@@ -177,6 +187,7 @@ type BookRead struct {
 	Book      Book      `gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE;<-:false"`
 	Completed bool      `gorm:"default:false"`
 	InLibrary bool      `gorm:"default:false"`
+	FirstRead bool      `gorm:"default:false"`
 }
 
 type BookReport struct {
@@ -196,6 +207,7 @@ type Chapter struct {
 	Title      string      `gorm:"type: varchar(255)"`
 	Slug       string      `gorm:"unique"`
 	Paragraphs []Paragraph `gorm:"foreignKey:ChapterID;constraint:OnDelete:CASCADE;"`
+	IsLast     bool        `gorm:"default:false"`
 }
 
 func (c *Chapter) GenerateUniqueSlug(tx *gorm.DB) string {

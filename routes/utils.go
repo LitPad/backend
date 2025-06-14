@@ -159,9 +159,17 @@ func CheckTagStrings(db *gorm.DB, submittedList []string, genre models.Genre) ([
 	return tagsToReturn, nil
 }
 
-func ReadBook(db *gorm.DB, bookID uuid.UUID, user *models.User) models.BookRead {
-	bookRead := models.BookRead{UserID: user.ID, BookID: bookID}
+func ReadBook(db *gorm.DB, bookID uuid.UUID, user *models.User, completed bool) models.BookRead {
+	previouslyRead := models.BookRead{}
+	db.First(&previouslyRead, "user_id = ?", user.ID)
+	firstRead := previouslyRead.ID == uuid.Nil
+
+	bookRead := models.BookRead{UserID: user.ID, BookID: bookID, FirstRead: firstRead}
 	db.FirstOrCreate(&bookRead, bookRead)
+	if completed {
+		bookRead.Completed = true
+		db.Save(&bookRead)
+	}
 	return bookRead
 }
 

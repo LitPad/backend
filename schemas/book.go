@@ -9,9 +9,9 @@ import (
 )
 
 type TagSchema struct {
-	Name string `json:"name"`
-	Slug string `json:"slug"`
-	BooksCount int `json:"books_count"`
+	Name       string `json:"name"`
+	Slug       string `json:"slug"`
+	BooksCount int    `json:"books_count"`
 }
 
 func (t TagSchema) Init(tag models.Tag) TagSchema {
@@ -74,11 +74,13 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 type ChapterListSchema struct {
 	Title string `json:"title"`
 	Slug  string `json:"slug"`
+	IsLast bool `json:"is_last"`
 }
 
 func (c ChapterListSchema) Init(chapter models.Chapter) ChapterListSchema {
 	c.Title = chapter.Title
 	c.Slug = chapter.Slug
+	c.IsLast = chapter.IsLast
 	return c
 }
 
@@ -96,7 +98,8 @@ type ChapterDetailSchema struct {
 func (c ChapterDetailSchema) Init(chapter models.Chapter) ChapterDetailSchema {
 	c.Title = chapter.Title
 	c.Slug = chapter.Slug
-	paragraphs := []ParagraphSchema{}
+	c.IsLast = chapter.IsLast
+	paragraphs := make([]ParagraphSchema, 0)
 	for _, p := range chapter.Paragraphs {
 		paragraphs = append(paragraphs, ParagraphSchema{Text: p.Text, CommentsCount: p.CommentsCount(), Index: p.Index})
 	}
@@ -111,8 +114,8 @@ type BookSchema struct {
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
-	Section            *SectionSchema         `json:"section"`
-	SubSection         *SubSectionSchema      `json:"sub_section"`
+	Section            *SectionSchema        `json:"section"`
+	SubSection         *SubSectionSchema     `json:"sub_section"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
@@ -135,7 +138,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.AgeDiscretion = book.AgeDiscretion
 
 	tags := book.Tags
-	tagsToAdd := b.Tags
+	tagsToAdd := make([]TagSchema, 0)
 	for _, tag := range tags {
 		tagsToAdd = append(tagsToAdd, TagSchema{}.Init(tag))
 	}
@@ -149,7 +152,7 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 		subsection := SubSectionSchema{}.Init(book.SubSection)
 		b.Section = &section
 		b.SubSection = &subsection
- 	} else {
+	} else {
 		b.Section = nil
 		b.SubSection = nil
 	}
@@ -290,14 +293,16 @@ type ReplyResponseSchema struct {
 
 type BookDetailSchema struct {
 	BookSchema
-	WordCount int                       `json:"word_count"`
-	Reviews   ReviewsResponseDataSchema `json:"reviews"`
+	WordCount    int                       `json:"word_count"`
+	LibraryCount int                       `json:"library_count"`
+	Reviews      ReviewsResponseDataSchema `json:"reviews"`
 }
 
 func (b BookDetailSchema) Init(book models.Book, reviewsPaginatedData PaginatedResponseDataSchema, reviews []models.Comment) BookDetailSchema {
 	b.BookSchema = b.BookSchema.Init(book)
 	b.WordCount = book.GetWordCount()
-	reviewsToAdd := b.Reviews.Items
+	b.LibraryCount = book.LibraryCount()
+	reviewsToAdd := make([]ReviewSchema, 0)
 	for _, review := range reviews {
 		reviewsToAdd = append(reviewsToAdd, ReviewSchema{}.Init(review))
 	}
@@ -339,7 +344,7 @@ type TagsResponseSchema struct {
 
 func (t TagsResponseSchema) Init(tags []models.Tag) TagsResponseSchema {
 	// Set Initial Data
-	tagItems := t.Data
+	tagItems := make([]TagSchema, 0)
 	for _, tag := range tags {
 		tagItems = append(tagItems, TagSchema{}.Init(tag))
 	}
@@ -354,7 +359,7 @@ type GenresResponseSchema struct {
 
 func (g GenresResponseSchema) Init(genres []models.Genre) GenresResponseSchema {
 	// Set Initial Data
-	genreItems := g.Data
+	genreItems := make([]GenreSchema, 0)
 	for _, genre := range genres {
 		genreItems = append(genreItems, GenreSchema{}.Init(genre))
 	}
@@ -369,7 +374,7 @@ type SectionsResponseSchema struct {
 
 func (s SectionsResponseSchema) Init(sections []models.Section) SectionsResponseSchema {
 	// Set Initial Data
-	sectionItems := s.Data
+	sectionItems := make([]SectionSchema, 0)
 	for _, section := range sections {
 		sectionItems = append(sectionItems, SectionSchema{}.Init(section))
 	}
@@ -384,7 +389,7 @@ type SubSectionsResponseSchema struct {
 
 func (s SubSectionsResponseSchema) Init(subSections []models.SubSection) SubSectionsResponseSchema {
 	// Set Initial Data
-	subSectionItems := s.Data
+	subSectionItems := make([]SubSectionSchema, 0)
 	for _, subSection := range subSections {
 		subSectionItems = append(subSectionItems, SubSectionSchema{}.Init(&subSection))
 	}

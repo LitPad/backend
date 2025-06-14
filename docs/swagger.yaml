@@ -261,6 +261,8 @@ definitions:
         type: integer
       genre:
         $ref: '#/definitions/schemas.GenreWithoutTagSchema'
+      library_count:
+        type: integer
       partial_view_chapter:
         $ref: '#/definitions/schemas.ChapterListSchema'
       reads:
@@ -287,6 +289,34 @@ definitions:
       word_count:
         type: integer
     type: object
+  schemas.BookReadingProgressResponseSchema:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/schemas.BookReadingProgressSchema'
+        type: array
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.BookReadingProgressSchema:
+    properties:
+      completion_rate:
+        example: 70
+        type: number
+      label:
+        example: Jul or Mon or Week 1
+        type: string
+      new_readers:
+        example: 500
+        type: integer
+      total_readers:
+        example: 1000
+        type: integer
+    type: object
   schemas.BookReportSchema:
     properties:
       additional_explanation:
@@ -302,6 +332,17 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/schemas.BookSchema'
+      message:
+        example: Data fetched/created/updated/deleted
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  schemas.BookRetentionStatsResponseSchema:
+    properties:
+      data:
+        $ref: '#/definitions/schemas.RetentionStatsSchema'
       message:
         example: Data fetched/created/updated/deleted
         type: string
@@ -435,6 +476,8 @@ definitions:
     type: object
   schemas.ChapterDetailSchema:
     properties:
+      is_last:
+        type: boolean
       paragraphs:
         items:
           $ref: '#/definitions/schemas.ParagraphSchema'
@@ -446,6 +489,8 @@ definitions:
     type: object
   schemas.ChapterListSchema:
     properties:
+      is_last:
+        type: boolean
       slug:
         type: string
       title:
@@ -1116,6 +1161,18 @@ definitions:
       status:
         example: success
         type: string
+    type: object
+  schemas.RetentionStatsSchema:
+    properties:
+      completed:
+        example: 35
+        type: number
+      dropped:
+        example: 20
+        type: number
+      in_progress:
+        example: 45
+        type: number
     type: object
   schemas.ReviewBookSchema:
     properties:
@@ -1882,6 +1939,58 @@ paths:
       security:
       - BearerAuth: []
       summary: View Book Details
+      tags:
+      - Admin | Books
+  /admin/books/book-detail/{slug}/reading-progress:
+    get:
+      description: This endpoint allows an admin to view reading progress data of
+        a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - default: 12_months
+        description: Time Range to filter by (12_months, 30_days, 7_days)
+        in: query
+        name: time_range_filter
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BookReadingProgressResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Book Reading Progress Data
+      tags:
+      - Admin | Books
+  /admin/books/book-detail/{slug}/retention-stats:
+    get:
+      description: This endpoint allows an admin to view retention data of a book
+      parameters:
+      - description: Book slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.BookRetentionStatsResponseSchema'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: View Book Retention Data
       tags:
       - Admin | Books
   /admin/books/book/{slug}/toggle-book-completion-status:
