@@ -107,6 +107,7 @@ func (s SectionsWithSubSectionsSchema) Init(sections []models.Section) SectionsW
 }
 
 type SubSectionBookSchema struct {
+	OrderInSection uint           `json:"order_in_section"`
 	Title          string         `json:"title"`
 	Author         UserDataSchema `json:"author"`
 }
@@ -116,20 +117,34 @@ type SubSectionBookResponseSchema struct {
 	Items []SubSectionBookSchema `json:"items"`
 }
 
+type BookWithOrder struct {
+	models.Book
+	OrderInSection uint `json:"order_in_section"`
+	AuthorID       uuid.UUID `json:"author_id"`
+	AuthorName     string    `json:"author_name"`
+	AuthorUsername string    `json:"author_username"`
+	AuthorAvatar string    `json:"author_avatar"`
+}
+
 type SubSectionWithBooksSchema struct {
 	SubSectionSchema
 	Section string                       `json:"section"`
 	Books   SubSectionBookResponseSchema `json:"books"`
 }
 
-func (s SubSectionWithBooksSchema) Init(subSection models.SubSection, books []models.Book, paginatedData PaginatedResponseDataSchema) SubSectionWithBooksSchema {
-	s.SubSectionSchema = s.SubSectionSchema.Init(&subSection)
+func (s SubSectionWithBooksSchema) Init(subSection models.SubSection, books []BookWithOrder, paginatedData PaginatedResponseDataSchema) SubSectionWithBooksSchema {
+	s.SubSectionSchema = SubSectionSchema{Name: subSection.Name, Slug: subSection.Slug, BooksCount: len(books)}
 	s.Section = subSection.Section.Name
 	bookItems := []SubSectionBookSchema{}
 	for _, item := range books {
 		bookItems = append(bookItems, SubSectionBookSchema{
+			OrderInSection: item.OrderInSection,
 			Title:          item.Title,
-			Author:         UserDataSchema{}.Init(item.Author),
+			Author:         UserDataSchema{
+				Name: &item.AuthorName,
+				Username: item.AuthorUsername,
+				Avatar: item.AuthorAvatar,
+			},
 		})
 	}
 	s.Books = SubSectionBookResponseSchema{

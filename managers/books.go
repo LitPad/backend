@@ -968,16 +968,28 @@ func (g GenreManager) GetSectionBySlug(db *gorm.DB, slug string) *models.Section
 	return &section
 }
 
-func (g GenreManager) GetSubSectionBySlug(db *gorm.DB, slug string) *models.SubSection {
-
-	subSection := models.SubSection{Slug: slug}
-	db.Preload("Section").Preload("Books").Preload("Books.Author").Take(&subSection, subSection)
-
-	if subSection.ID == uuid.Nil {
-		return nil
+func (g GenreManager) GetSubSectionBySlug(db *gorm.DB, slug string) (*models.SubSection, []schemas.BookWithOrder) {
+	var subSection models.SubSection
+	err := db.Preload("Section").Where("slug = ?", slug).First(&subSection).Error
+	if err != nil || subSection.ID == uuid.Nil {
+		return nil, []schemas.BookWithOrder{}
 	}
 
-	return &subSection
+	// Fetch books with pivot data
+	var booksWithOrder []schemas.BookWithOrder
+	err = db.Table("books").
+		Select("books.*, book_sub_sections.order_in_section, users.id AS author_id, users.username AS author_username, users.name AS author_name, users.avatar AS author_avatar").
+		Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
+		Joins("LEFT JOIN users ON users.id = books.author_id").
+		Where("book_sub_sections.sub_section_id = ?", subSection.ID).
+		Order("book_sub_sections.order_in_section ASC").
+		Scan(&booksWithOrder).Error
+
+	if err != nil {
+		return nil, []schemas.BookWithOrder{}
+	}
+
+	return &subSection, booksWithOrder
 }
 
 type ReviewManager struct {

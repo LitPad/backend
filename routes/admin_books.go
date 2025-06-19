@@ -7,6 +7,7 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // @Summary Add Genre
@@ -218,7 +219,7 @@ func (ep Endpoint) AdminUpdateBookSection(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) AdminUpdateBookSubSection(c *fiber.Ctx) error {
 	db := ep.DB
-	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	subsection, _ := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
 	if subsection == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
 	}
@@ -332,7 +333,7 @@ func (ep Endpoint) AdminDeleteBookSection(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) AdminDeleteBookSubSection(c *fiber.Ctx) error {
 	db := ep.DB
-	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	subsection, _ := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
 	if subsection == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
 	}
@@ -354,15 +355,44 @@ func (ep Endpoint) AdminDeleteBookSubSection(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) AddBookToSubSection(c *fiber.Ctx) error {
 	db := ep.DB
-	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+
+	subsection, _ := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
 	if subsection == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
 	}
+
 	book, err := bookManager.GetBySlug(db, c.Params("book_slug"), false)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	db.Model(&book).Association("SubSections").Append(subsection)
+
+	// Check if already exists to prevent duplicates
+	var count int64
+	db.Model(&models.BookSubSection{}).
+		Where("book_id = ? AND sub_section_id = ?", book.ID, subsection.ID).
+		Count(&count)
+
+	if count > 0 {
+		return c.Status(200).JSON(ResponseMessage("Book already in subsection"))
+	}
+
+	// Determine order in section
+	var order int64
+	db.Model(&models.BookSubSection{}).
+		Where("sub_section_id = ?", subsection.ID).
+		Count(&order)
+
+	// Add association manually to maintain ordering
+	bookSub := models.BookSubSection{
+		BookID:         book.ID,
+		SubSectionID:   subsection.ID,
+		OrderInSection: uint(order + 1),
+	}
+
+	if err := db.Create(&bookSub).Error; err != nil {
+		return c.Status(500).JSON(utils.ServerErr("Something went wrong"))
+	}
+
 	return c.Status(200).JSON(ResponseMessage("Book added to subsection successfully"))
 }
 
@@ -380,18 +410,43 @@ func (ep Endpoint) AddBookToSubSection(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) RemoveBookFromSubSection(c *fiber.Ctx) error {
 	db := ep.DB
-	subsection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+
+	subsection, _ := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
 	if subsection == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("SubSection does not exist"))
 	}
 
-	// Get the book by its slug
 	book, err := bookManager.GetBySlug(db, c.Params("book_slug"), false)
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	db.Model(&book).Association("SubSections").Delete(subsection)
-	return c.Status(200).JSON(ResponseMessage("Book removed from subsection"))
+
+	var bookSub models.BookSubSection
+	if err := db.
+		Where("book_id = ? AND sub_section_id = ?", book.ID, subsection.ID).
+		First(&bookSub).Error; err != nil {
+		return c.Status(404).JSON(utils.NotFoundErr("Book not found in subsection"))
+	}
+
+	tx := db.Begin()
+
+	// Delete the record
+	if err := tx.Delete(&bookSub).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(utils.ServerErr("Failed to remove book from subsection"))
+	}
+
+	// Shift order up for other books in that subsection
+	if err := tx.Model(&models.BookSubSection{}).
+		Where("sub_section_id = ? AND order_in_section > ?", subsection.ID, bookSub.OrderInSection).
+		Update("order_in_section", gorm.Expr("order_in_section - 1")).Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(utils.ServerErr("Failed to update book order"))
+	}
+
+	tx.Commit()
+
+	return c.Status(200).JSON(ResponseMessage("Book removed from subsection successfully"))
 }
 
 // @Summary Delete Tag
@@ -447,20 +502,20 @@ func (ep Endpoint) AdminGetSections(c *fiber.Ctx) error {
 // @Security BearerAuth
 func (ep Endpoint) AdminGetSubSection(c *fiber.Ctx) error {
 	db := ep.DB
-	subSection := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
+	subSection, books := genreManager.GetSubSectionBySlug(db, c.Params("slug"))
 	if subSection == nil {
 		return c.Status(404).JSON(utils.NotFoundErr("Sub section does not exist"))
 	}
 	// Paginate books
-	paginatedData, paginatedBooks, err := PaginateQueryset(subSection.Books, c, 200)
+	paginatedData, paginatedBooks, err := PaginateQueryset(books, c, 200)
 	if err != nil {
 		return c.Status(400).JSON(err)
 	}
-	books := paginatedBooks.([]models.Book)
+	castedBooks := paginatedBooks.([]schemas.BookWithOrder)
 
 	response := schemas.SubSectionWithBooksResponseSchema{
 		ResponseSchema: ResponseMessage("Sub section retrieved successfully"),
-		Data: schemas.SubSectionWithBooksSchema{}.Init(*subSection, books, *paginatedData),
+		Data: schemas.SubSectionWithBooksSchema{}.Init(*subSection, castedBooks, *paginatedData),
 	}
 	return c.Status(200).JSON(response)
 }

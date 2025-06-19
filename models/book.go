@@ -57,7 +57,7 @@ type SubSection struct {
 	BaseModel
 	Name      string `gorm:"unique"`
 	Slug      string `gorm:"unique"`
-	Books     []Book `gorm:"many2many:book_sub_sections"`
+	Books     []Book `gorm:"many2many:book_sub_sections;joinForeignKey:SubSectionID;joinReferences:BookID"`
 	SectionID uuid.UUID
 	Section   Section `gorm:"foreignKey:SectionID;constraint:OnDelete:SET NULL;<-:false"`
 }
@@ -79,7 +79,7 @@ type Book struct {
 	GenreID uuid.UUID
 	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	SubSections       []SubSection     `gorm:"many2many:book_sub_sections"`
+	SubSections []SubSection `gorm:"many2many:book_sub_sections;joinForeignKey:BookID;joinReferences:SubSectionID"`
 
 	Tags       []Tag     `gorm:"many2many:book_tags"`
 	Chapters   []Chapter `gorm:"constraint:OnDelete:CASCADE"`
@@ -175,6 +175,13 @@ func (b *Book) BeforeCreate(tx *gorm.DB) (err error) {
 	slug := b.GenerateUniqueSlug(tx)
 	b.Slug = slug
 	return
+}
+
+type BookSubSection struct {
+	BookID         uuid.UUID `gorm:"primaryKey"`
+	SubSectionID   uuid.UUID `gorm:"primaryKey"`
+	OrderInSection uint
+	CreatedAt      time.Time
 }
 
 type BookRead struct {
