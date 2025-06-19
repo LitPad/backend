@@ -5211,14 +5211,14 @@ const docTemplate = `{
                 "reviews": {
                     "$ref": "#/definitions/schemas.ReviewsResponseDataSchema"
                 },
-                "section": {
-                    "$ref": "#/definitions/schemas.SectionSchema"
-                },
                 "slug": {
                     "type": "string"
                 },
-                "sub_section": {
-                    "$ref": "#/definitions/schemas.SubSectionSchema"
+                "sub_sections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SubSectionSchema"
+                    }
                 },
                 "tags": {
                     "type": "array",
@@ -5372,14 +5372,14 @@ const docTemplate = `{
                 "reads": {
                     "type": "integer"
                 },
-                "section": {
-                    "$ref": "#/definitions/schemas.SectionSchema"
-                },
                 "slug": {
                     "type": "string"
                 },
-                "sub_section": {
-                    "$ref": "#/definitions/schemas.SubSectionSchema"
+                "sub_sections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/schemas.SubSectionSchema"
+                    }
                 },
                 "tags": {
                     "type": "array",
@@ -6870,9 +6870,6 @@ const docTemplate = `{
             "properties": {
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
-                },
-                "order_in_section": {
-                    "type": "integer"
                 },
                 "title": {
                     "type": "string"

@@ -7,7 +7,6 @@ import (
 	"github.com/LitPad/backend/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // @Summary Add Genre
@@ -363,11 +362,7 @@ func (ep Endpoint) AddBookToSubSection(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-	if book.SubSectionID != &subsection.ID {
-		book.SubSectionID = &subsection.ID
-		book.OrderInSection = uint(len(subsection.Books) + 1)
-		db.Save(&book)
-	}
+	db.Model(&book).Association("SubSections").Append(subsection)
 	return c.Status(200).JSON(ResponseMessage("Book added to subsection successfully"))
 }
 
@@ -395,31 +390,7 @@ func (ep Endpoint) RemoveBookFromSubSection(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(err)
 	}
-
-	// Get the current order of the book
-	currentOrder := book.OrderInSection
-
-	// Start a transaction to handle the operations atomically
-	tx := db.Begin()
-
-	// 1. Set the SubSectionID of the book to nil
-	if err := tx.Model(&book).Update("SubSectionID", nil).Error; err != nil {
-		tx.Rollback()
-		return c.Status(500).JSON(utils.ServerErr("Failed to remove book from subsection"))
-	}
-
-	// 2. Rearrange the OrderInSection for books after the removed book
-	if err := tx.Model(&models.Book{}).
-		Where("sub_section_id = ? AND order_in_section > ?", subsection.ID, currentOrder).
-		Update("order_in_section", gorm.Expr("order_in_section - 1")).Error; err != nil {
-		tx.Rollback()
-		return c.Status(500).JSON(utils.ServerErr("Failed to update book order"))
-	}
-
-	// Commit the transaction
-	tx.Commit()
-
-	// Return a success message
+	db.Model(&book).Association("SubSections").Delete(subsection)
 	return c.Status(200).JSON(ResponseMessage("Book removed from subsection"))
 }
 

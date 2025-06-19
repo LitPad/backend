@@ -57,7 +57,7 @@ type SubSection struct {
 	BaseModel
 	Name      string `gorm:"unique"`
 	Slug      string `gorm:"unique"`
-	Books     []Book
+	Books     []Book `gorm:"many2many:book_sub_sections"`
 	SectionID uuid.UUID
 	Section   Section `gorm:"foreignKey:SectionID;constraint:OnDelete:SET NULL;<-:false"`
 }
@@ -79,9 +79,7 @@ type Book struct {
 	GenreID uuid.UUID
 	Genre   Genre `gorm:"foreignKey:GenreID;constraint:OnDelete:SET NULL;<-:false"`
 
-	SubSectionID   *uuid.UUID  `gorm:"null"`
-	SubSection     *SubSection `gorm:"foreignKey:SubSectionID;constraint:OnDelete:SET NULL;<-:false"`
-	OrderInSection uint
+	SubSections       []SubSection     `gorm:"many2many:book_sub_sections"`
 
 	Tags       []Tag     `gorm:"many2many:book_tags"`
 	Chapters   []Chapter `gorm:"constraint:OnDelete:CASCADE"`

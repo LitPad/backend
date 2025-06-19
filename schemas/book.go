@@ -72,9 +72,9 @@ func (g GenreSchema) Init(genre models.Genre) GenreSchema {
 }
 
 type ChapterListSchema struct {
-	Title string `json:"title"`
-	Slug  string `json:"slug"`
-	IsLast bool `json:"is_last"`
+	Title  string `json:"title"`
+	Slug   string `json:"slug"`
+	IsLast bool   `json:"is_last"`
 }
 
 func (c ChapterListSchema) Init(chapter models.Chapter) ChapterListSchema {
@@ -114,8 +114,7 @@ type BookSchema struct {
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
-	Section            *SectionSchema        `json:"section"`
-	SubSection         *SubSectionSchema     `json:"sub_section"`
+	SubSections        []SubSectionSchema    `json:"sub_sections"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
@@ -147,15 +146,13 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Title = book.Title
 	b.Slug = book.Slug
 	b.Genre = b.Genre.Init(book.Genre)
-	if book.SubSection != nil {
-		section := SectionSchema{}.Init(book.SubSection.Section)
-		subsection := SubSectionSchema{}.Init(book.SubSection)
-		b.Section = &section
-		b.SubSection = &subsection
-	} else {
-		b.Section = nil
-		b.SubSection = nil
+
+	subsections := book.SubSections
+	subsectionsToAdd := make([]SubSectionSchema, 0)
+	for _, subsection := range subsections {
+		subsectionsToAdd = append(subsectionsToAdd, SubSectionSchema{}.Init(&subsection))
 	}
+	b.SubSections = subsectionsToAdd
 	b.ChaptersCount = book.ChaptersCount()
 	b.Votes = book.VotesCount()
 	b.Reads = book.ReadsCount()

@@ -107,7 +107,6 @@ func (s SectionsWithSubSectionsSchema) Init(sections []models.Section) SectionsW
 }
 
 type SubSectionBookSchema struct {
-	OrderInSection uint           `json:"order_in_section"`
 	Title          string         `json:"title"`
 	Author         UserDataSchema `json:"author"`
 }
@@ -129,7 +128,6 @@ func (s SubSectionWithBooksSchema) Init(subSection models.SubSection, books []mo
 	bookItems := []SubSectionBookSchema{}
 	for _, item := range books {
 		bookItems = append(bookItems, SubSectionBookSchema{
-			OrderInSection: item.OrderInSection,
 			Title:          item.Title,
 			Author:         UserDataSchema{}.Init(item.Author),
 		})

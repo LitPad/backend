@@ -41,9 +41,9 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 			errData := utils.NotFoundErr("Invalid book section")
 			return books, &errData
 		}
-		query = query.Joins("JOIN sub_sections ON sub_sections.id = books.sub_section_id").
-			Joins("JOIN sections ON sections.id = sub_sections.section_id").
-			Where("sections.id = ?", section.ID)
+		query = query.Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
+			Joins("JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id").
+			Where("sub_sections.section_id = ?", section.ID)
 		joinedSubSections = true
 	}
 	if subSectionSlug != "" {
@@ -53,7 +53,10 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 			errData := utils.NotFoundErr("Invalid book subsection")
 			return books, &errData
 		}
-		query = query.Where(models.Book{SubSectionID: &subSection.ID})
+		if !joinedSubSections {
+			query = query.Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id")
+		}
+		query = query.Where("book_sub_sections.sub_section_id = ?", subSection.ID)
 	}
 	if tagSlug != "" {
 		tag := models.Tag{Slug: tagSlug}
@@ -103,11 +106,13 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 	if orderBySubSection {
 		if !joinedSubSections {
 			query = query.
-				Joins("LEFT JOIN sub_sections ON sub_sections.id = books.sub_section_id")
+				Joins("LEFT JOIN book_sub_sections ON book_sub_sections.book_id = books.id")
 		}
 		query = query.
-			Group("sub_sections.name").
-			Order("sub_sections.name ASC")
+			Joins("LEFT JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id").
+			Select("books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating, MIN(sub_sections.name) AS sort_name").
+			Group("books.id").
+			Order("sort_name ASC")
 	}
 	if trending {
 		// Order by most read books
