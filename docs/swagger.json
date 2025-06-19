@@ -2486,7 +2486,6 @@
                         "required": true
                     },
                     {
-                        "maxLength": 200,
                         "type": "string",
                         "name": "title",
                         "in": "formData",
@@ -3340,7 +3339,6 @@
                         "required": true
                     },
                     {
-                        "maxLength": 200,
                         "type": "string",
                         "name": "title",
                         "in": "formData",

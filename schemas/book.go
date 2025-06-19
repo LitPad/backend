@@ -324,7 +324,7 @@ type BookChapterCreateSchema struct {
 }
 
 type BookCreateSchema struct {
-	Title         string          `form:"title" validate:"required,max=200"`
+	Title         string          `form:"title" validate:"required,wordcount_max=50,wordcount_min=1"`
 	Blurb         string          `form:"blurb" validate:"required,wordcount_max=1000,wordcount_min=100"`
 	GenreSlug     string          `form:"genre_slug" validate:"required"`
 	TagSlugs      []string        `form:"tag_slugs" validate:"required"`

@@ -3410,7 +3410,6 @@ paths:
         required: true
         type: array
       - in: formData
-        maxLength: 200
         name: title
         required: true
         type: string
@@ -3609,7 +3608,6 @@ paths:
         required: true
         type: array
       - in: formData
-        maxLength: 200
         name: title
         required: true
         type: string

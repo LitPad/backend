@@ -2493,7 +2493,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 200,
                         "type": "string",
                         "name": "title",
                         "in": "formData",
@@ -3347,7 +3346,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "maxLength": 200,
                         "type": "string",
                         "name": "title",
                         "in": "formData",
