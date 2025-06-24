@@ -106,10 +106,10 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 	if orderBySubSection {
 		if !joinedSubSections {
 			query = query.
-				Joins("LEFT JOIN book_sub_sections ON book_sub_sections.book_id = books.id")
+				Joins("LEFT JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
+				Joins("LEFT JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id")
 		}
 		query = query.
-			Joins("LEFT JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id").
 			Select("books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating, MIN(sub_sections.name) AS sort_name").
 			Group("books.id").
 			Order("sort_name ASC")
