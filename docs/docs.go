@@ -5217,7 +5217,7 @@ const docTemplate = `{
                 "sub_sections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.SubSectionSchema"
+                        "$ref": "#/definitions/schemas.BookSubSectionSchema"
                     }
                 },
                 "tags": {
@@ -5378,7 +5378,7 @@ const docTemplate = `{
                 "sub_sections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/schemas.SubSectionSchema"
+                        "$ref": "#/definitions/schemas.BookSubSectionSchema"
                     }
                 },
                 "tags": {
@@ -5396,6 +5396,20 @@ const docTemplate = `{
                 },
                 "votes": {
                     "type": "integer"
+                }
+            }
+        },
+        "schemas.BookSubSectionSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "section": {
+                    "$ref": "#/definitions/schemas.SectionSchema"
+                },
+                "slug": {
+                    "type": "string"
                 }
             }
         },
@@ -6870,6 +6884,9 @@ const docTemplate = `{
             "properties": {
                 "author": {
                     "$ref": "#/definitions/schemas.UserDataSchema"
+                },
+                "order_in_section": {
+                    "type": "integer"
                 },
                 "title": {
                     "type": "string"

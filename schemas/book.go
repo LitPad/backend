@@ -43,6 +43,7 @@ func (s SectionSchema) Init(section models.Section) SectionSchema {
 	return s
 }
 
+
 type SubSectionSchema struct {
 	Name       string `json:"name"`
 	Slug       string `json:"slug"`
@@ -53,6 +54,19 @@ func (s SubSectionSchema) Init(subSection *models.SubSection) SubSectionSchema {
 	s.Name = subSection.Name
 	s.Slug = subSection.Slug
 	s.BooksCount = len(subSection.Books)
+	return s
+}
+
+type BookSubSectionSchema struct {
+	Name       string `json:"name"`
+	Slug       string `json:"slug"`
+	Section    SectionSchema `json:"section"`
+}
+
+func (s BookSubSectionSchema) Init(subSection *models.SubSection) BookSubSectionSchema {
+	s.Name = subSection.Name
+	s.Slug = subSection.Slug
+	s.Section = SectionSchema{}.Init(subSection.Section)
 	return s
 }
 
@@ -114,7 +128,7 @@ type BookSchema struct {
 	Blurb              string                `json:"blurb"`
 	AgeDiscretion      choices.AgeType       `json:"age_discretion"`
 	Genre              GenreWithoutTagSchema `json:"genre"`
-	SubSections        []SubSectionSchema    `json:"sub_sections"`
+	SubSections        []BookSubSectionSchema    `json:"sub_sections"`
 	Tags               []TagSchema           `json:"tags"`
 	ChaptersCount      int                   `json:"chapters_count"`
 	PartialViewChapter *ChapterListSchema    `json:"partial_view_chapter"`
@@ -148,9 +162,9 @@ func (b BookSchema) Init(book models.Book) BookSchema {
 	b.Genre = b.Genre.Init(book.Genre)
 
 	subsections := book.SubSections
-	subsectionsToAdd := make([]SubSectionSchema, 0)
+	subsectionsToAdd := make([]BookSubSectionSchema, 0)
 	for _, subsection := range subsections {
-		subsectionsToAdd = append(subsectionsToAdd, SubSectionSchema{}.Init(&subsection))
+		subsectionsToAdd = append(subsectionsToAdd, BookSubSectionSchema{}.Init(&subsection))
 	}
 	b.SubSections = subsectionsToAdd
 	b.ChaptersCount = book.ChaptersCount()

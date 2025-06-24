@@ -273,7 +273,7 @@ definitions:
         type: string
       sub_sections:
         items:
-          $ref: '#/definitions/schemas.SubSectionSchema'
+          $ref: '#/definitions/schemas.BookSubSectionSchema'
         type: array
       tags:
         items:
@@ -383,7 +383,7 @@ definitions:
         type: string
       sub_sections:
         items:
-          $ref: '#/definitions/schemas.SubSectionSchema'
+          $ref: '#/definitions/schemas.BookSubSectionSchema'
         type: array
       tags:
         items:
@@ -396,6 +396,15 @@ definitions:
         type: string
       votes:
         type: integer
+    type: object
+  schemas.BookSubSectionSchema:
+    properties:
+      name:
+        type: string
+      section:
+        $ref: '#/definitions/schemas.SectionSchema'
+      slug:
+        type: string
     type: object
   schemas.BookWithStats:
     properties:
@@ -1404,6 +1413,8 @@ definitions:
     properties:
       author:
         $ref: '#/definitions/schemas.UserDataSchema'
+      order_in_section:
+        type: integer
       title:
         type: string
     type: object
