@@ -20,44 +20,70 @@ type BookManager struct {
 	ModelList []models.Book
 }
 
-func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string, subSectionSlug string, tagSlug string, title string, byRating bool, username string, nameContains string, featured bool, weeklyFeatured bool, trending bool, orderBySubSection bool) ([]models.Book, *utils.ErrorResponse) {
+func (b BookManager) GetLatest(
+	db *gorm.DB,
+	genreSlug string,
+	sectionSlug string,
+	subSectionSlug string,
+	tagSlug string,
+	title string,
+	byRating bool,
+	username string,
+	nameContains string,
+	featured bool,
+	weeklyFeatured bool,
+	trending bool,
+	orderBySubSection bool,
+) ([]models.Book, *utils.ErrorResponse) {
 	books := b.ModelList
 	joinedSubSections := false
 
 	query := db.Model(&b.Model)
+
+	// Genre filter
 	if genreSlug != "" {
 		genre := models.Genre{Slug: genreSlug}
 		db.Take(&genre, genre)
 		if genre.ID == uuid.Nil {
-			errData := utils.NotFoundErr("Invalid book genre")
-			return books, &errData
+			err := utils.NotFoundErr("Invalid book genre")
+			return books, &err
 		}
 		query = query.Where(models.Book{GenreID: genre.ID})
 	}
+
+	// Section filter
 	if sectionSlug != "" {
 		section := models.Section{Slug: sectionSlug}
 		db.Take(&section, section)
 		if section.ID == uuid.Nil {
-			errData := utils.NotFoundErr("Invalid book section")
-			return books, &errData
+			err := utils.NotFoundErr("Invalid book section")
+			return books, &err
 		}
-		query = query.Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
+		query = query.
+			Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
 			Joins("JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id").
 			Where("sub_sections.section_id = ?", section.ID)
 		joinedSubSections = true
 	}
+
+	// SubSection filter
 	if subSectionSlug != "" {
 		subSection := models.SubSection{Slug: subSectionSlug}
 		db.Take(&subSection, subSection)
 		if subSection.ID == uuid.Nil {
-			errData := utils.NotFoundErr("Invalid book subsection")
-			return books, &errData
+			err := utils.NotFoundErr("Invalid book subsection")
+			return books, &err
 		}
 		if !joinedSubSections {
-			query = query.Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id")
+			query = query.
+				Joins("JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
+				Joins("JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id")
+			joinedSubSections = true
 		}
 		query = query.Where("book_sub_sections.sub_section_id = ?", subSection.ID)
 	}
+
+	// Tag filter
 	if tagSlug != "" {
 		tag := models.Tag{Slug: tagSlug}
 		db.Take(&tag, tag)
@@ -67,65 +93,75 @@ func (b BookManager) GetLatest(db *gorm.DB, genreSlug string, sectionSlug string
 		query = query.Where("books.id IN (?)", db.Table("book_tags").Select("book_id").Where("tag_id = ?", tag.ID))
 	}
 
+	// Title filter
 	if title != "" {
 		query = query.Where("title ILIKE ?", "%"+title+"%")
 	}
 
+	// Author username filter
 	if username != "" {
 		author := models.User{Username: username, AccountType: choices.ACCTYPE_AUTHOR}
 		db.Take(&author, author)
 		if author.ID == uuid.Nil {
-			errData := utils.NotFoundErr("Invalid author username")
-			return books, &errData
+			err := utils.NotFoundErr("Invalid author username")
+			return books, &err
 		}
 		query = query.Where(models.Book{AuthorID: author.ID})
 	}
 
+	// Search by nameContains
 	if nameContains != "" {
-		query = query.Joins("left join users on users.id = books.author_id").
+		query = query.
+			Joins("LEFT JOIN users ON users.id = books.author_id").
 			Where("users.username ILIKE ? OR users.name ILIKE ?", "%"+nameContains+"%", "%"+nameContains+"%")
 	}
 
-	// 📌 Filter by Featured
+	// Featured filters
 	if featured {
 		query = query.Where("featured = ?", true)
 	}
-
-	// 📌 Filter by Weekly Featured (Check if it's within this week)
 	if weeklyFeatured {
 		query = query.Where("weekly_featured >= ? AND weekly_featured <= ?",
 			time.Now().Truncate(7*24*time.Hour), time.Now().Add(7*24*time.Hour))
 	}
 
-	// 📌 Select books and average rating
-	query = query.Select("books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating").
-		Joins("LEFT JOIN comments ON comments.book_id = books.id").
-		Group("books.id")
+	// Always join comments for rating computation
+	query = query.Joins("LEFT JOIN comments ON comments.book_id = books.id")
 
-	// 📌 Sorting Logic
+	// Dynamically build SELECT clause
+	selectFields := "books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating"
+
+	// If ordering by subsection name
 	if orderBySubSection {
 		if !joinedSubSections {
 			query = query.
 				Joins("LEFT JOIN book_sub_sections ON book_sub_sections.book_id = books.id").
 				Joins("LEFT JOIN sub_sections ON sub_sections.id = book_sub_sections.sub_section_id")
+			joinedSubSections = true
 		}
-		query = query.
-			Select("books.*, COALESCE(AVG(comments.rating), 0) AS avg_rating, MIN(sub_sections.name) AS sort_name").
-			Group("books.id").
-			Order("sort_name ASC")
+		selectFields += ", MIN(sub_sections.name) AS sort_name"
 	}
-	if trending {
-		// Order by most read books
-		query = query.Joins("LEFT JOIN book_reads ON book_reads.book_id = books.id").
+
+	// Final SELECT and GROUP
+	query = query.Select(selectFields).Group("books.id")
+
+	// Ordering
+	if orderBySubSection {
+		query = query.Order("sort_name ASC")
+	} else if trending {
+		query = query.
+			Joins("LEFT JOIN book_reads ON book_reads.book_id = books.id").
 			Group("books.id").
 			Order("COUNT(book_reads.id) DESC")
 	} else if byRating {
-		query = query.Order("COALESCE(AVG(comments.rating), 0) DESC")
+		query = query.Order("avg_rating DESC")
 	} else {
 		query = query.Order("books.created_at DESC")
 	}
 
+	// Apply preload scope
 	query.Scopes(scopes.AuthorGenreTagBookPreloadScope).Find(&books)
+
 	return books, nil
 }
 
