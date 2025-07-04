@@ -161,7 +161,6 @@ func (b BookManager) GetLatest(
 
 	// Apply preload scope
 	query.Scopes(scopes.AuthorGenreTagBookPreloadScope).Find(&books)
-
 	return books, nil
 }
 
