@@ -209,7 +209,6 @@ func (b BookManager) GetBooksOrderedByRatingAndVotes(db *gorm.DB) []schemas.Book
 		Order("avg_rating DESC, votes_count DESC").
 		Limit(10).
 		Scan(&books)
-
 	return books
 }
 
