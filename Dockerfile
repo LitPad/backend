@@ -8,5 +8,4 @@ WORKDIR /build
 COPY go.mod go.sum ./
 
 # Download dependencies
-RUN go install github.com/air-verse/air@latest
 RUN go mod download

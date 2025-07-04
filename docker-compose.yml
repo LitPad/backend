@@ -42,7 +42,7 @@ services:
     depends_on:
       - db
       - redis
-    command: air ./main.go -b 0.0.0.0
+    command: go run ./main.go
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/general/site-detail"]  # Health check endpoint
       interval: 30s
