@@ -1,12 +1,9 @@
-name: Deploy to VPS
+name: Deploy to AWS Lightsail
 
 on:
   push:
     branches:
       - main
-
-env:
-  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
 
 jobs:
   deploy:
@@ -21,47 +18,29 @@ jobs:
     - name: Get Commit Details
       id: commit_info
       run: |
-        echo "commit_message=$(git log -1 --pretty=%B | sed ':a;N;$!ba;s/\n/ /g' | sed 's/\"/\\"/g')" >> $GITHUB_ENV
+        echo "commit_message=$(git log -1 --pretty=%B | sed ':a;N;$!ba;s/\n/ /g' | sed 's/"_\\"_/g')" >> $GITHUB_ENV
         echo "commit_author=$(git log -1 --pretty=%an)" >> $GITHUB_ENV
 
-    # Install dependencies
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y sshpass rsync
-
-    # Setup SSH with passphrase
-    - name: Setup SSH passphrase
-      env:
-        SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-        echo 'echo $SSH_PASSPHRASE' > ~/.ssh_askpass && chmod +x ~/.ssh_askpass
-        echo "$SSH_PRIVATE_KEY" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh_askpass ssh-add - >/dev/null
-        echo "SSH key added"
+    # Setup SSH
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.2
+      with:
+        ssh-private-key: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
 
     # Verify SSH connection
     - name: Verify SSH Connection
-      env:
-        VPS_IP: ${{ secrets.VPS_IP }}
       run: |
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} "echo Connection successful"
+        ssh -o StrictHostKeyChecking=no ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "echo Connection successful"
 
-    # Copy files to VPS
-    - name: Copy files to VPS
-      env:
-        VPS_IP: ${{ secrets.VPS_IP }}
+    # Copy files to Lightsail
+    - name: Copy files to Lightsail
       run: |
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ docker@${VPS_IP}:/backend
-        echo "Files copied to VPS"
+        rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/backend
 
     # SSH and deploy with Docker
     - name: SSH and Deploy Docker
-      env:
-        VPS_IP: ${{ secrets.VPS_IP }}
       run: |
-        sshpass -p "${{ secrets.SSH_PASSPHRASE }}" ssh -o StrictHostKeyChecking=no docker@${VPS_IP} << 'EOF'
+        ssh -o StrictHostKeyChecking=no ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} << 'EOF'
           cd /backend
 
           # Backup the current running container
@@ -95,7 +74,7 @@ jobs:
         token: ${{ secrets.SLACK_BOT_TOKEN }}
         payload: |
           channel: ${{ secrets.SLACK_CHANNEL_ID }}
-          text: "✅ Backend Deployment to VPS succeeded! 🚀"
+          text: "✅ Backend Deployment to AWS Lightsail succeeded! 🚀"
           attachments:
             - color: "36a64f"
               fields:
@@ -110,7 +89,7 @@ jobs:
                   value: "Success"
                 - title: "Deployment Details"
                   short: true
-                  value: "The latest code was successfully deployed to the VPS."
+                  value: "The latest code was successfully deployed to AWS Lightsail."
 
     # Notify Slack - Failure
     - name: Notify Slack - Failure
@@ -121,7 +100,7 @@ jobs:
         token: ${{ secrets.SLACK_BOT_TOKEN }}
         payload: |
           channel: ${{ secrets.SLACK_CHANNEL_ID }}
-          text: "❌ Backend Deployment to VPS failed! 😞"
+          text: "❌ Backend Deployment to AWS Lightsail failed! 😞"
           attachments:
             - color: "ff0000"
               fields:
