@@ -32,6 +32,11 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "echo Connection successful"
 
+    # Create Deploy Directory
+    - name: Create Deploy Directory
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }} "sudo mkdir -p /backend && sudo chown -R ${{ secrets.LIGHTSAIL_USER }}:${{ secrets.LIGHTSAIL_USER }} /backend"
+
     # Copy files to Lightsail
     - name: Copy files to Lightsail
       run: |
