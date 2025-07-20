@@ -283,7 +283,7 @@ func (ep Endpoint) GoogleLogin(c *fiber.Ctx) error {
 	name := userGoogleData.Name
 	avatar := userGoogleData.Picture
 
-	user, token, err := RegisterSocialUser(db, email, name, &avatar)
+	user, token, err := RegisterSocialUser(db, email, name, &avatar, "google")
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}
@@ -322,7 +322,7 @@ func (ep Endpoint) FacebookLogin(c *fiber.Ctx) error {
 	email := userFacebookData.Email
 	name := userFacebookData.Name
 
-	user, token, err := RegisterSocialUser(db, email, name, nil)
+	user, token, err := RegisterSocialUser(db, email, name, nil, "facebook")
 	if err != nil {
 		return c.Status(401).JSON(err)
 	}

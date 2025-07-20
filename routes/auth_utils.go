@@ -2,6 +2,7 @@ package routes
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -198,7 +199,7 @@ func ConvertFacebookToken(accessToken string) (*FacebookPayload, *utils.ErrorRes
 	return &data, nil
 }
 
-func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) (*models.User, *models.AuthToken, *utils.ErrorResponse) {
+func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string, authType string) (*models.User, *models.AuthToken, *utils.ErrorResponse) {
 	cfg := config.GetConfig()
 
 	user := models.User{Email: email}
@@ -208,7 +209,7 @@ func RegisterSocialUser(db *gorm.DB, email string, name string, avatar *string) 
 		db.Create(&user)
 	} else {
 		if !user.SocialLogin {
-			errData := utils.RequestErr(utils.ERR_INVALID_AUTH, "Requires password to login")
+			errData := utils.RequestErr(utils.ERR_INVALID_AUTH, fmt.Sprintf("This account wasn't created via %s. Please sign in using your email and password.", authType))
 			return nil, nil, &errData
 		}
 	}
